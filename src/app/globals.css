@@ -1,76 +1,211 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600&display=swap');
+
+/* ============================================================
+   Al-Maktabah — editorial design system
+   Paper, ink, hairline rules. Type carries the hierarchy.
+   ============================================================ */
 
 :root {
-  /* Colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #f1f3f5;
-  --text-primary: #1a1b1e;
-  --text-secondary: #495057;
-  --text-tertiary: #868e96;
-  
-  --accent-primary: #4c6ef5; /* Soft Blue */
-  --accent-secondary: #748ffc;
-  --accent-success: #2b8a3e;
-  --accent-warning: #e67700;
-  --accent-danger: #c92a2a;
-  
-  /* Borders */
-  --border-color: #e9ecef;
-  --border-focus: #4c6ef5;
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 16px;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
-  
-  /* Typography */
-  --font-family: 'Inter', 'Noto Sans Thai', sans-serif;
+  /* Paper & ink */
+  --paper: #faf7f2;
+  --paper-2: #f2ede3;
+  --paper-3: #eae3d6;
+
+  --ink: #191714;
+  --ink-2: #5c554b;
+  --ink-3: #8f8578;
+
+  --rule: #ded6c8;
+  --rule-strong: #c2b7a4;
+
+  /* One accent, used sparingly */
+  --accent: #1f4d3a;
+  --accent-2: #7a3b2e;
+
+  /* Type */
+  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', 'Noto Sans Thai', system-ui, sans-serif;
+
+  --t-display: clamp(2.6rem, 6.5vw, 4.6rem);
+  --t-h1: clamp(1.9rem, 4vw, 2.8rem);
+  --t-h2: clamp(1.35rem, 2.5vw, 1.75rem);
+  --t-lede: clamp(1.02rem, 1.5vw, 1.18rem);
+  --t-body: 1rem;
+  --t-small: 0.875rem;
+  --t-micro: 0.72rem;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.15s;
+  --dur: 0.3s;
+
+  color-scheme: light;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+:root[data-theme='dark'] {
+  --paper: #14120f;
+  --paper-2: #1c1915;
+  --paper-3: #24201a;
+
+  --ink: #f0ebe1;
+  --ink-2: #b0a696;
+  --ink-3: #7d7466;
+
+  --rule: #2e2a23;
+  --rule-strong: #453f34;
+
+  --accent: #7fb99a;
+  --accent-2: #d08b78;
+
+  color-scheme: dark;
 }
 
-html,
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #14120f;
+    --paper-2: #1c1915;
+    --paper-3: #24201a;
+
+    --ink: #f0ebe1;
+    --ink-2: #b0a696;
+    --ink-3: #7d7466;
+
+    --rule: #2e2a23;
+    --rule-strong: #453f34;
+
+    --accent: #7fb99a;
+    --accent-2: #d08b78;
+
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { max-width: 100vw; overflow-x: hidden; }
+
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  font-family: var(--font-family);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--t-body);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  line-height: 1.5;
+  text-rendering: optimizeLegibility;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+/* Display type: serif, tight, optically sized */
+h1, h2, h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  font-variation-settings: 'opsz' 42;
+}
+h1 { font-size: var(--t-h1); }
+h2 { font-size: var(--t-h2); }
+h3 { font-size: 1.1rem; line-height: 1.25; }
+
+em { font-style: italic; }
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+::selection { background: var(--ink); color: var(--paper); }
+
+:focus-visible { outline: 1.5px solid var(--accent); outline-offset: 3px; }
+
+/* ---------- shared editorial primitives ---------- */
+
+/* Small tracked label — the workhorse of editorial UI */
+.eyebrow {
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 500;
+  color: var(--ink-3);
 }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
+.lede {
+  font-size: var(--t-lede);
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 58ch;
 }
 
-/* Glassmorphism utilities */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
+.rule { height: 1px; background: var(--rule); border: 0; }
 
-/* Base Layout */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+/* Text link with a sweeping underline */
+.tlink {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 1px;
+}
+.tlink::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%; height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--dur) var(--ease-out);
+}
+.tlink:hover::after { transform: scaleX(1); transform-origin: left; }
+
+/* Buttons: squared, hairline, no shadow */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.78rem 1.3rem;
+  font-family: var(--sans);
+  font-size: var(--t-small);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  background: transparent;
+  transition: background-color var(--dur) var(--ease),
+              color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
+}
+.btn:hover { border-color: var(--ink); }
+
+.btn-solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn-solid:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+
+.btn-block { width: 100%; }
+
+.btn-quiet { border-color: transparent; color: var(--ink-2); padding: 0.5rem 0.7rem; }
+.btn-quiet:hover { color: var(--ink); border-color: transparent; background: var(--paper-2); }
+
+.container { max-width: 1180px; margin: 0 auto; padding: 0 clamp(1.15rem, 4vw, 2.75rem); }
+
+/* ---------- motion ---------- */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.rise { animation: rise 0.6s var(--ease-out) both; }
+.stagger > * { animation: rise 0.55s var(--ease-out) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger > *:nth-child(3) { animation-delay: 0.09s; }
+.stagger > *:nth-child(4) { animation-delay: 0.12s; }
+.stagger > *:nth-child(5) { animation-delay: 0.15s; }
+.stagger > *:nth-child(6) { animation-delay: 0.18s; }
+.stagger > *:nth-child(7) { animation-delay: 0.21s; }
+.stagger > *:nth-child(8) { animation-delay: 0.24s; }
+.stagger > *:nth-child(n+9) { animation-delay: 0.27s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

@@ -1,132 +1,105 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle, XCircle, Upload, Search, Library } from 'lucide-react';
+import { Check, X, ArrowUpRight } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState('users');
+  const [tab, setTab] = useState('approvals');
 
-  const pendingUsers = [
-    { id: 1, name: 'Ahmad Abdullah', email: 'ahmad@example.com', social: 'facebook.com/ahmad123' },
-    { id: 2, name: 'Fatima Noor', email: 'fatima@example.com', social: 'instagram.com/fatima_n' },
+  const pending = [
+    { id: 1, name: 'Ahmad Abdullah', email: 'ahmad@example.com', social: 'facebook.com/ahmad123', requested: '2 days ago' },
+    { id: 2, name: 'Fatima Noor', email: 'fatima@example.com', social: 'instagram.com/fatima_n', requested: '5 days ago' },
+  ];
+
+  const books = [
+    { id: 1, title: 'Fath al-Bari', author: 'Ibn Hajar', category: 'Hadith', restricted: true },
+    { id: 2, title: 'Riyad al-Salihin', author: 'Imam al-Nawawi', category: 'Hadith', restricted: false },
   ];
 
   return (
-    <div className={styles.adminPage}>
-      <div className={styles.header}>
-        <h1>Admin Dashboard</h1>
-        <p>Manage pending user approvals and upload new books to the library.</p>
-      </div>
+    <div className="container">
+      <header className={`${styles.header} rise`}>
+        <p className="eyebrow">Owner</p>
+        <h1 className={styles.title}>Desk</h1>
+        <p className="lede">
+          Approve readers and keep the catalogue in order.
+        </p>
+      </header>
 
-      <div className={styles.tabs}>
-        <div 
-          className={`${styles.tab} ${activeTab === 'users' ? styles.activeTab : ''}`}
-          onClick={() => setActiveTab('users')}
+      <nav className={styles.tabs}>
+        <button
+          onClick={() => setTab('approvals')}
+          className={`${styles.tab} ${tab === 'approvals' ? styles.tabOn : ''}`}
         >
-          Pending Approvals
-          <span className={styles.badge}>{pendingUsers.length}</span>
-        </div>
-        <div 
-          className={`${styles.tab} ${activeTab === 'books' ? styles.activeTab : ''}`}
-          onClick={() => setActiveTab('books')}
+          Approvals <sup className={styles.sup}>{pending.length}</sup>
+        </button>
+        <button
+          onClick={() => setTab('catalogue')}
+          className={`${styles.tab} ${tab === 'catalogue' ? styles.tabOn : ''}`}
         >
-          Manage Books
-        </div>
-      </div>
+          Catalogue <sup className={styles.sup}>{books.length}</sup>
+        </button>
+      </nav>
 
-      {activeTab === 'users' && (
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2>Users waiting for approval</h2>
-          </div>
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>User Details</th>
-                  <th>Social Link (Verification)</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendingUsers.map(user => (
-                  <tr key={user.id}>
-                    <td>
-                      <div className={styles.userInfo}>
-                        <div className={styles.avatar}>{user.name.charAt(0)}</div>
-                        <div className={styles.userDetails}>
-                          <span className={styles.userName}>{user.name}</span>
-                          <span className={styles.userEmail}>{user.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <a href={`https://${user.social}`} target="_blank" rel="noopener noreferrer" className={styles.socialLink}>
-                        {user.social}
-                      </a>
-                    </td>
-                    <td>
-                      <div className={styles.actionCell}>
-                        <button className={styles.approveBtn}>
-                          <CheckCircle size={16} /> Approve
-                        </button>
-                        <button className={styles.rejectBtn}>
-                          <XCircle size={16} /> Reject
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      {tab === 'approvals' && (
+        <ul className={`${styles.rows} stagger`}>
+          {pending.map((user) => (
+            <li key={user.id} className={styles.row}>
+              <div className={styles.who}>
+                <span className={styles.name}>{user.name}</span>
+                <span className={styles.smallMeta}>{user.email}</span>
+              </div>
+
+              <a
+                className={styles.social}
+                href={`https://${user.social}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="tlink">{user.social}</span>
+                <ArrowUpRight size={13} />
+              </a>
+
+              <span className={styles.when}>{user.requested}</span>
+
+              <div className={styles.acts}>
+                <button className={`${styles.act} ${styles.approve}`} title="Approve">
+                  <Check size={16} />
+                </button>
+                <button className={`${styles.act} ${styles.reject}`} title="Reject">
+                  <X size={16} />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
 
-      {activeTab === 'books' && (
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2>Library Management</h2>
-            <button className={styles.uploadBtn}>
-              <Upload size={16} /> Add New Book
-            </button>
+      {tab === 'catalogue' && (
+        <>
+          <div className={styles.catBar}>
+            <button className="btn">Add a volume</button>
           </div>
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Book Title</th>
-                  <th>Category</th>
-                  <th>Access Level</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div className={styles.userInfo}>
-                      <div className={styles.avatar} style={{borderRadius: '4px', backgroundColor: '#e3f2fd'}}>
-                        <Library size={18} color="rgba(0,0,0,0.2)"/>
-                      </div>
-                      <div className={styles.userDetails}>
-                        <span className={styles.userName}>Clean Code</span>
-                        <span className={styles.userEmail}>Robert C. Martin</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Software Engineering</td>
-                  <td><span className={styles.badge} style={{backgroundColor: '#e67700'}}>Restricted</span></td>
-                  <td>
-                    <span className={styles.socialLink} style={{cursor:'pointer'}}>Edit</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <ul className={`${styles.rows} stagger`}>
+            {books.map((book) => (
+              <li key={book.id} className={styles.bookRow}>
+                <div className={styles.who}>
+                  <span className={styles.name}>{book.title}</span>
+                  <span className={styles.smallMeta}>{book.author}</span>
+                </div>
+                <span className={styles.when}>{book.category}</span>
+                <span className={book.restricted ? styles.flagOn : styles.flag}>
+                  {book.restricted ? 'Restricted' : 'Open'}
+                </span>
+                <button className={styles.edit}>
+                  <span className="tlink">Edit</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
-
     </div>
   );
 }

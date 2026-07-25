@@ -1,164 +1,43 @@
-.loginContainer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 6rem);
-  padding: 2rem;
+.wrap {
+  max-width: 390px;
+  margin: 0 auto;
+  padding: clamp(3rem, 8vw, 5.5rem) 0 4rem;
 }
 
-.loginCard {
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: 3rem;
-  width: 100%;
-  max-width: 440px;
-  box-shadow: var(--shadow-lg);
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
+.header { margin-bottom: 2.25rem; }
+.header .eyebrow { display: block; margin-bottom: 1rem; }
+.title { font-size: clamp(2rem, 5vw, 2.7rem); margin-bottom: 0.75rem; letter-spacing: -0.025em; }
+.sub { font-size: var(--t-small); line-height: 1.6; color: var(--ink-2); }
 
-.header {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
+.form { display: flex; flex-direction: column; gap: 1.4rem; margin-bottom: 1.75rem; }
 
-.iconWrapper {
-  background-color: rgba(76, 110, 245, 0.1);
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.5rem;
+.field { display: flex; flex-direction: column; gap: 0.4rem; }
+.field label {
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--ink-3);
 }
-
-.header h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.5px;
-}
-
-.header p {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.inputGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.inputGroup label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.inputGroup input {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.inputGroup input:focus {
+/* Inputs are ruled lines, not boxes */
+.field input {
+  border: 0;
+  border-bottom: 1px solid var(--rule-strong);
+  background: none;
+  padding: 0.5rem 0;
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  color: var(--ink);
   outline: none;
-  border-color: var(--border-focus);
-  background-color: var(--bg-primary);
-  box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.15);
+  transition: border-color var(--dur) var(--ease);
 }
+.field input:focus { border-color: var(--accent); }
+.field input::placeholder { color: var(--ink-3); font-family: var(--sans); font-size: 0.92rem; }
 
-.submitBtn {
-  background-color: var(--text-primary);
-  color: white;
-  padding: 0.85rem;
-  border-radius: var(--border-radius-md);
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: opacity 0.2s, transform 0.1s;
-  margin-top: 0.5rem;
-}
+.hint { font-size: var(--t-small); line-height: 1.5; color: var(--ink-3); }
 
-.submitBtn:hover {
-  opacity: 0.9;
-}
+.orRow { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; }
+.orLine { flex: 1; height: 1px; background: var(--rule); }
+.orText { font-size: var(--t-micro); text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-3); }
 
-.submitBtn:active {
-  transform: scale(0.98);
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: var(--text-tertiary);
-  font-size: 0.85rem;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.divider:not(:empty)::before {
-  margin-right: .5em;
-}
-
-.divider:not(:empty)::after {
-  margin-left: .5em;
-}
-
-.googleBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 0.85rem;
-  background-color: white;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-  box-shadow: var(--shadow-sm);
-}
-
-.googleBtn:hover {
-  background-color: var(--bg-secondary);
-}
-
-.footer {
-  text-align: center;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.toggleAuthBtn {
-  color: var(--accent-primary);
-  font-weight: 600;
-  margin-left: 0.5rem;
-}
-
-.toggleAuthBtn:hover {
-  text-decoration: underline;
-}
+.footer { margin-top: 2rem; font-size: var(--t-small); color: var(--ink-2); }
+.switch { font-size: var(--t-small); font-weight: 500; color: var(--ink); }

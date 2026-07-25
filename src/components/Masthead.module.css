@@ -1,0 +1,121 @@
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.inner {
+  display: flex;
+  align-items: baseline;
+  gap: 2.5rem;
+  padding-top: 1.15rem;
+  padding-bottom: 1.15rem;
+}
+
+/* ---------- Wordmark ---------- */
+.wordmark { display: flex; align-items: baseline; gap: 0.5rem; flex: none; }
+.wordmarkMain {
+  font-family: var(--serif);
+  font-size: 1.42rem;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 36;
+  color: var(--ink);
+}
+.wordmarkSub {
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ink-3);
+}
+
+/* ---------- Nav ---------- */
+.nav { display: flex; gap: 1.75rem; margin-left: auto; }
+
+.navLink {
+  position: relative;
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--ink-2);
+  padding-bottom: 2px;
+  transition: color var(--dur) var(--ease);
+}
+.navLink::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--dur) var(--ease-out);
+}
+.navLink:hover { color: var(--ink); }
+.navLink:hover::after { transform: scaleX(1); transform-origin: left; }
+.navActive { color: var(--ink); }
+.navActive::after { transform: scaleX(1); background: var(--accent); }
+
+/* ---------- Tools ---------- */
+.tools { display: flex; align-items: center; gap: 1.1rem; flex: none; }
+
+.signIn {
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 1px;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.signIn:hover { border-color: var(--ink); }
+
+.menuBtn { display: none; color: var(--ink); }
+
+/* ---------- Drawer ---------- */
+.drawer {
+  display: none;
+  overflow: hidden;
+  max-height: 0;
+  border-top: 1px solid transparent;
+  transition: max-height var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.drawerOpen { max-height: 320px; border-top-color: var(--rule); }
+.drawerLink {
+  display: block;
+  padding: 0.9rem 0;
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  color: var(--ink);
+  border-bottom: 1px solid var(--rule);
+}
+.drawerLink:last-child { border-bottom: 0; }
+
+/* ---------- Body & footer ---------- */
+.body { min-height: 70vh; }
+
+.footer {
+  margin-top: 5rem;
+  border-top: 1px solid var(--rule);
+  padding: 2rem 0 3rem;
+}
+.footerInner {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: var(--t-small);
+  color: var(--ink-3);
+}
+.footerNote { font-style: italic; font-family: var(--serif); }
+
+@media (max-width: 800px) {
+  .inner { gap: 1rem; align-items: center; }
+  .nav { display: none; }
+  .signIn { display: none; }
+  .menuBtn { display: grid; place-items: center; }
+  .drawer { display: block; }
+  .tools { margin-left: auto; }
+  .wordmarkSub { display: none; }
+}

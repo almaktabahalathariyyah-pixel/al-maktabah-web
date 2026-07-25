@@ -1,0 +1,21 @@
+.toggle {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  transition: color var(--dur) var(--ease);
+}
+.toggle:hover { color: var(--ink); }
+
+.icon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(0.7) rotate(-45deg);
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease-out);
+}
+.icon.on { opacity: 1; transform: none; }

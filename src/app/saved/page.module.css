@@ -1,82 +1,24 @@
-.savedPage {
-  padding: 3rem 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
 .header {
+  padding: clamp(3rem, 8vw, 5rem) 0 1.5rem;
+  border-bottom: 1px solid var(--rule);
   margin-bottom: 3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+}
+.header .eyebrow { display: block; margin-bottom: 1rem; }
+.title { font-size: clamp(2.2rem, 6vw, 3.4rem); letter-spacing: -0.028em; }
+
+.empty { max-width: 42ch; padding-bottom: 5rem; }
+.emptyLead {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.6rem;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+}
+.emptyBody {
+  font-size: var(--t-small);
+  color: var(--ink-2);
+  line-height: 1.6;
+  margin-bottom: 1.75rem;
 }
 
-.header h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.header p {
-  color: var(--text-secondary);
-  font-size: 1.05rem;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-}
-
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 5rem 2rem;
-  background-color: var(--bg-primary);
-  border: 1px dashed var(--border-color);
-  border-radius: var(--border-radius-lg);
-  gap: 1rem;
-}
-
-.emptyIcon {
-  width: 80px;
-  height: 80px;
-  background-color: var(--bg-secondary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-tertiary);
-  margin-bottom: 1rem;
-}
-
-.emptyState h2 {
-  font-size: 1.5rem;
-  color: var(--text-primary);
-}
-
-.emptyState p {
-  color: var(--text-secondary);
-  max-width: 400px;
-}
-
-.browseBtn {
-  margin-top: 1rem;
-  background-color: var(--text-primary);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius-md);
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.browseBtn:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
-}
+.list { list-style: none; }

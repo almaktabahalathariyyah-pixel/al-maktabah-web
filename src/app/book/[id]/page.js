@@ -1,96 +1,93 @@
 'use client';
 
+import { use, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Download, Bookmark, FileText, Info } from 'lucide-react';
+import { ArrowLeft, Download, Bookmark, Check } from 'lucide-react';
+import BookCover from '../../../components/BookCover';
 import styles from './page.module.css';
 
 export default function BookDetailPage({ params }) {
-  // In a real app, you would fetch the book data based on params.id
+  // Next.js 16: params is a Promise — unwrap it with React's use() hook.
+  const { id } = use(params);
+  const [saved, setSaved] = useState(false);
+
+  // Mock — a single Firestore doc read (books/{id}) will replace this.
   const book = {
-    id: params.id,
+    id,
     title: 'Al-Aqeedah Al-Wasitiyyah',
     author: 'Ibn Taymiyyah',
     category: 'Aqeedah',
     publisher: 'Dar Al-Minhaj',
     year: '2015',
-    translator: 'N/A',
+    translator: '—',
     pages: 342,
     size: '15 MB',
     format: 'PDF',
-    description: 'A classic text on Islamic theology and creed. This edition includes extensive footnotes and commentary for advanced students.',
-    isRestricted: true
+    cover: null,
+    description:
+      'A classic statement of creed, written in reply to a question put to the author in Wasit. This edition carries extensive footnotes and a commentary prepared for advanced students, with the chains of transmission set out in full.',
+    restricted: true,
   };
 
   return (
-    <div className={styles.pageContainer}>
-      <Link href="/" className={styles.backBtn}>
-        <ArrowLeft size={20} /> Back to Library
+    <div className="container">
+      <Link href="/" className={styles.back}>
+        <ArrowLeft size={15} /> <span className="tlink">The Collection</span>
       </Link>
 
-      <div className={styles.bookLayout}>
-        <aside className={styles.coverSection}>
-          <div className={styles.coverIcon}>
-            <BookOpen size={64} strokeWidth={1.5} />
-          </div>
-          
-          <div className={styles.actionButtons}>
-            <button className={styles.downloadBtn}>
-              <Download size={20} /> Download PDF
+      <article className={`${styles.layout} rise`}>
+        {/* ---------- Left rail: cover + actions ---------- */}
+        <aside className={styles.rail}>
+          <BookCover src={book.cover} title={book.title} author={book.author} />
+
+          <div className={styles.actions}>
+            <button className="btn btn-solid btn-block">
+              <Download size={15} /> Download {book.format}
             </button>
-            <button className={styles.saveBtn}>
-              <Bookmark size={20} /> Save for Later
+            <button
+              className={`btn btn-block ${saved ? styles.savedOn : ''}`}
+              onClick={() => setSaved((v) => !v)}
+            >
+              {saved ? <Check size={15} /> : <Bookmark size={15} />}
+              {saved ? 'Saved' : 'Save for later'}
             </button>
           </div>
+
+          <p className={styles.delivery}>
+            Delivered from a private Telegram channel. The download opens the
+            exact file message — nothing is re-hosted publicly.
+          </p>
         </aside>
 
-        <main className={styles.infoSection}>
+        {/* ---------- Main text ---------- */}
+        <div className={styles.main}>
           <header className={styles.header}>
-            <div className={styles.categoryBadge}>{book.category}</div>
+            <p className="eyebrow">
+              {book.category}
+              {book.restricted && <span className={styles.sep}>— Members only</span>}
+            </p>
             <h1 className={styles.title}>{book.title}</h1>
-            <div className={styles.author}>by {book.author}</div>
+            <p className={styles.author}>{book.author}</p>
           </header>
 
-          <div className={styles.telegramNotice}>
-            <Info size={24} color="var(--accent-success)" />
-            <p>
-              <strong>Secure Download:</strong> This file is hosted on our private Telegram channel. 
-              Clicking download will redirect you to the exact file message in Telegram.
-            </p>
-          </div>
+          <p className={styles.description}>{book.description}</p>
 
-          <div className={styles.description}>
-            <h3>About this Book</h3>
-            <p>{book.description}</p>
-          </div>
-
-          <div className={styles.metadataGrid}>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Publisher</span>
-              <span className={styles.metaValue}>{book.publisher}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Year</span>
-              <span className={styles.metaValue}>{book.year}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Translator</span>
-              <span className={styles.metaValue}>{book.translator}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Pages</span>
-              <span className={styles.metaValue}>{book.pages}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>File Size</span>
-              <span className={styles.metaValue}>{book.size}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Format</span>
-              <span className={styles.metaValue}>{book.format}</span>
-            </div>
-          </div>
-        </main>
-      </div>
+          <dl className={styles.specs}>
+            {[
+              ['Publisher', book.publisher],
+              ['Year', book.year],
+              ['Translator', book.translator],
+              ['Extent', `${book.pages} pages`],
+              ['File', `${book.format} · ${book.size}`],
+            ].map(([label, value]) => (
+              <div key={label} className={styles.spec}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </article>
     </div>
   );
 }
