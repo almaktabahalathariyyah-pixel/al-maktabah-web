@@ -2,8 +2,8 @@
   position: relative;
   aspect-ratio: 2 / 3;
   overflow: hidden;
-  background: var(--paper-2);
-  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
 }
 
 .img {
@@ -11,36 +11,44 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.7s var(--ease-out);
+  transition: transform 0.5s var(--ease-out);
 }
 
-/* Typographic binding for records without a cover image */
+/* Records without a cover get the title set in type, on a tinted
+   panel — a real state, not a broken image frame. */
 .fallback {
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 0.7rem;
-  padding: 1.4rem 1.15rem;
-  background: var(--paper-2);
+  justify-content: flex-end;
+  gap: 0.4rem;
+  padding: 1rem 0.9rem;
+  background:
+    radial-gradient(120% 80% at 20% 0%, var(--surface-3), var(--surface-2) 70%);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
 }
 .fallbackTitle {
-  font-family: var(--serif);
-  font-size: 0.98rem;
-  line-height: 1.25;
-  color: var(--ink);
-  font-variation-settings: 'opsz' 20;
+  font-family: var(--display);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0;
+  color: var(--fg);
   display: -webkit-box;
-  -webkit-line-clamp: 5;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.fallbackRule { width: 22px; height: 1px; background: var(--rule-strong); }
+.fallbackRule { width: 20px; height: 2px; border-radius: var(--r-pill); background: var(--accent); }
 .fallbackAuthor {
+  font-family: var(--text);
   font-size: var(--t-micro);
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-  color: var(--ink-3);
+  letter-spacing: var(--tr-label);
+  line-height: 1.5;
+  color: var(--fg-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

@@ -1,0 +1,152 @@
+'use client';
+
+import { use, useState, useEffect } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Download, Bookmark, Check } from 'lucide-react';
+import BookCover from '@/components/BookCover';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { useAuth } from '@/context/AuthContext';
+import styles from './page.module.css';
+
+export default function BookDetailPage({ params }) {
+  const { id } = use(params);
+  const { user } = useAuth();
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchBookAndUser = async () => {
+      try {
+        // Fetch Book
+        const docRef = doc(db, 'books', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setBook({ id: docSnap.id, ...docSnap.data() });
+        }
+
+        // Fetch User Saved State
+        if (user) {
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            if (userData.savedBooks && userData.savedBooks.includes(id)) {
+              setSaved(true);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBookAndUser();
+  }, [id, user]);
+
+  const toggleSave = async () => {
+    if (!user) {
+      alert("กรุณาเข้าสู่ระบบก่อนบันทึกหนังสือ");
+      return;
+    }
+    setSaving(true);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      if (saved) {
+        await updateDoc(userRef, { savedBooks: arrayRemove(id) });
+        setSaved(false);
+      } else {
+        await updateDoc(userRef, { savedBooks: arrayUnion(id) });
+        setSaved(true);
+      }
+    } catch (error) {
+      console.error("Error updating saved books:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="container" style={{paddingTop: '4rem'}}>กำลังโหลดข้อมูล...</div>;
+  }
+
+  if (!book) {
+    return <div className="container" style={{paddingTop: '4rem'}}>ไม่พบข้อมูลหนังสือ</div>;
+  }
+
+  // In a real app, you would check if user is approved to see restricted books.
+  const approved = !!user;
+  const sealed = book.restricted && !approved;
+
+  return (
+    <div className="container">
+      <Link href="/" className={styles.back}>
+        <ArrowLeft size={15} /> <span className="tlink">คลังหนังสือ</span>
+      </Link>
+
+      <article className={`${styles.layout} rise`}>
+        {/* ---------- Left rail: cover + actions ---------- */}
+        <aside className={styles.rail}>
+          <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+
+          <div className={styles.actions}>
+            {sealed ? (
+              <button className="btn btn-solid btn-block" disabled>
+                <Download size={15} /> เฉพาะสมาชิก
+              </button>
+            ) : (
+              <a href={book.telegramUrl || '#'} target="_blank" rel="noopener noreferrer" className="btn btn-solid btn-block" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', textDecoration: 'none'}}>
+                <Download size={15} /> ดาวน์โหลด {book.format || 'PDF'}
+              </a>
+            )}
+            
+            <button
+              className={`btn btn-block ${saved ? styles.savedOn : ''}`}
+              onClick={toggleSave}
+              disabled={saving}
+            >
+              {saved ? <Check size={15} /> : <Bookmark size={15} />}
+              {saved ? 'บันทึกแล้ว' : 'บันทึกไว้อ่าน'}
+            </button>
+          </div>
+
+          <p className={styles.delivery}>
+            ไฟล์ถูกจัดเก็บอย่างปลอดภัยบนระบบ Telegram การดาวน์โหลดจะพาคุณไปยังไฟล์ต้นฉบับโดยตรง
+          </p>
+        </aside>
+
+        {/* ---------- Main text ---------- */}
+        <div className={styles.main}>
+          <header className={styles.header}>
+            <p className="eyebrow">
+              {book.category}
+              {book.restricted && <span className={styles.sep}>— เฉพาะสมาชิก</span>}
+            </p>
+            <h1 className={styles.title}>{book.title}</h1>
+            <p className={styles.author}>{book.author}</p>
+          </header>
+
+          <p className={styles.description}>{book.description || '-'}</p>
+
+          <dl className={styles.specs}>
+            {[
+              ['สำนักพิมพ์', book.publisher || '-'],
+              ['ปีที่พิมพ์', book.year || '-'],
+              ['ผู้แปล', book.translator || '-'],
+              ['จำนวนหน้า', `${book.pages || '-'} หน้า`],
+              ['รูปแบบไฟล์', `${book.format || 'PDF'} · ${book.size || '-'}`],
+            ].map(([label, value]) => (
+              <div key={label} className={styles.spec}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </article>
+    </div>
+  );
+}

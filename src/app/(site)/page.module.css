@@ -1,0 +1,266 @@
+/* ---------------- Header bar ---------------- */
+.bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: clamp(1.5rem, 3.5vw, 2.5rem) 0 1.25rem;
+}
+
+.barText { display: flex; align-items: baseline; gap: 0.85rem; min-width: 0; }
+.title {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 3.2vw, 2.1rem);
+  font-weight: 600;
+  line-height: var(--lh-display);
+  letter-spacing: 0;
+}
+.count {
+  font-size: var(--t-small);
+  color: var(--fg-3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.barTools {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1 1 320px;
+  justify-content: flex-end;
+}
+
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1 1 auto;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 0.55rem 1rem;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.searchWrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.searchIcon { color: var(--fg-3); flex: none; }
+.search {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font-family: inherit;
+  font-size: var(--t-small);
+  color: var(--fg);
+}
+.search::placeholder { color: var(--fg-3); }
+.searchClear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  color: var(--fg-3);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.searchClear:hover { background: var(--surface-3); color: var(--fg); }
+
+/* Filter toggle only appears once the rail collapses */
+.railToggle {
+  display: none;
+  align-items: center;
+  gap: 0.45rem;
+  flex: none;
+  padding: 0.55rem 1rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--fg);
+  transition: background-color var(--dur) var(--ease), transform var(--dur-fast) var(--spring);
+}
+.railToggle:hover { background: var(--surface-3); }
+.railToggle:active { transform: scale(0.96); }
+.pip {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+/* ---------------- Layout: rail + shelf ---------------- */
+.layout {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 2.75rem);
+  align-items: start;
+  padding-bottom: 4rem;
+}
+
+.railWrap {
+  position: sticky;
+  top: 5rem;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+.shelf { min-width: 0; }
+
+/* ---------------- Cover grid ---------------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: clamp(1.4rem, 2.4vw, 2rem) clamp(0.9rem, 1.6vw, 1.35rem);
+}
+
+.item { display: block; }
+.sealed { cursor: default; }
+
+.coverWrap {
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin-bottom: 0.8rem;
+  transition: transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease);
+}
+.item:not(.sealed):hover .coverWrap {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg), 0 0 0 2px var(--accent-glow);
+}
+.item:not(.sealed):active .coverWrap { transform: translateY(-2px) scale(0.99); }
+.item:not(.sealed):hover :global(img) { transform: scale(1.06); }
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 8, 0.62);
+  backdrop-filter: blur(1.5px);
+  pointer-events: none;
+}
+.lockTag {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--r-pill);
+  background: var(--hot-dim);
+  color: var(--hot);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.meta { display: flex; flex-direction: column; }
+
+.bookTitle {
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.42;
+  letter-spacing: 0;
+  color: var(--fg);
+  margin-bottom: 0.15rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color var(--dur) var(--ease);
+}
+.item:not(.sealed):hover .bookTitle { color: var(--accent); }
+
+.author {
+  font-family: var(--text);
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--fg-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------------- Empty ---------------- */
+.emptyBlock {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: clamp(2.5rem, 6vw, 4rem) 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+.emptyLead {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(1.2rem, 2.8vw, 1.5rem);
+  line-height: var(--lh-heading);
+  color: var(--fg);
+}
+.emptyBody {
+  font-size: var(--t-small);
+  line-height: var(--lh-body);
+  color: var(--fg-3);
+  max-width: 44ch;
+  margin-bottom: 1.1rem;
+}
+
+/* ---------------- Skeletons ---------------- */
+.skeleton { animation: pulse 1.4s var(--ease) infinite; }
+.skeletonCover {
+  aspect-ratio: 2 / 3;
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  margin-bottom: 0.8rem;
+}
+.skeletonLine {
+  height: 11px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  margin-bottom: 0.5rem;
+}
+.skeletonShort { width: 55%; }
+
+/* ---------------- Collapse the rail on narrow screens ---------------- */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .railToggle { display: inline-flex; }
+  .railWrap {
+    position: static;
+    max-height: 0;
+    overflow: hidden;
+    padding: 0;
+    transition: max-height var(--dur) var(--ease);
+  }
+  .railOpen {
+    max-height: 1400px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .barTools { flex: 1 1 100%; }
+}

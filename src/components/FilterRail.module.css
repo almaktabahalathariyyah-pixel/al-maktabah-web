@@ -1,0 +1,110 @@
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.headTitle {
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--fg);
+}
+.reset {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  color: var(--accent);
+  transition: opacity var(--dur) var(--ease);
+}
+.reset:hover { opacity: 0.75; }
+
+.none { font-size: var(--t-small); color: var(--fg-3); padding: 0.5rem 0; }
+
+/* ---------------- Group ---------------- */
+.group { border-bottom: 1px solid var(--border); padding-bottom: 0.45rem; }
+.group:last-child { border-bottom: 0; }
+
+.groupHead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.7rem 0;
+  font-family: var(--text);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--fg);
+  text-align: left;
+}
+.chevron {
+  color: var(--fg-3);
+  flex: none;
+  transition: transform var(--dur) var(--ease);
+}
+.chevronOpen { transform: rotate(180deg); }
+
+.options { display: flex; flex-direction: column; gap: 0.12rem; padding-bottom: 0.4rem; }
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--r-sm);
+  font-size: var(--t-small);
+  color: var(--fg-2);
+  text-align: left;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.option:hover { background: var(--surface-2); color: var(--fg); }
+
+.optionLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.optionCount {
+  flex: none;
+  font-size: var(--t-micro);
+  color: var(--fg-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The chosen value sits at the top of its group as a removable chip */
+.selected {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0.35rem 0.7rem;
+  margin-bottom: 0.3rem;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  transition: transform var(--dur-fast) var(--spring);
+}
+.selected:active { transform: scale(0.95); }
+
+.more {
+  align-self: flex-start;
+  padding: 0.35rem 0.6rem;
+  font-size: var(--t-micro);
+  font-weight: 600;
+  color: var(--accent);
+}
+.more:hover { text-decoration: underline; }

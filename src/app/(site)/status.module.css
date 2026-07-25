@@ -1,0 +1,35 @@
+/* Shared by not-found and error — same shape, different message */
+.wrap {
+  max-width: 46ch;
+  margin: 0 auto;
+  padding: clamp(4rem, 12vw, 8rem) 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.code {
+  font-family: var(--display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-weight: 600;
+  line-height: var(--lh-display);
+}
+
+.body {
+  font-size: var(--t-small);
+  line-height: var(--lh-body);
+  color: var(--fg-3);
+}
+
+.acts { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin-top: 0.9rem; }

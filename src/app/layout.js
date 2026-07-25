@@ -1,23 +1,53 @@
+import { Kanit, Sarabun } from 'next/font/google';
 import './globals.css';
-import Masthead from '../components/Masthead';
+import Providers from '@/components/Providers';
+
+const kanit = Kanit({
+  weight: ['300', '400', '500', '600'],
+  subsets: ['latin', 'thai'],
+  variable: '--font-kanit',
+  display: 'swap',
+});
+
+const sarabun = Sarabun({
+  weight: ['300', '400', '500', '600'],
+  subsets: ['latin', 'thai'],
+  variable: '--font-sarabun',
+  display: 'swap',
+});
 
 export const metadata = {
   title: 'Al-Maktabah Al-Athariyyah',
-  description: 'A library of classical texts, catalogued and delivered privately.',
+  description: 'ห้องสมุดหนังสืออิสลาม คลังความรู้เพื่อชนรุ่นหลัง',
 };
 
-// Runs before first paint so the saved theme is applied without a flash.
-// With nothing stored, the CSS falls back to the OS preference.
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
+// Runs before first paint so a chosen theme applies without a flash.
+// Dark is the default shell; light is opt-in only.
+const themeScript = `(function(){try{if(localStorage.getItem('theme')==='light'){document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();`;
 
+/**
+ * Root layout holds only the document shell and providers.
+ * Chrome lives in the route-group layouts: (site) for readers,
+ * admin for the owner.
+ *
+ * The font variables go on <html> so they land on :root, where
+ * globals.css composes --display and --text from them. A custom
+ * property is substituted where it is declared, not where it is
+ * used, so declaring them on <body> would leave those empty.
+ */
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html
+      lang="th"
+      className={`${kanit.variable} ${sarabun.variable}`}
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <Masthead>{children}</Masthead>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

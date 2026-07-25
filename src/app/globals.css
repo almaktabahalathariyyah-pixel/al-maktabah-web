@@ -1,84 +1,123 @@
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600&display=swap');
-
 /* ============================================================
-   Al-Maktabah — editorial design system
-   Paper, ink, hairline rules. Type carries the hierarchy.
+   Al-Maktabah — dark-first, cover-forward
+
+   Dark is the product, not a mode: the covers are the content
+   and they read best against near-black. Light exists only if
+   the reader explicitly asks for it.
+
+   Thai metrics still govern the type:
+     - stacked vowels + tone marks need generous leading
+     - tracking is never negative
+     - no wide tracking on Thai; there are no spaces between words
    ============================================================ */
 
 :root {
-  /* Paper & ink */
-  --paper: #faf7f2;
-  --paper-2: #f2ede3;
-  --paper-3: #eae3d6;
+  /* Surfaces — near-black with a faint green cast */
+  --bg: #0b0e0d;
+  --surface: #141917;
+  --surface-2: #1b221f;
+  --surface-3: #242d29;
 
-  --ink: #191714;
-  --ink-2: #5c554b;
-  --ink-3: #8f8578;
+  /* Foreground */
+  --fg: #eef4f1;
+  --fg-2: #9aa9a3;
+  --fg-3: #6a7772;
 
-  --rule: #ded6c8;
-  --rule-strong: #c2b7a4;
+  --border: #222b27;
+  --border-2: #303b36;
 
-  /* One accent, used sparingly */
-  --accent: #1f4d3a;
-  --accent-2: #7a3b2e;
+  /* One vivid accent, used with confidence */
+  --accent: #3ee6a0;
+  --accent-hover: #5cf0b1;
+  --accent-ink: #04140d;
+  --accent-dim: rgba(62, 230, 160, 0.13);
+  --accent-glow: rgba(62, 230, 160, 0.28);
 
-  /* Type */
-  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
-  --sans: 'Inter', 'Noto Sans Thai', system-ui, sans-serif;
+  /* Warm counterpoint for locked / restricted */
+  --hot: #ff8360;
+  --hot-dim: rgba(255, 131, 96, 0.14);
 
-  --t-display: clamp(2.6rem, 6.5vw, 4.6rem);
-  --t-h1: clamp(1.9rem, 4vw, 2.8rem);
-  --t-h2: clamp(1.35rem, 2.5vw, 1.75rem);
-  --t-lede: clamp(1.02rem, 1.5vw, 1.18rem);
+  /* Legacy colour aliases — older rules and inline styles use these */
+  --paper: var(--bg);
+  --paper-2: var(--surface-2);
+  --paper-3: var(--surface-3);
+  --ink: var(--fg);
+  --ink-2: var(--fg-2);
+  --ink-3: var(--fg-3);
+  --rule: var(--border);
+  --rule-strong: var(--border-2);
+  --accent-2: var(--hot);
+
+  /* Type families — self-hosted via next/font in layout.js
+     (names kept stable across redesigns) */
+  --display: var(--font-kanit), 'Noto Sans Thai', system-ui, sans-serif;
+  --text: var(--font-sarabun), 'Noto Sans Thai', system-ui, sans-serif;
+  --serif: var(--display);
+  --sans: var(--text);
+
+  /* Scale */
+  --t-display: clamp(2.1rem, 5vw, 3.6rem);
+  --t-h1: clamp(1.7rem, 3.4vw, 2.4rem);
+  --t-h2: clamp(1.25rem, 2.2vw, 1.55rem);
+  --t-lede: clamp(1rem, 1.3vw, 1.1rem);
   --t-body: 1rem;
-  --t-small: 0.875rem;
-  --t-micro: 0.72rem;
+  --t-small: 0.9rem;
+  --t-micro: 0.78rem;
 
-  /* Motion */
+  /* Thai leading */
+  --lh-display: 1.28;
+  --lh-heading: 1.36;
+  --lh-body: 1.72;
+  --tr-label: 0.03em;
+
+  /* Shape — rounded, app-like */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* Depth */
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+
+  /* Motion — a little spring so it feels alive */
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   --dur-fast: 0.15s;
-  --dur: 0.3s;
-
-  color-scheme: light;
-}
-
-:root[data-theme='dark'] {
-  --paper: #14120f;
-  --paper-2: #1c1915;
-  --paper-3: #24201a;
-
-  --ink: #f0ebe1;
-  --ink-2: #b0a696;
-  --ink-3: #7d7466;
-
-  --rule: #2e2a23;
-  --rule-strong: #453f34;
-
-  --accent: #7fb99a;
-  --accent-2: #d08b78;
+  --dur: 0.26s;
 
   color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --paper: #14120f;
-    --paper-2: #1c1915;
-    --paper-3: #24201a;
+/* Light is opt-in only */
+:root[data-theme='light'] {
+  --bg: #ffffff;
+  --surface: #f6f8f7;
+  --surface-2: #eef2f0;
+  --surface-3: #e3e9e6;
 
-    --ink: #f0ebe1;
-    --ink-2: #b0a696;
-    --ink-3: #7d7466;
+  --fg: #0c1310;
+  --fg-2: #55635d;
+  --fg-3: #7d8b85;
 
-    --rule: #2e2a23;
-    --rule-strong: #453f34;
+  --border: #e2e8e5;
+  --border-2: #cbd5d0;
 
-    --accent: #7fb99a;
-    --accent-2: #d08b78;
+  --accent: #049960;
+  --accent-hover: #037a4d;
+  --accent-ink: #ffffff;
+  --accent-dim: rgba(4, 153, 96, 0.1);
+  --accent-glow: rgba(4, 153, 96, 0.2);
 
-    color-scheme: dark;
-  }
+  --hot: #d8542c;
+  --hot-dim: rgba(216, 84, 44, 0.1);
+
+  --shadow: 0 8px 24px rgba(12, 19, 16, 0.1);
+  --shadow-lg: 0 20px 48px rgba(12, 19, 16, 0.16);
+
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -86,67 +125,77 @@
 html, body { max-width: 100vw; overflow-x: hidden; }
 
 body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--text);
   font-size: var(--t-body);
-  line-height: 1.6;
+  line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  /* Let the browser's Thai dictionary decide line breaks */
+  word-break: normal;
+  overflow-wrap: normal;
+  line-break: auto;
 }
 
-/* Display type: serif, tight, optically sized */
+/* Display type: Kanit, heavy. Weight is what reads as modern here. */
 h1, h2, h3 {
-  font-family: var(--serif);
-  font-weight: 400;
-  line-height: 1.08;
-  letter-spacing: -0.015em;
-  font-variation-settings: 'opsz' 42;
+  font-family: var(--display);
+  font-weight: 600;
+  line-height: var(--lh-heading);
+  letter-spacing: 0;
+  text-wrap: balance;
 }
-h1 { font-size: var(--t-h1); }
+h1 { font-size: var(--t-h1); line-height: var(--lh-display); }
 h2 { font-size: var(--t-h2); }
-h3 { font-size: 1.1rem; line-height: 1.25; }
+h3 { font-size: 1.08rem; font-weight: 500; line-height: 1.42; }
 
-em { font-style: italic; }
+p { text-wrap: pretty; }
+
+/* Thai has no italic tradition — emphasis is colour and weight */
+em { font-style: normal; font-weight: 600; color: var(--accent); }
 
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 
-::selection { background: var(--ink); color: var(--paper); }
+::selection { background: var(--accent); color: var(--accent-ink); }
 
-:focus-visible { outline: 1.5px solid var(--accent); outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--r-sm); }
 
-/* ---------- shared editorial primitives ---------- */
+/* Thin scrollbar that matches the dark shell */
+* { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: var(--r-pill);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
 
-/* Small tracked label — the workhorse of editorial UI */
+/* ---------- primitives ---------- */
+
 .eyebrow {
+  font-family: var(--text);
   font-size: var(--t-micro);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: var(--tr-label);
   font-weight: 500;
-  color: var(--ink-3);
+  color: var(--fg-3);
+  line-height: 1.6;
 }
 
 .lede {
   font-size: var(--t-lede);
-  line-height: 1.6;
-  color: var(--ink-2);
-  max-width: 58ch;
+  line-height: var(--lh-body);
+  color: var(--fg-2);
+  max-width: 54ch;
 }
 
-.rule { height: 1px; background: var(--rule); border: 0; }
-
-/* Text link with a sweeping underline */
-.tlink {
-  position: relative;
-  display: inline-block;
-  padding-bottom: 1px;
-}
+.tlink { position: relative; display: inline-block; padding-bottom: 1px; }
 .tlink::after {
   content: '';
   position: absolute;
   left: 0; bottom: 0;
-  width: 100%; height: 1px;
+  width: 100%; height: 1.5px;
+  border-radius: var(--r-pill);
   background: currentColor;
   transform: scaleX(0);
   transform-origin: right;
@@ -154,54 +203,84 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 }
 .tlink:hover::after { transform: scaleX(1); transform-origin: left; }
 
-/* Buttons: squared, hairline, no shadow */
+/* Buttons: pill, filled, springy */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.78rem 1.3rem;
-  font-family: var(--sans);
+  padding: 0.72rem 1.4rem;
+  border-radius: var(--r-pill);
+  font-family: var(--text);
   font-size: var(--t-small);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--ink);
-  border: 1px solid var(--rule-strong);
-  background: transparent;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   transition: background-color var(--dur) var(--ease),
               color var(--dur) var(--ease),
-              border-color var(--dur) var(--ease);
+              border-color var(--dur) var(--ease),
+              transform var(--dur-fast) var(--spring);
 }
-.btn:hover { border-color: var(--ink); }
+.btn:hover { background: var(--surface-3); border-color: var(--border-2); }
+.btn:active { transform: scale(0.96); }
 
-.btn-solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-.btn-solid:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.btn-solid {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
+}
+.btn-solid:hover { background: var(--accent-hover); border-color: transparent; }
 
 .btn-block { width: 100%; }
 
-.btn-quiet { border-color: transparent; color: var(--ink-2); padding: 0.5rem 0.7rem; }
-.btn-quiet:hover { color: var(--ink); border-color: transparent; background: var(--paper-2); }
+.btn-quiet { background: transparent; border-color: transparent; color: var(--fg-2); }
+.btn-quiet:hover { background: var(--surface-2); color: var(--fg); }
 
-.container { max-width: 1180px; margin: 0 auto; padding: 0 clamp(1.15rem, 4vw, 2.75rem); }
+/* Pill chips for filters */
+.chip {
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--r-pill);
+  font-size: var(--t-small);
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--fg-2);
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  transition: background-color var(--dur) var(--ease),
+              color var(--dur) var(--ease),
+              transform var(--dur-fast) var(--spring);
+}
+.chip:hover { background: var(--surface-3); color: var(--fg); }
+.chip:active { transform: scale(0.95); }
+.chip-on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.chip-on:hover { background: var(--accent-hover); color: var(--accent-ink); }
+
+.container { max-width: 1280px; margin: 0 auto; padding: 0 clamp(1.15rem, 4vw, 2.5rem); }
 
 /* ---------- motion ---------- */
 @keyframes rise {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: none; }
 }
-@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 
-.rise { animation: rise 0.6s var(--ease-out) both; }
-.stagger > * { animation: rise 0.55s var(--ease-out) both; }
-.stagger > *:nth-child(1) { animation-delay: 0.03s; }
-.stagger > *:nth-child(2) { animation-delay: 0.06s; }
-.stagger > *:nth-child(3) { animation-delay: 0.09s; }
-.stagger > *:nth-child(4) { animation-delay: 0.12s; }
-.stagger > *:nth-child(5) { animation-delay: 0.15s; }
-.stagger > *:nth-child(6) { animation-delay: 0.18s; }
-.stagger > *:nth-child(7) { animation-delay: 0.21s; }
-.stagger > *:nth-child(8) { animation-delay: 0.24s; }
-.stagger > *:nth-child(n+9) { animation-delay: 0.27s; }
+.rise { animation: rise 0.5s var(--ease-out) both; }
+.stagger > * { animation: rise 0.45s var(--ease-out) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.05s; }
+.stagger > *:nth-child(3) { animation-delay: 0.08s; }
+.stagger > *:nth-child(4) { animation-delay: 0.11s; }
+.stagger > *:nth-child(5) { animation-delay: 0.14s; }
+.stagger > *:nth-child(6) { animation-delay: 0.17s; }
+.stagger > *:nth-child(7) { animation-delay: 0.20s; }
+.stagger > *:nth-child(8) { animation-delay: 0.23s; }
+.stagger > *:nth-child(n+9) { animation-delay: 0.26s; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

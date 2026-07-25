@@ -12,12 +12,8 @@ export default function ThemeToggle() {
   const [theme, setTheme] = useState(null);
 
   useEffect(() => {
-    const stored = document.documentElement.getAttribute('data-theme');
-    if (stored) {
-      setTheme(stored);
-    } else {
-      setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    }
+    // Dark is the default shell; light only when explicitly chosen.
+    setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
   }, []);
 
   const toggle = () => {
