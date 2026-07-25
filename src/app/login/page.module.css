@@ -119,11 +119,11 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.divider::not(:empty)::before {
+.divider:not(:empty)::before {
   margin-right: .5em;
 }
 
-.divider::not(:empty)::after {
+.divider:not(:empty)::after {
   margin-left: .5em;
 }
 
