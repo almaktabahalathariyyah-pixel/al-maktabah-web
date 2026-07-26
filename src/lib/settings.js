@@ -23,7 +23,7 @@ export async function getDropdownSettings() {
  */
 export async function saveDropdownSettings(data) {
   try {
-    await setDoc(doc(db, 'settings', 'dropdowns'), data);
+    await setDoc(doc(db, 'settings', 'dropdowns'), data, { merge: true });
     return true;
   } catch (err) {
     console.error('Error saving dropdown settings:', err);

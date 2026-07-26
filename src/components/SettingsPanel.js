@@ -14,9 +14,6 @@ export default function SettingsPanel({ isOpen, onClose }) {
   const [categories, setCategories] = useState([]);
   const [languages, setLanguages] = useState([]);
   const [types, setTypes] = useState([]);
-  const [authors, setAuthors] = useState([]);
-  const [translators, setTranslators] = useState([]);
-  const [publishers, setPublishers] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,9 +40,6 @@ export default function SettingsPanel({ isOpen, onClose }) {
         setCategories(settings.categories || []);
         setLanguages(settings.languages || []);
         setTypes(settings.types || ['หนังสือ', 'ไฟล์ออนไลน์', 'รายงาน', 'แผ่นพับ', 'วารสาร', 'งานวิจัย', 'วิทยานิพนธ์']);
-        setAuthors(settings.authors || []);
-        setTranslators(settings.translators || []);
-        setPublishers(settings.publishers || []);
       } catch (err) {
         if (isMounted) toast.error('โหลดข้อมูลการตั้งค่าไม่สำเร็จ');
       } finally {
@@ -64,9 +58,6 @@ export default function SettingsPanel({ isOpen, onClose }) {
         categories,
         languages,
         types: types.filter(Boolean),
-        authors: authors.filter(Boolean),
-        translators: translators.filter(Boolean),
-        publishers: publishers.filter(Boolean),
       };
       const success = await saveDropdownSettings(payload);
       if (success) {
@@ -242,31 +233,6 @@ export default function SettingsPanel({ isOpen, onClose }) {
                   {types.length === 0 && <div style={{color:'var(--fg-3)', padding:'1rem', textAlign:'center'}}>ยังไม่มีประเภท</div>}
                 </div>
               </section>
-
-              {/* Large List Editors */}
-              <SearchableListEditor 
-                title="ผู้แต่ง (Authors)"
-                description="จัดการรายชื่อผู้แต่ง พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
-                placeholder="ค้นหาชื่อผู้แต่ง..."
-                items={authors}
-                onChange={setAuthors}
-              />
-              
-              <SearchableListEditor 
-                title="ผู้แปล (Translators)"
-                description="จัดการรายชื่อผู้แปล พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
-                placeholder="ค้นหาชื่อผู้แปล..."
-                items={translators}
-                onChange={setTranslators}
-              />
-              
-              <SearchableListEditor 
-                title="สำนักพิมพ์ (Publishers)"
-                description="จัดการรายชื่อสำนักพิมพ์ พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
-                placeholder="ค้นหาชื่อสำนักพิมพ์..."
-                items={publishers}
-                onChange={setPublishers}
-              />
 
               {/* Languages Section */}
               <section className={styles.section}>

@@ -111,6 +111,9 @@ export default function AdminShell({ children }) {
         <div className={styles.navDivider} />
         
         <div className={styles.settingsNav}>
+          <Link href="/admin/names" className={styles.navLink} title={!isSidebarOpen ? 'จัดการรายชื่อ' : undefined} onClick={() => { if (window.innerWidth <= 900) toggleSidebar(); }}>
+            <UserCheck size={18} className={styles.navIcon} /> <span className={styles.navText}>จัดการรายชื่อ</span>
+          </Link>
           <button onClick={openFields} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าฟิลด์' : undefined}>
             <SlidersHorizontal size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าฟิลด์</span>
           </button>
