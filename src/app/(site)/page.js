@@ -174,7 +174,7 @@ export default function Home() {
                   : 'ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองบางตัวออก'}
               </p>
               {visibleBooks.length === 0 ? (
-                isAdmin ? <Link href="/admin/new" className="btn">เพิ่มหนังสือ</Link> : null
+                isAdmin ? <Link href="/admin/new" className="btn btn-solid">เพิ่มหนังสือ</Link> : null
               ) : (
                 <button className="btn" onClick={resetAll}>ล้างทั้งหมด</button>
               )}

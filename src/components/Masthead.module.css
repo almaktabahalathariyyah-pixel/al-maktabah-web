@@ -104,10 +104,11 @@
   padding: 0.6rem 0.75rem;
   border-radius: var(--r-sm);
   font-size: var(--t-small);
-  color: var(--fg-2);
+  color: var(--fg);
+  font-weight: 500;
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.dropdownItem:hover { background: var(--surface-2); color: var(--fg); }
+.dropdownItem:hover { background: var(--surface-3); }
 
 /* ---------- Drawer ---------- */
 .backdrop {
