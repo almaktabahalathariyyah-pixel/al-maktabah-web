@@ -251,8 +251,11 @@ export default function AdminPage() {
               <LayoutGrid size={18} />
             </button>
           </div>
+          <Link href="/admin/fields" className="btn" title="ตั้งค่าฟิลด์แบบฟอร์ม">
+            <Settings size={18} /> <span className="hide-mobile">ตั้งค่าฟิลด์</span>
+          </Link>
           <Link href="/admin/settings" className="btn" title="ตั้งค่าหมวดหมู่และภาษา">
-            <Settings size={18} /> <span className="hide-mobile">ตั้งค่าระบบ</span>
+            <Settings size={18} /> <span className="hide-mobile">ตั้งค่าหมวดหมู่</span>
           </Link>
           <Link href="/admin/new" className="btn btn-solid">
             <Plus size={18} /> <span className="hide-mobile">เพิ่มหนังสือใหม่</span>

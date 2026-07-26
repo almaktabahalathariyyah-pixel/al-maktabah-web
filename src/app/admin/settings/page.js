@@ -122,7 +122,10 @@ export default function SettingsPage() {
         </div>
         <h1 className={styles.title}>ตั้งค่าหมวดหมู่ & ภาษา</h1>
         <p className="lede">
-          ปรับแต่งโครงสร้างหมวดหมู่หนังสือและภาษาที่จะแสดงในฟอร์มการเพิ่ม/แก้ไขหนังสือ
+          ปรับแต่งโครงสร้างหมวดหมู่หนังสือและภาษาที่จะแสดงในฟอร์มการเพิ่ม/แก้ไขหนังสือ<br/>
+          <span style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)' }}>
+            *หากต้องการตั้งค่าว่าฟิลด์ไหนควรเป็น Text หรือ Dropdown กรุณาไปที่ <Link href="/admin/fields" className="tlink" style={{ color: 'var(--accent)' }}>หน้าตั้งค่าฟิลด์ฟอร์ม</Link>
+          </span>
         </p>
       </header>
 
