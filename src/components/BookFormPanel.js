@@ -21,6 +21,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   const [restricted, setRestricted] = useState(false);
   const [coverUrl, setCoverUrl] = useState('');
   const [telegramUrl, setTelegramUrl] = useState('');
+  const [driveUrl, setDriveUrl] = useState('');
   
   const [options, setOptions] = useState({});
   const [loading, setLoading] = useState(false);
@@ -109,11 +110,12 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
             const data = docSnap.data();
             setCoverUrl(data.coverUrl || '');
             setTelegramUrl(data.telegramUrl || '');
+            setDriveUrl(data.driveUrl || '');
             setRestricted(data.restricted || false);
             
             const vals = {};
             for (const key of Object.keys(data)) {
-              if (!['coverUrl', 'telegramUrl', 'restricted', 'createdAt'].includes(key)) {
+              if (!['coverUrl', 'telegramUrl', 'driveUrl', 'restricted', 'createdAt'].includes(key)) {
                 vals[key] = data[key];
               }
             }
@@ -127,6 +129,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           setValues({});
           setCoverUrl('');
           setTelegramUrl('');
+          setDriveUrl('');
           setRestricted(false);
         }
       } catch (err) {
@@ -186,7 +189,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     setSaving(true);
     setNote('');
     try {
-      const payload = { ...values, coverUrl, telegramUrl, restricted };
+      const payload = { ...values, coverUrl, telegramUrl, driveUrl, restricted };
       
       for (const field of fields) {
         if (field.type === 'number' && payload[field.key] !== undefined) {
@@ -283,13 +286,23 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                 <fieldset className={styles.block}>
                   <legend className={styles.blockTitle}>ไฟล์และการเข้าถึง</legend>
                   <label className={styles.field}>
-                    <span className={styles.label}>ลิงก์ไฟล์ใน Telegram</span>
+                    <span className={styles.label}>ลิงก์ไฟล์ใน Telegram (ไฟล์เล็ก)</span>
                     <input
                       type="text"
                       className={styles.input}
                       placeholder="https://t.me/c/..."
                       value={telegramUrl}
                       onChange={(e) => setTelegramUrl(e.target.value)}
+                    />
+                  </label>
+                  <label className={styles.field}>
+                    <span className={styles.label}>ลิงก์สำรอง Google Drive (ไฟล์ใหญ่)</span>
+                    <input
+                      type="text"
+                      className={styles.input}
+                      placeholder="https://drive.google.com/file/d/..."
+                      value={driveUrl}
+                      onChange={(e) => setDriveUrl(e.target.value)}
                     />
                   </label>
                   <label className={styles.toggle}>

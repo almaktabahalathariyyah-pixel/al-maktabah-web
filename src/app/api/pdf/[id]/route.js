@@ -2,44 +2,118 @@ export const runtime = 'edge';
 
 export async function GET(request, { params }) {
   const { id } = await params;
+  const { searchParams } = new URL(request.url);
+  const token = searchParams.get('token');
 
   try {
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+
+    if (!token) {
+      return new Response('Unauthorized: Missing token', { status: 401 });
+    }
+
+    // 1. Verify Firebase Auth Token
+    const authRes = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: token })
+    });
+
+    const authData = await authRes.json();
+    if (!authRes.ok || !authData.users || authData.users.length === 0) {
+      return new Response('Unauthorized: Invalid token', { status: 401 });
+    }
     
-    // Use Firestore REST API instead of Client SDK to avoid Edge runtime issues
+    const uid = authData.users[0].localId;
+
+    // 2. Check if user is approved
+    const userRes = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}?key=${apiKey}`
+    );
+    
+    if (!userRes.ok) {
+      return new Response('Forbidden: User record not found', { status: 403 });
+    }
+    
+    const userData = await userRes.json();
+    const isApproved = userData.fields?.status?.stringValue === 'approved';
+    const isAdmin = userData.fields?.role?.stringValue === 'admin';
+    
+    if (!isApproved && !isAdmin) {
+      return new Response('Forbidden: Your account is not approved yet', { status: 403 });
+    }
+
+    // 3. Fetch Book Data
     const docRes = await fetch(
       `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/books/${id}?key=${apiKey}`
     );
 
     if (!docRes.ok) {
-      if (docRes.status === 404) {
-        return new Response('Book not found', { status: 404 });
-      }
+      if (docRes.status === 404) return new Response('Book not found', { status: 404 });
       return new Response('Database error', { status: 500 });
     }
 
     const docData = await docRes.json();
     const fields = docData.fields || {};
     
-    // Firestore REST API wraps values, e.g., fields.telegramFileId.stringValue
     const telegramFileId = fields.telegramFileId?.stringValue;
     const telegramUrl = fields.telegramUrl?.stringValue;
+    const driveUrl = fields.driveUrl?.stringValue;
     const title = fields.title?.stringValue || 'book';
 
-    if (!telegramFileId) {
-      if (telegramUrl) {
-        return Response.redirect(telegramUrl);
+    // 4. Handle Google Drive Proxy
+    if (driveUrl) {
+      // Extract Drive ID from URL formats like:
+      // https://drive.google.com/file/d/1J3aRk8FjO.../view
+      // https://drive.google.com/open?id=1J3aRk8FjO...
+      let driveId = null;
+      const matchD = driveUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (matchD) driveId = matchD[1];
+      else {
+        const matchId = driveUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (matchId) driveId = matchId[1];
       }
+
+      if (!driveId) {
+        return new Response('Invalid Google Drive URL format in database.', { status: 500 });
+      }
+
+      let driveDownloadUrl = `https://drive.google.com/uc?export=download&id=${driveId}`;
+      let driveRes = await fetch(driveDownloadUrl);
+      
+      // If Google Drive returns HTML (Virus scan warning for >25MB files)
+      const contentType = driveRes.headers.get('content-type') || '';
+      if (contentType.includes('text/html')) {
+        const html = await driveRes.text();
+        const confirmMatch = html.match(/confirm=([a-zA-Z0-9_-]+)/);
+        if (confirmMatch) {
+          const confirmCode = confirmMatch[1];
+          // Refetch with confirm code to bypass warning
+          driveRes = await fetch(`${driveDownloadUrl}&confirm=${confirmCode}`);
+        } else {
+          // If we can't bypass, we might have to fallback or error, but let's try to stream whatever it is
+          return new Response('Google Drive Virus Scan Warning blocked the direct download.', { status: 502 });
+        }
+      }
+
+      return new Response(driveRes.body, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${encodeURIComponent(title)}.pdf"`,
+        },
+      });
+    }
+
+    // 5. Handle Telegram Proxy (Fallback)
+    if (!telegramFileId) {
+      if (telegramUrl) return Response.redirect(telegramUrl);
       return new Response('No PDF file attached to this book', { status: 404 });
     }
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    if (!botToken) {
-      return new Response('Server configuration error', { status: 500 });
-    }
+    if (!botToken) return new Response('Server configuration error', { status: 500 });
 
-    // 1. Get file path from Telegram API
     const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${telegramFileId}`);
     const fileData = await fileRes.json();
 
@@ -59,7 +133,7 @@ export async function GET(request, { params }) {
             <div class="box">
               <h2 style="margin-top:0">ไฟล์มีขนาดใหญ่เกินไป 📦</h2>
               <p>ขออภัย ไฟล์นี้มีขนาดใหญ่กว่าขีดจำกัดของระบบ (20MB) จึงไม่สามารถแสดงพรีวิวในหน้านี้ได้ครับ</p>
-              ${telegramUrl ? `<a href="${telegramUrl}" target="_parent">ดาวน์โหลด / เปิดดูผ่าน Telegram แทน</a>` : '<p style="color:#ef4444; margin-top:1rem;">(ไม่พบลิงก์ต้นฉบับ)</p>'}
+              ${telegramUrl ? `<a href="${telegramUrl}" target="_parent">ดาวน์โหลด / เปิดดูผ่าน Telegram แทน</a>` : '<p style="color:#ef4444; margin-top:1rem;">กรุณาติดต่อผู้ดูแลระบบเพื่อขอลิงก์สำรอง Google Drive</p>'}
             </div>
           </body>
           </html>
@@ -70,16 +144,10 @@ export async function GET(request, { params }) {
     }
 
     const filePath = fileData.result.file_path;
-
-    // 2. Fetch the actual file
     const pdfRes = await fetch(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
 
-    if (!pdfRes.ok) {
-      return new Response('Error downloading file from Telegram', { status: 500 });
-    }
+    if (!pdfRes.ok) return new Response('Error downloading file from Telegram', { status: 500 });
 
-    // 3. Stream the file back
-    // Edge runtime supports streaming without the strict 10s timeout limits of Node.js Serverless functions
     return new Response(pdfRes.body, {
       headers: {
         'Content-Type': 'application/pdf',
@@ -89,7 +157,8 @@ export async function GET(request, { params }) {
 
   } catch (error) {
     console.error('PDF Proxy Error:', error);
-    return new Response(`Internal Server Error: ${error.message} \n\n Stack: ${error.stack}`, { status: 500 });
+    return new Response(`Internal Server Error: ${error.message}`, { status: 500 });
   }
 }
+
 
