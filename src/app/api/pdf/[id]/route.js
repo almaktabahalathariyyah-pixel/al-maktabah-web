@@ -67,7 +67,7 @@ export async function GET(request, { params }) {
 
   } catch (error) {
     console.error('PDF Proxy Error:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    return new Response(`Internal Server Error: ${error.message} \n\n Stack: ${error.stack}`, { status: 500 });
   }
 }
 
