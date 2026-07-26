@@ -62,12 +62,13 @@
 }
 
 .filterBottomRow {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  align-items: center;
-  padding-top: 0.5rem;
-  border-top: 1px dashed var(--border);
+  padding: 1.5rem;
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
   animation: fadeIn 0.2s var(--ease);
 }
 

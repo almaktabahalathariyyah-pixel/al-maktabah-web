@@ -114,48 +114,32 @@
 }
 .searchClear:hover { background: var(--surface-3); color: var(--fg); }
 
-/* ---------------- Search Suggestions ---------------- */
+/* ---------------- Suggestion Dropdown ---------------- */
 .suggestions {
   position: absolute;
   top: calc(100% + 0.5rem);
   left: 0;
   right: 0;
-  background: var(--surface-2);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
   max-height: 400px;
   overflow-y: auto;
-  z-index: 100;
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  z-index: 50;
 }
 .suggestionGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  padding: 0.5rem 0;
 }
-.suggestionLabel {
+.suggestionTitle {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--fg-3);
-  padding: 0.3rem 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  padding: 0.25rem 1rem;
 }
 .suggestionItem {
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.85rem;
-  color: var(--fg);
-  border-radius: var(--r-sm);
-  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   border: none;
   background: transparent;
   width: 100%;
@@ -208,12 +192,9 @@
 }
 .chips::-webkit-scrollbar { display: none; }
 
-/* ---------------- Layout: rail + shelf ---------------- */
+/* ---------------- Layout: shelf ---------------- */
 .layout {
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
-  gap: clamp(1.5rem, 3vw, 2.75rem);
-  align-items: start;
+  display: block;
   padding-bottom: 4rem;
 }
 

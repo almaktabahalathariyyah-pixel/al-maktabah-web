@@ -309,44 +309,78 @@ export default function AdminPage() {
 
         {showFilters && (
           <div className={styles.filterBottomRow}>
-            <select className={styles.filterSelect} value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-              <option value="">ทุกหมวดหมู่</option>
-              {categories.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className={styles.filterSelect} value={authorFilter} onChange={(e) => setAuthorFilter(e.target.value)}>
-              <option value="">ทุกผู้แต่ง</option>
-              {authors.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className={styles.filterSelect} value={translatorFilter} onChange={(e) => setTranslatorFilter(e.target.value)}>
-              <option value="">ทุกผู้แปล</option>
-              {translators.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className={styles.filterSelect} value={publisherFilter} onChange={(e) => setPublisherFilter(e.target.value)}>
-              <option value="">ทุกสำนักพิมพ์</option>
-              {publishers.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className={styles.filterSelect} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-              <option value="">ทุกประเภท</option>
-              {types.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className={styles.filterSelect} value={languageFilter} onChange={(e) => setLanguageFilter(e.target.value)}>
-              <option value="">ทุกภาษา</option>
-              {languages.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className={styles.filterSelect} value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
-              <option value="">ทุกปีพิมพ์</option>
-              {years.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="">ทุกสถานะ</option>
-              <option value="public">สาธารณะ</option>
-              <option value="restricted">สงวนสิทธิ์</option>
-            </select>
-            <button className="btn" onClick={() => {
-              setCategoryFilter(''); setAuthorFilter(''); setTranslatorFilter(''); 
-              setPublisherFilter(''); setTypeFilter(''); setLanguageFilter(''); 
-              setYearFilter(''); setStatusFilter(''); setSearchQuery('');
-            }}>ล้างตัวกรอง</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>หมวดหมู่</label>
+              <select className={styles.filterSelect} value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ประเภท</label>
+              <select className={styles.filterSelect} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {types.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สถานะ</label>
+              <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="">ทั้งหมด</option>
+                <option value="public">สาธารณะ</option>
+                <option value="restricted">สงวนสิทธิ์</option>
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ภาษา</label>
+              <select className={styles.filterSelect} value={languageFilter} onChange={(e) => setLanguageFilter(e.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {languages.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ปีพิมพ์</label>
+              <select className={styles.filterSelect} value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {years.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แต่ง</label>
+              <select className={styles.filterSelect} value={authorFilter} onChange={(e) => setAuthorFilter(e.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {authors.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แปล</label>
+              <select className={styles.filterSelect} value={translatorFilter} onChange={(e) => setTranslatorFilter(e.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {translators.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สำนักพิมพ์</label>
+              <select className={styles.filterSelect} value={publisherFilter} onChange={(e) => setPublisherFilter(e.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {publishers.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            
+            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+              <button className="btn" onClick={() => {
+                setCategoryFilter(''); setAuthorFilter(''); setTranslatorFilter(''); 
+                setPublisherFilter(''); setTypeFilter(''); setLanguageFilter(''); 
+                setYearFilter(''); setStatusFilter(''); setSearchQuery('');
+              }}>ล้างตัวกรองทั้งหมด</button>
+            </div>
           </div>
         )}
       </div>

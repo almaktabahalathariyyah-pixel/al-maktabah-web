@@ -20,6 +20,7 @@ export default function NamesPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('authors'); // 'authors', 'translators', 'publishers'
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -102,30 +103,61 @@ export default function NamesPage() {
         </button>
       </header>
 
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+        <button 
+          className={`btn ${activeTab === 'authors' ? 'btn-solid' : ''}`}
+          onClick={() => setActiveTab('authors')}
+          style={{ flex: 1, justifyContent: 'center' }}
+        >
+          ผู้แต่ง (Authors)
+        </button>
+        <button 
+          className={`btn ${activeTab === 'translators' ? 'btn-solid' : ''}`}
+          onClick={() => setActiveTab('translators')}
+          style={{ flex: 1, justifyContent: 'center' }}
+        >
+          ผู้แปล (Translators)
+        </button>
+        <button 
+          className={`btn ${activeTab === 'publishers' ? 'btn-solid' : ''}`}
+          onClick={() => setActiveTab('publishers')}
+          style={{ flex: 1, justifyContent: 'center' }}
+        >
+          สำนักพิมพ์ (Publishers)
+        </button>
+      </div>
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        <SearchableListEditor 
-          title="ผู้แต่ง (Authors)"
-          description="จัดการรายชื่อผู้แต่ง พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
-          placeholder="ค้นหาชื่อผู้แต่ง..."
-          items={authors}
-          onChange={setAuthors}
-        />
+        {activeTab === 'authors' && (
+          <SearchableListEditor 
+            title="ผู้แต่ง (Authors)"
+            description="จัดการรายชื่อผู้แต่ง พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
+            placeholder="ค้นหาชื่อผู้แต่ง..."
+            items={authors}
+            onChange={setAuthors}
+          />
+        )}
         
-        <SearchableListEditor 
-          title="ผู้แปล (Translators)"
-          description="จัดการรายชื่อผู้แปล พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
-          placeholder="ค้นหาชื่อผู้แปล..."
-          items={translators}
-          onChange={setTranslators}
-        />
+        {activeTab === 'translators' && (
+          <SearchableListEditor 
+            title="ผู้แปล (Translators)"
+            description="จัดการรายชื่อผู้แปล พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
+            placeholder="ค้นหาชื่อผู้แปล..."
+            items={translators}
+            onChange={setTranslators}
+          />
+        )}
         
-        <SearchableListEditor 
-          title="สำนักพิมพ์ (Publishers)"
-          description="จัดการรายชื่อสำนักพิมพ์ พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
-          placeholder="ค้นหาชื่อสำนักพิมพ์..."
-          items={publishers}
-          onChange={setPublishers}
-        />
+        {activeTab === 'publishers' && (
+          <SearchableListEditor 
+            title="สำนักพิมพ์ (Publishers)"
+            description="จัดการรายชื่อสำนักพิมพ์ พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
+            placeholder="ค้นหาชื่อสำนักพิมพ์..."
+            items={publishers}
+            onChange={setPublishers}
+          />
+        )}
       </div>
       
       {/* Fixed Save Button for Mobile */}

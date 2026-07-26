@@ -122,7 +122,7 @@ export default function AdminShell({ children }) {
           </button>
         </div>
 
-        <div style={{ marginTop: 'auto' }}>
+        <div>
           <Link href="/" className={styles.exit} title={!isSidebarOpen ? 'กลับหน้าเว็บ' : undefined}>
             <ArrowLeft size={18} className={styles.navIcon} /> <span className={styles.navText}>กลับหน้าเว็บ</span>
           </Link>
