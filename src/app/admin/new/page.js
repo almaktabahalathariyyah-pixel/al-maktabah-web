@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadBookFields } from '@/lib/bookFields';
 import BookCover from '@/components/BookCover';
 import { useToast } from '@/context/ToastContext';
+import CreatableSelect from 'react-select/creatable';
+import { selectStyles } from '@/lib/selectStyles';
 import styles from './page.module.css';
 
 export default function NewBookPage() {
@@ -22,8 +24,32 @@ export default function NewBookPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [note, setNote] = useState('');
 
+  const [options, setOptions] = useState({});
+
   useEffect(() => {
-    loadBookFields().then((f) => setFields(f.filter((x) => x.form)));
+    const fetchData = async () => {
+      const f = await loadBookFields();
+      setFields(f.filter((x) => x.form));
+
+      try {
+        const snap = await getDocs(collection(db, 'books'));
+        const opts = { author: new Set(), category: new Set(), publisher: new Set(), translator: new Set(), language: new Set(), format: new Set(), type: new Set() };
+        snap.forEach(doc => {
+          const d = doc.data();
+          Object.keys(opts).forEach(k => {
+            if (d[k]) opts[k].add(d[k]);
+          });
+        });
+        const formattedOpts = {};
+        Object.keys(opts).forEach(k => {
+          formattedOpts[k] = Array.from(opts[k]).sort().map(v => ({ value: v, label: v }));
+        });
+        setOptions(formattedOpts);
+      } catch (err) {
+        console.error("Error fetching options:", err);
+      }
+    };
+    fetchData();
   }, []);
 
   const set = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
@@ -127,6 +153,17 @@ export default function NewBookPage() {
                     <option value="false">ไม่ใช่</option>
                     <option value="true">ใช่</option>
                   </select>
+                ) : field.type === 'select' ? (
+                  <CreatableSelect
+                    isClearable
+                    styles={selectStyles}
+                    options={options[field.key] || []}
+                    value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
+                    onChange={(selected) => set(field.key, selected ? selected.value : '')}
+                    placeholder="พิมพ์เพื่อค้นหาหรือเพิ่มใหม่..."
+                    formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
+                    classNamePrefix="react-select"
+                  />
                 ) : (
                   <input
                     type={field.type === 'number' ? 'number' : 'text'}

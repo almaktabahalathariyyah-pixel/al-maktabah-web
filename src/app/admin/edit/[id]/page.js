@@ -3,13 +3,15 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadBookFields } from '@/lib/bookFields';
 import BookCover from '@/components/BookCover';
 import { useToast } from '@/context/ToastContext';
 import styles from './page.module.css';
 import { Trash2 } from 'lucide-react';
+import CreatableSelect from 'react-select/creatable';
+import { selectStyles } from '@/lib/selectStyles';
 
 export default function EditBookPage({ params }) {
   const { id } = use(params);
@@ -22,6 +24,7 @@ export default function EditBookPage({ params }) {
   const [coverUrl, setCoverUrl] = useState('');
   const [telegramUrl, setTelegramUrl] = useState('');
   
+  const [options, setOptions] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -33,6 +36,24 @@ export default function EditBookPage({ params }) {
       try {
         const f = await loadBookFields();
         setFields(f.filter((x) => x.form));
+
+        try {
+          const snap = await getDocs(collection(db, 'books'));
+          const opts = { author: new Set(), category: new Set(), publisher: new Set(), translator: new Set(), language: new Set(), format: new Set(), type: new Set() };
+          snap.forEach(doc => {
+            const d = doc.data();
+            Object.keys(opts).forEach(k => {
+              if (d[k]) opts[k].add(d[k]);
+            });
+          });
+          const formattedOpts = {};
+          Object.keys(opts).forEach(k => {
+            formattedOpts[k] = Array.from(opts[k]).sort().map(v => ({ value: v, label: v }));
+          });
+          setOptions(formattedOpts);
+        } catch (err) {
+          console.error("Error fetching options:", err);
+        }
 
         const docSnap = await getDoc(doc(db, 'books', id));
         if (docSnap.exists()) {
@@ -180,6 +201,17 @@ export default function EditBookPage({ params }) {
                     <option value="false">ไม่ใช่</option>
                     <option value="true">ใช่</option>
                   </select>
+                ) : field.type === 'select' ? (
+                  <CreatableSelect
+                    isClearable
+                    styles={selectStyles}
+                    options={options[field.key] || []}
+                    value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
+                    onChange={(selected) => set(field.key, selected ? selected.value : '')}
+                    placeholder="พิมพ์เพื่อค้นหาหรือเพิ่มใหม่..."
+                    formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
+                    classNamePrefix="react-select"
+                  />
                 ) : (
                   <input
                     type={field.type === 'number' ? 'number' : 'text'}

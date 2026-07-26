@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
-import { Search, Plus, Download } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2 } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AdminPage() {
@@ -17,7 +17,17 @@ export default function AdminPage() {
   
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(true);
+  
+  // Filters
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(''); // 'all', 'public', 'restricted'
+
+  // Selection & Bulk Edit
+  const [selectedBooks, setSelectedBooks] = useState(new Set());
+  const [bulkEditModalOpen, setBulkEditModalOpen] = useState(false);
+  const [bulkValues, setBulkValues] = useState({ category: '', author: '', restricted: '' });
+  const [submittingBulk, setSubmittingBulk] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -49,15 +59,69 @@ export default function AdminPage() {
     }
   }, [isAdmin, toast]);
 
-  const handleDeleteBook = async (id) => {
-    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบหนังสือเล่มนี้?')) return;
+  const handleSelectBook = (id) => {
+    const newSelected = new Set(selectedBooks);
+    if (newSelected.has(id)) newSelected.delete(id);
+    else newSelected.add(id);
+    setSelectedBooks(newSelected);
+  };
+
+  const handleSelectAll = (e, currentList) => {
+    if (e.target.checked) {
+      setSelectedBooks(new Set(currentList.map(b => b.id)));
+    } else {
+      setSelectedBooks(new Set());
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบหนังสือ ${selectedBooks.size} เล่มนี้?`)) return;
     try {
-      await deleteDoc(doc(db, 'books', id));
-      setBooks(books.filter(b => b.id !== id));
+      const batch = writeBatch(db);
+      selectedBooks.forEach(id => {
+        batch.delete(doc(db, 'books', id));
+      });
+      await batch.commit();
+      setBooks(books.filter(b => !selectedBooks.has(b.id)));
+      setSelectedBooks(new Set());
       toast.success('ลบหนังสือสำเร็จ');
-    } catch (error) {
-      console.error("Error deleting book:", error);
-      toast.error('เกิดข้อผิดพลาดในการลบหนังสือ');
+    } catch (err) {
+      console.error(err);
+      toast.error('ลบไม่สำเร็จ');
+    }
+  };
+
+  const handleBulkUpdate = async (e) => {
+    e.preventDefault();
+    setSubmittingBulk(true);
+    try {
+      const batch = writeBatch(db);
+      const updates = {};
+      if (bulkValues.category) updates.category = bulkValues.category;
+      if (bulkValues.author) updates.author = bulkValues.author;
+      if (bulkValues.restricted !== '') updates.restricted = bulkValues.restricted === 'true';
+      
+      if (Object.keys(updates).length === 0) {
+        setBulkEditModalOpen(false);
+        setSubmittingBulk(false);
+        return;
+      }
+
+      selectedBooks.forEach(id => {
+        batch.update(doc(db, 'books', id), updates);
+      });
+      await batch.commit();
+      
+      setBooks(books.map(b => selectedBooks.has(b.id) ? { ...b, ...updates } : b));
+      setSelectedBooks(new Set());
+      setBulkEditModalOpen(false);
+      setBulkValues({ category: '', author: '', restricted: '' });
+      toast.success('แก้ไขข้อมูลสำเร็จ');
+    } catch (err) {
+      console.error(err);
+      toast.error('แก้ไขไม่สำเร็จ');
+    } finally {
+      setSubmittingBulk(false);
     }
   };
 
@@ -69,15 +133,20 @@ export default function AdminPage() {
     return null;
   }
 
-  const filteredBooks = books.filter(book => 
-    book.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const categories = Array.from(new Set(books.map(b => b.category).filter(Boolean))).sort();
+
+  const filteredBooks = books.filter(book => {
+    const matchesSearch = book.title?.toLowerCase().includes(searchQuery.toLowerCase()) || book.author?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCat = categoryFilter ? book.category === categoryFilter : true;
+    const matchesStatus = statusFilter === 'restricted' ? book.restricted : statusFilter === 'public' ? !book.restricted : true;
+    return matchesSearch && matchesCat && matchesStatus;
+  });
 
   const totalBooks = books.length;
   const restrictedCount = books.filter(b => b.restricted).length;
   const publicCount = totalBooks - restrictedCount;
+  
+  const allSelected = filteredBooks.length > 0 && selectedBooks.size === filteredBooks.length;
 
   return (
     <div className="container">
@@ -104,30 +173,72 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className={styles.actions}>
+      <div className={styles.filterBar}>
         <div className={styles.searchWrap}>
           <Search className={styles.searchIcon} size={18} />
           <input 
             type="text" 
-            placeholder="ค้นหาชื่อหนังสือ ผู้แต่ง หมวดหมู่..."
+            placeholder="ค้นหาชื่อ หรือผู้แต่ง..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={styles.searchInput}
           />
         </div>
-        <Link href="/admin/new" className="btn btn-solid">
+        
+        <select 
+          className={styles.filterSelect}
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+        >
+          <option value="">ทุกหมวดหมู่</option>
+          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+
+        <select 
+          className={styles.filterSelect}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">ทุกสถานะ</option>
+          <option value="public">สาธารณะ</option>
+          <option value="restricted">สงวนสิทธิ์</option>
+        </select>
+
+        <Link href="/admin/new" className="btn btn-solid" style={{ marginLeft: 'auto' }}>
           <Plus size={18} style={{ marginRight: '0.25rem' }} /> เพิ่มหนังสือใหม่
         </Link>
+      </div>
+
+      <div className={styles.tableHeader}>
+        <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '1.1rem' }}>
+          <input 
+            type="checkbox" 
+            className={styles.checkbox} 
+            checked={allSelected} 
+            onChange={(e) => handleSelectAll(e, filteredBooks)} 
+          />
+        </div>
+        <div style={{ paddingLeft: '1rem', color: 'var(--fg-3)', fontSize: '0.85rem' }}>
+          {selectedBooks.size > 0 ? `เลือกแล้ว ${selectedBooks.size} เล่ม` : `${filteredBooks.length} เล่ม`}
+        </div>
       </div>
 
       <ul className={`${styles.rows} stagger`}>
         {filteredBooks.length === 0 && (
           <li style={{color: 'var(--fg-3)', padding: '2rem', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)'}}>
-            {searchQuery ? 'ไม่พบหนังสือที่ค้นหา' : 'ยังไม่มีหนังสือในระบบ'}
+            {searchQuery || categoryFilter || statusFilter ? 'ไม่พบหนังสือที่ค้นหา' : 'ยังไม่มีหนังสือในระบบ'}
           </li>
         )}
         {filteredBooks.map((book) => (
-          <li key={book.id} className={styles.bookRow}>
+          <li key={book.id} className={`${styles.bookRow} ${selectedBooks.has(book.id) ? styles.rowSelected : ''}`}>
+            <div className={styles.checkboxWrap}>
+              <input 
+                type="checkbox" 
+                className={styles.checkbox}
+                checked={selectedBooks.has(book.id)}
+                onChange={() => handleSelectBook(book.id)}
+              />
+            </div>
             <div className={styles.who}>
               <span className={styles.name}>{book.title}</span>
               <span className={styles.smallMeta}>{book.author || 'ไม่ระบุผู้แต่ง'}</span>
@@ -143,13 +254,79 @@ export default function AdminPage() {
               <Link href={`/admin/edit/${book.id}`} className={styles.edit}>
                 <span className="tlink">แก้ไข</span>
               </Link>
-              <button className={styles.edit} onClick={() => handleDeleteBook(book.id)} title="ลบ">
-                <span className="tlink" style={{color: 'var(--hot)'}}>ลบ</span>
-              </button>
             </div>
           </li>
         ))}
       </ul>
+
+      {selectedBooks.size > 0 && (
+        <div className={styles.bulkActionBar}>
+          <div style={{ fontSize: 'var(--t-small)' }}>เลือกแล้ว <strong>{selectedBooks.size}</strong> รายการ</div>
+          <div style={{ display: 'flex', gap: '0.8rem' }}>
+            <button className="btn" onClick={() => setBulkEditModalOpen(true)}>
+              <Edit2 size={16} /> แก้ไขพร้อมกัน
+            </button>
+            <button className="btn" style={{ color: 'var(--hot)', borderColor: 'var(--hot)' }} onClick={handleBulkDelete}>
+              <Trash2 size={16} /> ลบที่เลือก
+            </button>
+          </div>
+        </div>
+      )}
+
+      {bulkEditModalOpen && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modal}>
+            <h2 style={{ marginBottom: '1rem', fontSize: 'var(--t-h2)' }}>แก้ไข {selectedBooks.size} เล่มพร้อมกัน</h2>
+            <p style={{ color: 'var(--fg-2)', fontSize: 'var(--t-small)', marginBottom: '1.5rem' }}>
+              เว้นว่างไว้หากไม่ต้องการเปลี่ยนแปลงค่าเดิม
+            </p>
+            <form onSubmit={handleBulkUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label>
+                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>ผู้แต่งใหม่ (เปลี่ยนทั้งหมด)</div>
+                <input 
+                  type="text" 
+                  value={bulkValues.author} 
+                  onChange={e => setBulkValues({...bulkValues, author: e.target.value})}
+                  placeholder="ปล่อยว่างเพื่อคงเดิม"
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
+                />
+              </label>
+              
+              <label>
+                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>หมวดหมู่ใหม่</div>
+                <select 
+                  value={bulkValues.category} 
+                  onChange={e => setBulkValues({...bulkValues, category: e.target.value})}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
+                >
+                  <option value="">ปล่อยว่างเพื่อคงเดิม</option>
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
+
+              <label>
+                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>สถานะการเข้าถึง</div>
+                <select 
+                  value={bulkValues.restricted} 
+                  onChange={e => setBulkValues({...bulkValues, restricted: e.target.value})}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
+                >
+                  <option value="">ปล่อยว่างเพื่อคงเดิม</option>
+                  <option value="false">สาธารณะ</option>
+                  <option value="true">สงวนสิทธิ์</option>
+                </select>
+              </label>
+              
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                <button type="button" className="btn btn-block" onClick={() => setBulkEditModalOpen(false)}>ยกเลิก</button>
+                <button type="submit" className="btn btn-solid btn-block" disabled={submittingBulk}>
+                  {submittingBulk ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
