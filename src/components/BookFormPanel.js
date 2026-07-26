@@ -587,9 +587,9 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                   )}
 
                   <label className={styles.field} style={{ marginTop: '1.5rem' }}>
-                    <span className={styles.label}>ลิงก์สำรอง Google Drive (ไฟล์ใหญ่ &gt; 50MB)</span>
+                    <span className={styles.label}>ลิงก์สำรอง Google Drive (ใส่เองเมื่อจำเป็น)</span>
                     <input type="text" className={styles.input} placeholder="https://drive.google.com/file/d/..." value={driveUrl} onChange={(e) => setDriveUrl(e.target.value)} />
-                    <span style={{ fontSize: '0.75rem', color: 'var(--fg-3)', marginTop: '4px' }}>ถ้าไฟล์ใหญ่เกิน 50MB ให้อัปโหลดลง Drive ด้วยตัวเองแล้วนำลิงก์มาวางที่นี่</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--fg-3)', marginTop: '4px' }}>ใช้ในกรณีฉุกเฉินหรือต้องการวางลิงก์ด้วยตัวเอง (ระบบอัปโหลดไฟล์ขนาดใหญ่กว่า 50MB ขึ้น Drive อัตโนมัติอยู่แล้ว)</span>
                   </label>
                   
                   <div style={{ display: 'none' }}>
