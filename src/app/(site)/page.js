@@ -19,7 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [railOpen, setRailOpen] = useState(false);
   // Signing in is not enough — restricted titles need the owner's approval.
-  const { approved } = useAuth();
+  const { approved, isAdmin } = useAuth();
 
   useEffect(() => {
     const load = async () => {
@@ -170,11 +170,11 @@ export default function Home() {
               </p>
               <p className={styles.emptyBody}>
                 {visibleBooks.length === 0
-                  ? 'เริ่มต้นด้วยการเพิ่มเล่มแรก หรือนำเข้าทั้งหมดจาก Telegram ในครั้งเดียว'
+                  ? (isAdmin ? 'เริ่มต้นด้วยการเพิ่มเล่มแรก หรือนำเข้าทั้งหมดจาก Telegram ในครั้งเดียว' : 'โปรดติดตามหนังสือเล่มใหม่เร็วๆ นี้')
                   : 'ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองบางตัวออก'}
               </p>
               {visibleBooks.length === 0 ? (
-                <Link href="/admin" className="btn">เพิ่มหนังสือ</Link>
+                isAdmin ? <Link href="/admin/new" className="btn">เพิ่มหนังสือ</Link> : null
               ) : (
                 <button className="btn" onClick={resetAll}>ล้างทั้งหมด</button>
               )}
