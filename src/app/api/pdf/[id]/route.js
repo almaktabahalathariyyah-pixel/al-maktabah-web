@@ -1,23 +1,35 @@
-
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+export const runtime = 'edge';
 
 export async function GET(request, { params }) {
   const { id } = await params;
 
   try {
-    const docRef = doc(db, 'books', id);
-    const docSnap = await getDoc(docRef);
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    
+    // Use Firestore REST API instead of Client SDK to avoid Edge runtime issues
+    const docRes = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/books/${id}?key=${apiKey}`
+    );
 
-    if (!docSnap.exists()) {
-      return new Response('Book not found', { status: 404 });
+    if (!docRes.ok) {
+      if (docRes.status === 404) {
+        return new Response('Book not found', { status: 404 });
+      }
+      return new Response('Database error', { status: 500 });
     }
 
-    const book = docSnap.data();
-    if (!book.telegramFileId) {
-      // Fallback for old books that use direct URLs
-      if (book.telegramUrl) {
-        return Response.redirect(book.telegramUrl);
+    const docData = await docRes.json();
+    const fields = docData.fields || {};
+    
+    // Firestore REST API wraps values, e.g., fields.telegramFileId.stringValue
+    const telegramFileId = fields.telegramFileId?.stringValue;
+    const telegramUrl = fields.telegramUrl?.stringValue;
+    const title = fields.title?.stringValue || 'book';
+
+    if (!telegramFileId) {
+      if (telegramUrl) {
+        return Response.redirect(telegramUrl);
       }
       return new Response('No PDF file attached to this book', { status: 404 });
     }
@@ -28,7 +40,7 @@ export async function GET(request, { params }) {
     }
 
     // 1. Get file path from Telegram API
-    const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${book.telegramFileId}`);
+    const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${telegramFileId}`);
     const fileData = await fileRes.json();
 
     if (!fileData.ok) {
@@ -45,11 +57,11 @@ export async function GET(request, { params }) {
     }
 
     // 3. Stream the file back
-    // 'inline' tells the browser to display it in its built-in PDF viewer
+    // Edge runtime supports streaming without the strict 10s timeout limits of Node.js Serverless functions
     return new Response(pdfRes.body, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${encodeURIComponent(book.title || 'book')}.pdf"`,
+        'Content-Disposition': `inline; filename="${encodeURIComponent(title)}.pdf"`,
       },
     });
 
@@ -58,3 +70,4 @@ export async function GET(request, { params }) {
     return new Response('Internal Server Error', { status: 500 });
   }
 }
+
