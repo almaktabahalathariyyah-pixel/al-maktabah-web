@@ -1,5 +1,6 @@
 .shell { 
-  min-height: 100vh; 
+  min-height: 100vh; /* fallback */
+  min-height: 100dvh;
   background: var(--bg); 
   display: flex;
 }
@@ -44,7 +45,9 @@
   padding: 1.5rem 1rem;
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100vh; /* fallback */
+  height: 100dvh;
+  overflow-y: auto;
   flex: none;
   transition: transform 0.3s var(--ease), width 0.3s var(--ease);
   z-index: 50;

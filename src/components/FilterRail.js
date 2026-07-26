@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { facetValues } from '@/lib/bookFields';
+import Select from 'react-select';
+import { selectStyles } from '@/lib/selectStyles';
 import styles from './FilterRail.module.css';
 
 /**
@@ -44,7 +46,6 @@ export default function FilterRail({ fields, books, active, onChange, onReset })
 
 function FilterGroup({ field, books, value, onChange }) {
   const [open, setOpen] = useState(true);
-  const [showAll, setShowAll] = useState(false);
 
   const options = facetValues(books, field.key);
   if (options.length === 0) return null;
@@ -54,7 +55,9 @@ function FilterGroup({ field, books, value, onChange }) {
     options.sort((a, b) => Number(b.value) - Number(a.value));
   }
 
-  const visible = showAll ? options : options.slice(0, 6);
+  const useSelect = options.length > 6;
+  const selectOptions = options.map(o => ({ value: o.value, label: `${o.value} (${o.count})` }));
+  const selectedOption = value ? selectOptions.find(o => o.value === value) : null;
 
   return (
     <section className={styles.group}>
@@ -72,32 +75,36 @@ function FilterGroup({ field, books, value, onChange }) {
 
       {open && (
         <div className={styles.options}>
-          {value && (
-            <button className={styles.selected} onClick={() => onChange('')}>
-              {value} <X size={12} />
-            </button>
-          )}
-
-          {visible
-            .filter((o) => o.value !== value)
-            .map((o) => (
-              <button
-                key={o.value}
-                className={styles.option}
-                onClick={() => onChange(o.value)}
-              >
-                <span className={styles.optionLabel}>{o.value}</span>
-                <span className={styles.optionCount}>{o.count}</span>
-              </button>
-            ))}
-
-          {options.length > 6 && (
-            <button
-              className={styles.more}
-              onClick={() => setShowAll((v) => !v)}
-            >
-              {showAll ? 'ย่อ' : `ดูทั้งหมด ${options.length}`}
-            </button>
+          {useSelect ? (
+            <Select
+              isClearable
+              styles={selectStyles}
+              options={selectOptions}
+              value={selectedOption}
+              onChange={(selected) => onChange(selected ? selected.value : '')}
+              placeholder="ค้นหา..."
+              classNamePrefix="react-select"
+            />
+          ) : (
+            <>
+              {value && (
+                <button className={styles.selected} onClick={() => onChange('')}>
+                  {value} <X size={12} />
+                </button>
+              )}
+              {options
+                .filter((o) => o.value !== value)
+                .map((o) => (
+                  <button
+                    key={o.value}
+                    className={styles.option}
+                    onClick={() => onChange(o.value)}
+                  >
+                    <span className={styles.optionLabel}>{o.value}</span>
+                    <span className={styles.optionCount}>{o.count}</span>
+                  </button>
+                ))}
+            </>
           )}
         </div>
       )}

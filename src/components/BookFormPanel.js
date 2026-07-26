@@ -133,7 +133,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         ]);
         
         if (!isMounted) return;
-        const { categories: predefinedCategories, languages: predefinedLanguages } = settings;
+        const { categories: predefinedCategories, languages: predefinedLanguages, types: predefinedTypes = [], authors: predefinedAuthors = [], translators: predefinedTranslators = [], publishers: predefinedPublishers = [] } = settings;
 
         const opts = { author: new Set(), category: new Set(), publisher: new Set(), translator: new Set(), language: new Set(), type: new Set(), year: new Set() };
         snap.forEach(dSnap => {
@@ -156,6 +156,17 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         
         const dynamicLangs = formattedOpts.language.filter(l => !predefinedLanguages.some(p => p.value === l.value));
         formattedOpts.language = [...predefinedLanguages, ...dynamicLangs];
+        
+        const mergeSimplePredefined = (key, predefinedArr) => {
+          const preOpts = predefinedArr.map(p => ({ value: p, label: p }));
+          const dynamicOpts = formattedOpts[key].filter(d => !preOpts.some(p => p.value === d.value));
+          formattedOpts[key] = [...preOpts, ...dynamicOpts];
+        };
+
+        mergeSimplePredefined('type', predefinedTypes);
+        mergeSimplePredefined('author', predefinedAuthors);
+        mergeSimplePredefined('translator', predefinedTranslators);
+        mergeSimplePredefined('publisher', predefinedPublishers);
         
         const currentYear = new Date().getFullYear();
         const yearOptions = Array.from({length: 100}, (_, i) => { const y = String(currentYear - i); return { value: y, label: y }; });

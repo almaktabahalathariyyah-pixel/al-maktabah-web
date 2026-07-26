@@ -12,6 +12,11 @@ export default function SettingsPanel({ isOpen, onClose }) {
   
   const [categories, setCategories] = useState([]);
   const [languages, setLanguages] = useState([]);
+  const [types, setTypes] = useState('');
+  const [authors, setAuthors] = useState('');
+  const [translators, setTranslators] = useState('');
+  const [publishers, setPublishers] = useState('');
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -36,6 +41,10 @@ export default function SettingsPanel({ isOpen, onClose }) {
         if (!isMounted) return;
         setCategories(settings.categories || []);
         setLanguages(settings.languages || []);
+        setTypes(settings.types ? settings.types.join('\n') : '');
+        setAuthors(settings.authors ? settings.authors.join('\n') : '');
+        setTranslators(settings.translators ? settings.translators.join('\n') : '');
+        setPublishers(settings.publishers ? settings.publishers.join('\n') : '');
       } catch (err) {
         if (isMounted) toast.error('โหลดข้อมูลการตั้งค่าไม่สำเร็จ');
       } finally {
@@ -50,7 +59,15 @@ export default function SettingsPanel({ isOpen, onClose }) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const success = await saveDropdownSettings({ categories, languages });
+      const payload = {
+        categories,
+        languages,
+        types: types.split('\n').map(s => s.trim()).filter(Boolean),
+        authors: authors.split('\n').map(s => s.trim()).filter(Boolean),
+        translators: translators.split('\n').map(s => s.trim()).filter(Boolean),
+        publishers: publishers.split('\n').map(s => s.trim()).filter(Boolean),
+      };
+      const success = await saveDropdownSettings(payload);
       if (success) {
         toast.success('บันทึกการตั้งค่าสำเร็จ');
         onClose();
@@ -181,6 +198,50 @@ export default function SettingsPanel({ isOpen, onClose }) {
                     </div>
                   ))}
                   {categories.length === 0 && <div style={{color:'var(--fg-3)', padding:'1rem', textAlign:'center'}}>ยังไม่มีกลุ่มหมวดหมู่</div>}
+                </div>
+              </section>
+
+              {/* Textarea Settings */}
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle} style={{ margin: '0 0 1rem 0', fontSize: '1.2rem' }}>ตัวเลือกอื่นๆ (คั่นด้วยบรรทัดใหม่)</h2>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: 'var(--t-small)', color: 'var(--fg-2)' }}>ประเภท (Types)</label>
+                    <textarea 
+                      value={types} 
+                      onChange={e => setTypes(e.target.value)}
+                      placeholder="เช่น หนังสือทั่วไป, ตำรา, บทความ..."
+                      style={{ width: '100%', minHeight: '120px', padding: '0.75rem', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: 'var(--t-small)', color: 'var(--fg-2)' }}>ผู้แต่ง (Authors)</label>
+                    <textarea 
+                      value={authors} 
+                      onChange={e => setAuthors(e.target.value)}
+                      placeholder="ก๊อปปี้รายชื่อผู้แต่งมาวาง 1 บรรทัดต่อ 1 ชื่อ"
+                      style={{ width: '100%', minHeight: '180px', padding: '0.75rem', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: 'var(--t-small)', color: 'var(--fg-2)' }}>ผู้แปล (Translators)</label>
+                    <textarea 
+                      value={translators} 
+                      onChange={e => setTranslators(e.target.value)}
+                      placeholder="ก๊อปปี้รายชื่อผู้แปลมาวาง 1 บรรทัดต่อ 1 ชื่อ"
+                      style={{ width: '100%', minHeight: '120px', padding: '0.75rem', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: 'var(--t-small)', color: 'var(--fg-2)' }}>สำนักพิมพ์ (Publishers)</label>
+                    <textarea 
+                      value={publishers} 
+                      onChange={e => setPublishers(e.target.value)}
+                      placeholder="ก๊อปปี้ชื่อสำนักพิมพ์มาวาง 1 บรรทัดต่อ 1 ชื่อ"
+                      style={{ width: '100%', minHeight: '120px', padding: '0.75rem', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', resize: 'vertical' }}
+                    />
+                  </div>
                 </div>
               </section>
 
