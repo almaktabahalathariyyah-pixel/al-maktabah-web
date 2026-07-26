@@ -78,11 +78,23 @@ export default function AdminPage() {
           fetchedBooks.push({ id: doc.id, ...doc.data() });
         });
         setBooks(fetchedBooks);
-        setPredefinedCategories(settings.categories || []);
+        // Categories are saved as groups { label, options: [{value, label}] }
+        const flatCategories = (settings.categories || []).reduce((acc, group) => {
+          if (group.options) {
+            acc.push(...group.options.map(o => o.value));
+          }
+          return acc;
+        }, []);
+        setPredefinedCategories(flatCategories);
+        
         setPredefinedAuthors(settings.authors || []);
         setPredefinedTranslators(settings.translators || []);
         setPredefinedPublishers(settings.publishers || []);
-        setPredefinedLanguages(settings.languages || []);
+        
+        // Languages are saved as { value, label }
+        const flatLanguages = (settings.languages || []).map(l => l.value || l);
+        setPredefinedLanguages(flatLanguages);
+        
         // Note: types might be in categories or hardcoded, fallback to dynamic if missing
         if (settings.types) setPredefinedTypes(settings.types);
       } catch (error) {
