@@ -25,6 +25,7 @@ export default function EditBookPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [note, setNote] = useState('');
 
   useEffect(() => {
@@ -62,6 +63,39 @@ export default function EditBookPage({ params }) {
   }, [id, router, toast]);
 
   const set = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
+      if (!apiKey) throw new Error('ไม่พบ API Key ของ ImgBB');
+
+      const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setCoverUrl(data.data.url);
+        toast.success('อัปโหลดรูปภาพสำเร็จ');
+      } else {
+        throw new Error(data.error?.message || 'Upload failed');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('อัปโหลดรูปภาพไม่สำเร็จ: ' + err.message);
+    } finally {
+      setUploadingImage(false);
+      e.target.value = ''; // reset file input
+    }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -195,6 +229,20 @@ export default function EditBookPage({ params }) {
               author={values.author || 'ผู้แต่ง'}
             />
           </div>
+
+          <label className={styles.field}>
+            <span className={styles.label}>อัปโหลดรูปปก (ImgBB)</span>
+            <input
+              type="file"
+              accept="image/*"
+              className={styles.input}
+              onChange={handleImageUpload}
+              disabled={uploadingImage}
+              style={{ padding: '0.4rem' }}
+            />
+          </label>
+          {uploadingImage && <p style={{ fontSize: '12px', color: 'var(--brand)', marginBottom: '0.5rem' }}>กำลังอัปโหลด...</p>}
+          <div style={{ textAlign: 'center', margin: '0.5rem 0', color: 'var(--fg-3)', fontSize: '12px' }}>หรือวางลิงก์รูปภาพ</div>
 
           <label className={styles.field}>
             <span className={styles.label}>ลิงก์รูปปก</span>
