@@ -4,6 +4,7 @@ export async function GET(request, { params }) {
   const { id } = await params;
   const { searchParams } = new URL(request.url);
   const token = searchParams.get('token');
+  const action = searchParams.get('action'); // 'download' or undefined
 
   try {
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -79,7 +80,11 @@ export async function GET(request, { params }) {
         return new Response('Invalid Google Drive URL format in database.', { status: 500 });
       }
 
-      // Redirect directly to Google Drive's native preview player
+      if (action === 'download') {
+        return Response.redirect(`https://drive.google.com/uc?export=download&id=${driveId}&confirm=t`);
+      }
+      
+      // Redirect directly to Google Drive's native preview player for reading
       // This avoids Vercel bandwidth limits, timeouts, and Google Drive Virus Scan HTML warnings entirely.
       return Response.redirect(`https://drive.google.com/file/d/${driveId}/preview`);
     }
@@ -127,10 +132,12 @@ export async function GET(request, { params }) {
 
     if (!pdfRes.ok) return new Response('Error downloading file from Telegram', { status: 500 });
 
+    const disposition = action === 'download' ? 'attachment' : 'inline';
+    
     return new Response(pdfRes.body, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${encodeURIComponent(title)}.pdf"`,
+        'Content-Disposition': `${disposition}; filename="${encodeURIComponent(title)}.pdf"`,
       },
     });
 

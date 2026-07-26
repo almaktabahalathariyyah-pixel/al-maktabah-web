@@ -113,7 +113,8 @@ export default function BookDetailPage({ params }) {
       await addDoc(downloadRef, {
         bookId: id,
         userId: user.uid,
-        timestamp: new Date()
+        timestamp: new Date(),
+        type: 'read'
       });
 
       // 2. เพิ่มยอดดาวน์โหลดใน Document หนังสือ
@@ -123,6 +124,42 @@ export default function BookDetailPage({ params }) {
       });
     } catch (err) {
       console.error("Error logging download:", err);
+    }
+  };
+
+  const handleDirectDownload = async () => {
+    if (!user) {
+      toast.error('คุณต้องเข้าสู่ระบบเพื่อดาวน์โหลด');
+      router.push('/login');
+      return;
+    }
+    if (book.restricted && !approved) {
+      toast.error('คุณไม่มีสิทธิ์ดาวน์โหลดหนังสือเล่มนี้');
+      return;
+    }
+
+    try {
+      // 1. บันทึกสถิติ
+      const downloadRef = collection(db, 'downloads');
+      await addDoc(downloadRef, {
+        bookId: id,
+        userId: user.uid,
+        timestamp: new Date(),
+        type: 'download'
+      });
+      // 2. เพิ่มยอดดาวน์โหลด
+      const bookRef = doc(db, 'books', id);
+      await updateDoc(bookRef, { downloadCount: increment(1) });
+    } catch (err) {
+      console.error("Error logging download:", err);
+    }
+
+    try {
+      const token = await user.getIdToken();
+      window.open(`/api/pdf/${id}?token=${token}&action=download`, '_blank');
+    } catch (err) {
+      console.error(err);
+      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่');
     }
   };
 
@@ -162,7 +199,15 @@ export default function BookDetailPage({ params }) {
               className="btn btn-solid btn-block" 
               style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem'}}
             >
-              <Download size={15} /> เปิดอ่านหนังสือ
+              <Check size={15} /> เปิดอ่านหนังสือ
+            </button>
+
+            <button 
+              onClick={handleDirectDownload} 
+              className="btn btn-outline btn-block" 
+              style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '0.5rem', marginBottom: '0.5rem'}}
+            >
+              <Download size={15} /> ดาวน์โหลดไฟล์ PDF
             </button>
             
             <button
