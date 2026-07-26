@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
