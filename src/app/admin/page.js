@@ -7,10 +7,11 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
-import { Search, Plus, Download, Edit2, Trash2, Settings, LayoutGrid, List } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2, Settings, LayoutGrid, List, UploadCloud } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
 import BookFormPanel from '@/components/BookFormPanel';
+import BulkUploadPanel from '@/components/BulkUploadPanel';
 import SettingsPanel from '@/components/SettingsPanel';
 import FieldsPanel from '@/components/FieldsPanel';
 import styles from './page.module.css';
@@ -27,6 +28,7 @@ export default function AdminPage() {
 
   // Form Panel State
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [editingBookId, setEditingBookId] = useState(null);
   
   // Settings Panel State
@@ -290,6 +292,9 @@ export default function AdminPage() {
           <button onClick={() => setIsSettingsOpen(true)} className="btn" title="ตั้งค่าหมวดหมู่และภาษา">
             <Settings size={18} /> <span className="hide-mobile">ตั้งค่าหมวดหมู่</span>
           </button>
+          <button onClick={() => setIsBulkUploadOpen(true)} className="btn btn-solid" style={{ background: 'var(--hot)' }}>
+            <UploadCloud size={18} /> <span className="hide-mobile">อัปโหลดหลายเล่ม</span>
+          </button>
           <button onClick={handleOpenNewBook} className="btn btn-solid">
             <Plus size={18} /> <span className="hide-mobile">เพิ่มหนังสือใหม่</span>
           </button>
@@ -455,6 +460,13 @@ export default function AdminPage() {
         isOpen={isFormOpen} 
         onClose={() => setIsFormOpen(false)} 
         bookId={editingBookId} 
+        onSaved={handleBookSaved}
+      />
+
+      {/* Bulk Upload Panel */}
+      <BulkUploadPanel
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
         onSaved={handleBookSaved}
       />
 
