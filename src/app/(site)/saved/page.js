@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { Bookmark } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import styles from './page.module.css';
 
