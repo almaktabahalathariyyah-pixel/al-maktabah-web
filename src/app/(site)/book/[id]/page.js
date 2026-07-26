@@ -93,8 +93,7 @@ export default function BookDetailPage({ params }) {
     // เปิดหน้าต่างใหม่ไปที่ไฟล์ทันที
     let downloadUrl = book.telegramUrl;
     if (book.telegramFileId) {
-      const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'AlMaktabahBot';
-      downloadUrl = `https://t.me/${botUsername}?start=book_${id}`;
+      downloadUrl = `/api/pdf/${id}`;
     }
     
     window.open(downloadUrl || '#', '_blank');
@@ -154,7 +153,7 @@ export default function BookDetailPage({ params }) {
               className="btn btn-solid btn-block" 
               style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem'}}
             >
-              <Download size={15} /> ดาวน์โหลด {book.format || 'PDF'}
+              <Download size={15} /> เปิดอ่านหนังสือ
             </button>
             
             <button
@@ -168,7 +167,7 @@ export default function BookDetailPage({ params }) {
           </div>
 
           <p className={styles.delivery}>
-            ไฟล์ถูกจัดเก็บอย่างปลอดภัยบนระบบ Telegram การดาวน์โหลดจะพาคุณไปยังไฟล์ต้นฉบับโดยตรง
+            เปิดอ่านไฟล์ PDF จากระบบได้โดยตรง
           </p>
         </aside>
 
