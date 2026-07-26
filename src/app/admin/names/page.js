@@ -20,6 +20,7 @@ export default function NamesPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState('authors'); // 'authors', 'translators', 'publishers'
 
   useEffect(() => {
@@ -73,6 +74,34 @@ export default function NamesPage() {
     }
   };
 
+  const handleSyncFromBooks = async () => {
+    if (!window.confirm('ระบบจะดึงรายชื่อผู้แต่ง ผู้แปล และสำนักพิมพ์ จากหนังสือทั้งหมดมาเพิ่มในหน้านี้ (รายชื่อเดิมจะไม่หายไป) ต้องการดำเนินการต่อหรือไม่?')) {
+      return;
+    }
+    setSyncing(true);
+    try {
+      const { collection, getDocs } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase');
+      const booksSnap = await getDocs(collection(db, 'books'));
+      const books = booksSnap.docs.map(d => d.data());
+      
+      const newAuthors = Array.from(new Set([...authors, ...books.map(b => b.author).filter(Boolean)])).sort();
+      const newTranslators = Array.from(new Set([...translators, ...books.map(b => b.translator).filter(Boolean)])).sort();
+      const newPublishers = Array.from(new Set([...publishers, ...books.map(b => b.publisher).filter(Boolean)])).sort();
+      
+      setAuthors(newAuthors);
+      setTranslators(newTranslators);
+      setPublishers(newPublishers);
+      
+      toast.success('ดึงข้อมูลสำเร็จ! กรุณากด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน');
+    } catch (err) {
+      console.error(err);
+      toast.error('เกิดข้อผิดพลาดในการดึงข้อมูล');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   if (authLoading || loading) {
     return <div className="container" style={{paddingTop: '4rem'}}>กำลังโหลดข้อมูล...</div>;
   }
@@ -92,15 +121,25 @@ export default function NamesPage() {
           </p>
         </div>
         
-        <button 
-          className="btn btn-solid" 
-          onClick={handleSave} 
-          disabled={saving}
-          style={{ background: 'var(--accent)', borderColor: 'var(--accent)', fontSize: '1rem', padding: '0.75rem 1.5rem' }}
-        >
-          <Save size={18} /> 
-          <span>{saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}</span>
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            className="btn" 
+            onClick={handleSyncFromBooks} 
+            disabled={syncing || saving}
+            style={{ fontSize: '0.9rem', padding: '0.75rem 1rem' }}
+          >
+            {syncing ? 'กำลังดึงข้อมูล...' : 'ดึงรายชื่อจากหนังสือ'}
+          </button>
+          <button 
+            className="btn btn-solid" 
+            onClick={handleSave} 
+            disabled={saving || syncing}
+            style={{ background: 'var(--accent)', borderColor: 'var(--accent)', fontSize: '1rem', padding: '0.75rem 1.5rem' }}
+          >
+            <Save size={18} style={{ marginRight: '0.5rem' }}/>
+            {saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
+          </button>
+        </div>
       </header>
 
       {/* Tabs */}

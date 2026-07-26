@@ -17,6 +17,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -70,6 +71,48 @@ export default function SettingsPanel({ isOpen, onClose }) {
       toast.error('เกิดข้อผิดพลาดในการบันทึก');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSyncFromBooks = async () => {
+    if (!window.confirm('ระบบจะดึง หมวดหมู่, ประเภท และภาษา จากหนังสือทั้งหมดมาเพิ่มในหน้านี้ (ข้อมูลเดิมจะไม่หายไป) ต้องการดำเนินการต่อหรือไม่?')) {
+      return;
+    }
+    setSyncing(true);
+    try {
+      const { collection, getDocs } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase');
+      const booksSnap = await getDocs(collection(db, 'books'));
+      const books = booksSnap.docs.map(d => d.data());
+      
+      const uniqueLanguages = Array.from(new Set(books.map(b => b.language).filter(Boolean)));
+      const uniqueTypes = Array.from(new Set(books.map(b => b.type).filter(Boolean)));
+      const uniqueCats = Array.from(new Set(books.map(b => b.category).filter(Boolean)));
+      
+      setLanguages(Array.from(new Set([...languages, ...uniqueLanguages])).sort());
+      setTypes(Array.from(new Set([...types, ...uniqueTypes])).sort());
+      
+      // For categories, we add them to a "นำเข้าอัตโนมัติ" group if they don't exist
+      const existingCatSet = new Set();
+      categories.forEach(group => group.options.forEach(opt => existingCatSet.add(opt.value)));
+      
+      const newCats = uniqueCats.filter(c => !existingCatSet.has(c));
+      if (newCats.length > 0) {
+        setCategories([
+          ...categories, 
+          { 
+            label: 'นำเข้าจากหนังสือ', 
+            options: newCats.map(c => ({ value: c, label: c }))
+          }
+        ]);
+      }
+      
+      toast.success('ดึงข้อมูลสำเร็จ! กรุณากด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน');
+    } catch (err) {
+      console.error(err);
+      toast.error('เกิดข้อผิดพลาดในการดึงข้อมูล');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -139,15 +182,29 @@ export default function SettingsPanel({ isOpen, onClose }) {
       <div className={panelStyles.backdrop} onClick={onClose} />
       <div className={panelStyles.panel}>
         <div className={panelStyles.header}>
-          <div>
-            <h2 className={panelStyles.title}>ตั้งค่าหมวดหมู่ & ภาษา</h2>
-            <p style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', margin: '0.2rem 0 0 0' }}>
-              ปรับแต่งโครงสร้างหมวดหมู่หนังสือและภาษาที่จะแสดงในฟอร์ม
-            </p>
-          </div>
-          <button className={panelStyles.closeBtn} onClick={onClose} aria-label="Close">
-            <X size={20} />
-          </button>
+            <div className={styles.headerRow}>
+              <h2 className={styles.title}>ตั้งค่าหมวดหมู่</h2>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button 
+                  className="btn" 
+                  onClick={handleSyncFromBooks} 
+                  disabled={syncing || saving}
+                >
+                  {syncing ? 'กำลังดึง...' : 'ดึงจากหนังสือ'}
+                </button>
+                <button 
+                  className="btn btn-solid" 
+                  onClick={handleSave} 
+                  disabled={saving || syncing}
+                  style={{ background: 'var(--accent)', borderColor: 'var(--accent)' }}
+                >
+                  <Save size={16} /> <span>{saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}</span>
+                </button>
+                <button className={panelStyles.closeButton} onClick={onClose}>
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
         </div>
 
         <div className={panelStyles.content}>
