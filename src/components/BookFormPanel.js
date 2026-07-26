@@ -203,10 +203,6 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
       toast.error('รองรับเฉพาะไฟล์ PDF เท่านั้น');
       return;
     }
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error('ไฟล์ใหญ่เกิน 50MB กรุณาอัปโหลดลง Drive ด้วยตัวเองแล้วนำลิงก์มาวาง');
-      return;
-    }
     setPdfFile(file);
     setUploadStatus('idle');
     setTgProgress(0);
@@ -255,47 +251,64 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         });
       };
 
-      // 2. Upload to Telegram
-      const tgPromise = (async () => {
-        const tgFormData = new FormData();
-        tgFormData.append('chat_id', conf.telegramChatId);
-        tgFormData.append('document', pdfFile);
-        
-        const tgResult = await uploadWithProgress(
-          `https://api.telegram.org/bot${conf.telegramBotToken}/sendDocument`,
-          'POST',
-          {},
-          tgFormData,
-          setTgProgress
-        );
-        
-        if (tgResult.ok && tgResult.result.document) {
-          setTelegramFileId(tgResult.result.document.file_id);
-          // Optional: You can construct a t.me/c/ link if you know your channel ID logic, 
-          // but file_id is what matters for the proxy.
-        } else {
-          throw new Error('Telegram upload rejected');
-        }
-      })();
+      // 2. Upload to Telegram (Only if <= 50MB)
+      const isLargeFile = pdfFile.size > 50 * 1024 * 1024;
+      let tgPromise = Promise.resolve();
+      
+      if (!isLargeFile) {
+        tgPromise = (async () => {
+          const tgFormData = new FormData();
+          tgFormData.append('chat_id', conf.telegramChatId);
+          tgFormData.append('document', pdfFile);
+          
+          const tgResult = await uploadWithProgress(
+            `https://api.telegram.org/bot${conf.telegramBotToken}/sendDocument`,
+            'POST',
+            {},
+            tgFormData,
+            setTgProgress
+          );
+          
+          if (tgResult.ok && tgResult.result.document) {
+            setTelegramFileId(tgResult.result.document.file_id);
+          } else {
+            throw new Error('Telegram upload rejected');
+          }
+        })();
+      } else {
+        setTgProgress(100); // Skip Telegram visually
+      }
 
-      // 3. Upload to Google Drive
+      // 3. Upload to Google Drive (Resumable Upload for large files)
       const drivePromise = (async () => {
-        // We use the simple upload endpoint for <5MB, but multipart is better for up to 5GB.
-        // For simplicity in XHR, we can just send the binary file with Content-Type.
         const metadata = {
           name: pdfFile.name,
           mimeType: 'application/pdf',
         };
         
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', pdfFile);
+        // Step 1: Initiate Resumable Upload
+        const initRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${googleToken}`,
+            'Content-Type': 'application/json',
+            'X-Upload-Content-Type': 'application/pdf',
+            'X-Upload-Content-Length': pdfFile.size
+          },
+          body: JSON.stringify(metadata)
+        });
+        
+        if (!initRes.ok) throw new Error('Failed to initiate Google Drive upload');
+        const uploadUrl = initRes.headers.get('Location');
+        
+        if (!uploadUrl) throw new Error('No upload URL returned from Google Drive');
 
+        // Step 2: Upload actual file data to the resumable URL
         const driveResult = await uploadWithProgress(
-          'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',
-          'POST',
-          { 'Authorization': `Bearer ${googleToken}` },
-          form,
+          uploadUrl,
+          'PUT',
+          { 'Content-Type': 'application/pdf' },
+          pdfFile,
           setDriveProgress
         );
         
@@ -476,8 +489,8 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                   >
                     <input type="file" id="pdfInput" accept="application/pdf" style={{ display: 'none' }} onChange={onFileChange} />
                     <UploadCloud size={32} style={{ color: 'var(--brand)', marginBottom: '0.5rem' }} />
-                    <p style={{ margin: 0, fontWeight: 'bold' }}>ลากไฟล์ PDF มาวางที่นี่ (ขนาดไม่เกิน 50MB)</p>
-                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--fg-3)' }}>ระบบจะอัปโหลดไปที่ Telegram และ Google Drive ให้อัตโนมัติ</p>
+                    <p style={{ margin: 0, fontWeight: 'bold' }}>ลากไฟล์ PDF มาวางที่นี่</p>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--fg-3)' }}>ระบบจะอัปโหลดไปที่ Telegram และ Google Drive อัตโนมัติ<br/>(หากไฟล์ใหญ่กว่า 50MB จะอัปโหลดขึ้น Drive เพียงอย่างเดียว)</p>
                   </div>
 
                   {pdfFile && (
@@ -495,15 +508,17 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
 
                       {uploadStatus !== 'idle' && (
                         <div>
-                          <div style={{ marginBottom: '0.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.2rem' }}>
-                              <span>Telegram</span>
-                              <span>{tgProgress}%</span>
+                          {pdfFile.size <= 50 * 1024 * 1024 && (
+                            <div style={{ marginBottom: '0.5rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.2rem' }}>
+                                <span>Telegram</span>
+                                <span>{tgProgress}%</span>
+                              </div>
+                              <div style={{ width: '100%', height: '6px', background: 'var(--bg-1)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: `${tgProgress}%`, height: '100%', background: 'var(--brand)', transition: 'width 0.2s' }} />
+                              </div>
                             </div>
-                            <div style={{ width: '100%', height: '6px', background: 'var(--bg-1)', borderRadius: '3px', overflow: 'hidden' }}>
-                              <div style={{ width: `${tgProgress}%`, height: '100%', background: 'var(--brand)', transition: 'width 0.2s' }} />
-                            </div>
-                          </div>
+                          )}
                           
                           <div style={{ marginBottom: '0.5rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.2rem' }}>
