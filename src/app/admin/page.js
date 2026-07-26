@@ -59,6 +59,17 @@ export default function AdminPage() {
   const [bulkValues, setBulkValues] = useState({ category: '', author: '', language: '', restricted: '' });
   const [submittingBulk, setSubmittingBulk] = useState(false);
 
+  // Load Google Auth script for deletion if needed
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.google) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       router.push('/');
@@ -127,6 +138,46 @@ export default function AdminPage() {
     }
   };
 
+  const hasValidGoogleToken = () => {
+    const savedData = localStorage.getItem('googleDriveToken');
+    if (!savedData) return false;
+    try {
+      const { expiresAt } = JSON.parse(savedData);
+      return Date.now() < expiresAt;
+    } catch {
+      return false;
+    }
+  };
+
+  const triggerGoogleAuth = (callback) => {
+    if (!window.google) {
+      toast.error('Google API ยังไม่พร้อมใช้งาน กรุณารอสักครู่');
+      return;
+    }
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      toast.error('ยังไม่ได้ตั้งค่า Google Client ID');
+      return;
+    }
+    const tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: (response) => {
+        if (response.error) {
+          toast.error('การยืนยันตัวตนล้มเหลว');
+          return;
+        }
+        localStorage.setItem('googleDriveToken', JSON.stringify({
+          token: response.access_token,
+          expiresAt: Date.now() + 55 * 60 * 1000
+        }));
+        toast.success('เชื่อมต่อสำเร็จ กำลังดำเนินการต่อ...');
+        if (callback) callback();
+      },
+    });
+    tokenClient.requestAccessToken();
+  };
+
   const deleteFromDrive = async (driveUrl) => {
     if (!driveUrl) return;
     try {
@@ -157,49 +208,74 @@ export default function AdminPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบหนังสือ ${selectedBooks.size} เล่มนี้? (หากมีการเชื่อมต่อ Google Drive ระบบจะพยายามลบไฟล์ในไดรฟ์ด้วย)`)) return;
-    try {
-      toast.success('กำลังทยอยลบข้อมูล กรุณารอสักครู่...');
-      const batch = writeBatch(db);
-      for (const id of selectedBooks) {
-        const bookToDelete = books.find(b => b.id === id);
-        if (bookToDelete && bookToDelete.driveUrl) {
-          await deleteFromDrive(bookToDelete.driveUrl);
+    if (selectedBooks.size === 0) return;
+
+    const performDelete = async () => {
+      if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบหนังสือ ${selectedBooks.size} เล่มนี้? (หากมีการเชื่อมต่อ Google Drive ระบบจะพยายามลบไฟล์ในไดรฟ์ด้วย)`)) return;
+      try {
+        toast.success('กำลังทยอยลบข้อมูล กรุณารอสักครู่...');
+        const batch = writeBatch(db);
+        for (const id of selectedBooks) {
+          const bookToDelete = books.find(b => b.id === id);
+          if (bookToDelete && bookToDelete.driveUrl) {
+            await deleteFromDrive(bookToDelete.driveUrl);
+          }
+          batch.delete(doc(db, 'books', id));
         }
-        batch.delete(doc(db, 'books', id));
+        await batch.commit();
+        setBooks(books.filter(b => !selectedBooks.has(b.id)));
+        setSelectedBooks(new Set());
+        toast.success('ลบหนังสือสำเร็จ');
+      } catch (err) {
+        console.error(err);
+        toast.error('ลบไม่สำเร็จ');
       }
-      await batch.commit();
-      setBooks(books.filter(b => !selectedBooks.has(b.id)));
-      setSelectedBooks(new Set());
-      toast.success('ลบหนังสือสำเร็จ');
-    } catch (err) {
-      console.error(err);
-      toast.error('ลบไม่สำเร็จ');
+    };
+
+    if (!hasValidGoogleToken()) {
+      if (confirm('คุณยังไม่ได้เชื่อมต่อ Google Drive (หรือสิทธิ์หมดอายุ)\\nหากดำเนินการต่อ จะลบได้แค่ในเว็บไซต์เท่านั้น\\n\\n- กด OK เพื่อ "เชื่อมต่อ Google Drive ก่อนลบ"\\n- กด Cancel เพื่อ "ยอมให้ลบแค่ในเว็บไซต์"')) {
+        triggerGoogleAuth(performDelete);
+      } else {
+        performDelete();
+      }
+    } else {
+      performDelete();
     }
   };
 
   const handleSingleDelete = async (id) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบหนังสือเล่มนี้?')) return;
-    try {
-      const bookToDelete = books.find(b => b.id === id);
-      if (bookToDelete && bookToDelete.driveUrl) {
-        await deleteFromDrive(bookToDelete.driveUrl);
-      }
+    const performDelete = async () => {
+      if (!confirm('คุณแน่ใจหรือไม่ที่จะลบหนังสือเล่มนี้? (หากเชื่อมต่อ Google Drive ระบบจะพยายามลบไฟล์ในไดรฟ์ด้วย)')) return;
+      try {
+        const bookToDelete = books.find(b => b.id === id);
+        if (bookToDelete && bookToDelete.driveUrl) {
+          await deleteFromDrive(bookToDelete.driveUrl);
+        }
 
-      await deleteDoc(doc(db, 'books', id));
-      setBooks(books.filter(b => b.id !== id));
-      
-      // If it was selected, remove it from selection
-      const newSelected = new Set(selectedBooks);
-      if (newSelected.has(id)) {
-        newSelected.delete(id);
-        setSelectedBooks(newSelected);
+        await deleteDoc(doc(db, 'books', id));
+        setBooks(books.filter(b => b.id !== id));
+        
+        const newSelected = new Set(selectedBooks);
+        if (newSelected.has(id)) {
+          newSelected.delete(id);
+          setSelectedBooks(newSelected);
+        }
+        
+        toast.success('ลบหนังสือสำเร็จ');
+      } catch (err) {
+        console.error(err);
+        toast.error('ลบไม่สำเร็จ');
       }
-      
-      toast.success('ลบหนังสือสำเร็จ');
-    } catch (err) {
-      console.error(err);
-      toast.error('ลบไม่สำเร็จ');
+    };
+
+    if (!hasValidGoogleToken()) {
+      if (confirm('คุณยังไม่ได้เชื่อมต่อ Google Drive (หรือสิทธิ์หมดอายุ)\\nหากดำเนินการต่อ จะลบได้แค่ในเว็บไซต์เท่านั้น\\n\\n- กด OK เพื่อ "เชื่อมต่อ Google Drive ก่อนลบ"\\n- กด Cancel เพื่อ "ยอมให้ลบแค่ในเว็บไซต์"')) {
+        triggerGoogleAuth(performDelete);
+      } else {
+        performDelete();
+      }
+    } else {
+      performDelete();
     }
   };
 
