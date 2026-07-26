@@ -6,16 +6,17 @@ import { useToast } from '@/context/ToastContext';
 import { X, Plus, Trash2, GripVertical, Save } from 'lucide-react';
 import panelStyles from './BookFormPanel.module.css';
 import styles from '@/app/admin/settings/page.module.css'; // Reuse existing setting styles
+import SearchableListEditor from './SearchableListEditor';
 
 export default function SettingsPanel({ isOpen, onClose }) {
   const { toast } = useToast();
   
   const [categories, setCategories] = useState([]);
   const [languages, setLanguages] = useState([]);
-  const [types, setTypes] = useState('');
-  const [authors, setAuthors] = useState('');
-  const [translators, setTranslators] = useState('');
-  const [publishers, setPublishers] = useState('');
+  const [types, setTypes] = useState([]);
+  const [authors, setAuthors] = useState([]);
+  const [translators, setTranslators] = useState([]);
+  const [publishers, setPublishers] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -41,10 +42,10 @@ export default function SettingsPanel({ isOpen, onClose }) {
         if (!isMounted) return;
         setCategories(settings.categories || []);
         setLanguages(settings.languages || []);
-        setTypes(settings.types ? settings.types.join('\n') : '');
-        setAuthors(settings.authors ? settings.authors.join('\n') : '');
-        setTranslators(settings.translators ? settings.translators.join('\n') : '');
-        setPublishers(settings.publishers ? settings.publishers.join('\n') : '');
+        setTypes(settings.types || ['หนังสือ', 'ไฟล์ออนไลน์', 'รายงาน', 'แผ่นพับ', 'วารสาร', 'งานวิจัย', 'วิทยานิพนธ์']);
+        setAuthors(settings.authors || []);
+        setTranslators(settings.translators || []);
+        setPublishers(settings.publishers || []);
       } catch (err) {
         if (isMounted) toast.error('โหลดข้อมูลการตั้งค่าไม่สำเร็จ');
       } finally {
@@ -62,10 +63,10 @@ export default function SettingsPanel({ isOpen, onClose }) {
       const payload = {
         categories,
         languages,
-        types: types.split('\n').map(s => s.trim()).filter(Boolean),
-        authors: authors.split('\n').map(s => s.trim()).filter(Boolean),
-        translators: translators.split('\n').map(s => s.trim()).filter(Boolean),
-        publishers: publishers.split('\n').map(s => s.trim()).filter(Boolean),
+        types: types.filter(Boolean),
+        authors: authors.filter(Boolean),
+        translators: translators.filter(Boolean),
+        publishers: publishers.filter(Boolean),
       };
       const success = await saveDropdownSettings(payload);
       if (success) {
@@ -125,6 +126,19 @@ export default function SettingsPanel({ isOpen, onClose }) {
     const newLangs = [...languages];
     newLangs.splice(index, 1);
     setLanguages(newLangs);
+  };
+
+  // --- Type Handlers ---
+  const addType = () => setTypes([...types, '']);
+  const updateType = (index, val) => {
+    const newTypes = [...types];
+    newTypes[index] = val;
+    setTypes(newTypes);
+  };
+  const removeType = (index) => {
+    const newTypes = [...types];
+    newTypes.splice(index, 1);
+    setTypes(newTypes);
   };
 
   if (!isOpen) return null;
@@ -201,49 +215,58 @@ export default function SettingsPanel({ isOpen, onClose }) {
                 </div>
               </section>
 
-              {/* Textarea Settings */}
+              {/* Types Section */}
               <section className={styles.section}>
-                <h2 className={styles.sectionTitle} style={{ margin: '0 0 1rem 0', fontSize: '1.2rem' }}>ตัวเลือกอื่นๆ (คั่นด้วยบรรทัดใหม่)</h2>
+                <div className={styles.sectionHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h2 className={styles.sectionTitle} style={{ margin: 0, fontSize: '1.2rem' }}>ประเภทหนังสือ (Types)</h2>
+                  <button className="btn" onClick={addType}><Plus size={16}/> เพิ่มประเภท</button>
+                </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: 'var(--t-small)', color: 'var(--fg-2)' }}>ประเภท (Types)</label>
-                    <textarea 
-                      value={types} 
-                      onChange={e => setTypes(e.target.value)}
-                      placeholder="เช่น หนังสือทั่วไป, ตำรา, บทความ..."
-                      style={{ width: '100%', minHeight: '120px', padding: '0.75rem', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', resize: 'vertical' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: 'var(--t-small)', color: 'var(--fg-2)' }}>ผู้แต่ง (Authors)</label>
-                    <textarea 
-                      value={authors} 
-                      onChange={e => setAuthors(e.target.value)}
-                      placeholder="ก๊อปปี้รายชื่อผู้แต่งมาวาง 1 บรรทัดต่อ 1 ชื่อ"
-                      style={{ width: '100%', minHeight: '180px', padding: '0.75rem', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', resize: 'vertical' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: 'var(--t-small)', color: 'var(--fg-2)' }}>ผู้แปล (Translators)</label>
-                    <textarea 
-                      value={translators} 
-                      onChange={e => setTranslators(e.target.value)}
-                      placeholder="ก๊อปปี้รายชื่อผู้แปลมาวาง 1 บรรทัดต่อ 1 ชื่อ"
-                      style={{ width: '100%', minHeight: '120px', padding: '0.75rem', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', resize: 'vertical' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: 'var(--t-small)', color: 'var(--fg-2)' }}>สำนักพิมพ์ (Publishers)</label>
-                    <textarea 
-                      value={publishers} 
-                      onChange={e => setPublishers(e.target.value)}
-                      placeholder="ก๊อปปี้ชื่อสำนักพิมพ์มาวาง 1 บรรทัดต่อ 1 ชื่อ"
-                      style={{ width: '100%', minHeight: '120px', padding: '0.75rem', borderRadius: 'var(--r-md)', border: '1px solid var(--border)', background: 'var(--surface)', resize: 'vertical' }}
-                    />
-                  </div>
+                <div className={styles.langList} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {types.map((typeVal, tIdx) => (
+                    <div key={tIdx} className={styles.optionRow} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <GripVertical size={14} style={{ color: 'var(--fg-3)' }} />
+                      <input 
+                        type="text"
+                        value={typeVal}
+                        onChange={(e) => updateType(tIdx, e.target.value)}
+                        className={styles.optionInput}
+                        placeholder="เช่น หนังสือทั่วไป, ตำรา, บทความ"
+                        style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
+                      />
+                      <button className={styles.iconBtn} onClick={() => removeType(tIdx)} title="ลบประเภท" style={{ padding: '0.5rem', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--fg-3)' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {types.length === 0 && <div style={{color:'var(--fg-3)', padding:'1rem', textAlign:'center'}}>ยังไม่มีประเภท</div>}
                 </div>
               </section>
+
+              {/* Large List Editors */}
+              <SearchableListEditor 
+                title="ผู้แต่ง (Authors)"
+                description="จัดการรายชื่อผู้แต่ง พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
+                placeholder="ค้นหาชื่อผู้แต่ง..."
+                items={authors}
+                onChange={setAuthors}
+              />
+              
+              <SearchableListEditor 
+                title="ผู้แปล (Translators)"
+                description="จัดการรายชื่อผู้แปล พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
+                placeholder="ค้นหาชื่อผู้แปล..."
+                items={translators}
+                onChange={setTranslators}
+              />
+              
+              <SearchableListEditor 
+                title="สำนักพิมพ์ (Publishers)"
+                description="จัดการรายชื่อสำนักพิมพ์ พิมพ์ค้นหาเพื่อแก้ไขหรือลบ"
+                placeholder="ค้นหาชื่อสำนักพิมพ์..."
+                items={publishers}
+                onChange={setPublishers}
+              />
 
               {/* Languages Section */}
               <section className={styles.section}>

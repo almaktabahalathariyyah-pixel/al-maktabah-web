@@ -114,6 +114,60 @@
 }
 .searchClear:hover { background: var(--surface-3); color: var(--fg); }
 
+/* ---------------- Search Suggestions ---------------- */
+.suggestions {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xl);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 100;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.suggestionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.suggestionLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--fg-3);
+  padding: 0.3rem 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.suggestionItem {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--fg);
+  border-radius: var(--r-sm);
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: transparent;
+  width: 100%;
+}
+.suggestionItem:hover {
+  background: var(--surface-3);
+  color: var(--accent);
+}
+.suggestionIcon {
+  color: var(--fg-3);
+}
+
 /* Filter toggle only appears once the rail collapses */
 .railToggle {
   display: none;

@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Search, SlidersHorizontal, X, User } from 'lucide-react';
+import { Search, SlidersHorizontal, X, User, Book, Languages, Building, Bookmark } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import FilterRail from '@/components/FilterRail';
 import { useAuth } from '@/context/AuthContext';
@@ -19,13 +19,12 @@ export default function Home() {
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [railOpen, setRailOpen] = useState(false);
-  // Signing in is not enough — restricted titles need the owner's approval.
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const { approved, isAdmin } = useAuth();
 
   useEffect(() => {
     const load = async () => {
       try {
-        // Field config is a single document read; books are one collection read.
         const [fieldConfig, snapshot] = await Promise.all([
           loadBookFields(),
           getDocs(query(collection(db, 'books'), orderBy('createdAt', 'desc'))),
@@ -60,6 +59,38 @@ export default function Home() {
         .includes(q);
     });
   }, [visibleBooks, filters, queryText]);
+  
+  // --- Autocomplete Suggestions ---
+  const suggestions = useMemo(() => {
+    if (!queryText.trim()) return { author: [], translator: [], publisher: [], type: [], title: [] };
+    const q = queryText.toLowerCase();
+    
+    const authors = new Set();
+    const translators = new Set();
+    const publishers = new Set();
+    const types = new Set();
+    const titles = new Set();
+    
+    // We search through the entire visibleBooks, not just the filtered results, 
+    // so users can find facets outside current filters (selecting them will just add the filter)
+    visibleBooks.forEach(b => {
+      if (b.author && b.author.toLowerCase().includes(q)) authors.add(b.author);
+      if (b.translator && b.translator.toLowerCase().includes(q)) translators.add(b.translator);
+      if (b.publisher && b.publisher.toLowerCase().includes(q)) publishers.add(b.publisher);
+      if (b.type && b.type.toLowerCase().includes(q)) types.add(b.type);
+      if (b.title && b.title.toLowerCase().includes(q)) titles.add(b.title);
+    });
+    
+    return {
+      author: Array.from(authors).slice(0, 3),
+      translator: Array.from(translators).slice(0, 3),
+      publisher: Array.from(publishers).slice(0, 2),
+      type: Array.from(types).slice(0, 2),
+      title: Array.from(titles).slice(0, 3)
+    };
+  }, [queryText, visibleBooks]);
+
+  const hasSuggestions = Object.values(suggestions).some(arr => arr.length > 0);
 
   const activeCount = Object.values(filters).filter(Boolean).length;
   const narrowed = activeCount > 0 || queryText.trim() !== '';
@@ -72,13 +103,23 @@ export default function Home() {
     return Array.from(cats).sort();
   }, [visibleBooks]);
 
-  const setFilter = (key, value) =>
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
   const resetAll = () => { setFilters({}); setQueryText(''); };
+  
+  const handleSuggestionClick = (key, value) => {
+    if (key === 'title') {
+      // For titles, just set the query text
+      setQueryText(value);
+    } else {
+      // For facets, apply the filter and clear query
+      setFilter(key, value);
+      setQueryText('');
+    }
+    setShowSuggestions(false);
+  };
 
   return (
     <div className="container">
-      {/* ---------------- Hero Section ---------------- */}
       <section className={styles.hero}>
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>คลังหนังสืออิสลาม</h1>
@@ -87,7 +128,6 @@ export default function Home() {
         <div className={styles.heroGlow} aria-hidden />
       </section>
 
-      {/* ---------------- Compact header: the shelf is the page ---------------- */}
       <header className={styles.bar}>
         <div className={styles.barText}>
           <h1 className={styles.title}>คลังหนังสือ</h1>
@@ -101,14 +141,19 @@ export default function Home() {
         </div>
 
         <div className={styles.barTools}>
-          <div className={styles.searchWrap}>
+          <div className={styles.searchWrap} style={{ position: 'relative' }}>
             <Search size={15} className={styles.searchIcon} />
             <input
               className={styles.search}
               type="text"
               placeholder="ค้นหาชื่อเรื่อง ผู้แต่ง สำนักพิมพ์…"
               value={queryText}
-              onChange={(e) => setQueryText(e.target.value)}
+              onChange={(e) => {
+                setQueryText(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 250)}
             />
             {queryText && (
               <button
@@ -118,6 +163,66 @@ export default function Home() {
               >
                 <X size={14} />
               </button>
+            )}
+            
+            {showSuggestions && queryText.trim() && hasSuggestions && (
+              <div className={styles.suggestions}>
+                {suggestions.title.length > 0 && (
+                  <div className={styles.suggestionGroup}>
+                    <div className={styles.suggestionLabel}>ชื่อเรื่อง</div>
+                    {suggestions.title.map(t => (
+                      <button key={t} className={styles.suggestionItem} onClick={() => handleSuggestionClick('title', t)}>
+                        <Book size={14} className={styles.suggestionIcon} />
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {suggestions.author.length > 0 && (
+                  <div className={styles.suggestionGroup}>
+                    <div className={styles.suggestionLabel}>ผู้แต่ง</div>
+                    {suggestions.author.map(a => (
+                      <button key={a} className={styles.suggestionItem} onClick={() => handleSuggestionClick('author', a)}>
+                        <User size={14} className={styles.suggestionIcon} />
+                        {a}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {suggestions.translator.length > 0 && (
+                  <div className={styles.suggestionGroup}>
+                    <div className={styles.suggestionLabel}>ผู้แปล</div>
+                    {suggestions.translator.map(t => (
+                      <button key={t} className={styles.suggestionItem} onClick={() => handleSuggestionClick('translator', t)}>
+                        <Languages size={14} className={styles.suggestionIcon} />
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {suggestions.publisher.length > 0 && (
+                  <div className={styles.suggestionGroup}>
+                    <div className={styles.suggestionLabel}>สำนักพิมพ์</div>
+                    {suggestions.publisher.map(p => (
+                      <button key={p} className={styles.suggestionItem} onClick={() => handleSuggestionClick('publisher', p)}>
+                        <Building size={14} className={styles.suggestionIcon} />
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {suggestions.type.length > 0 && (
+                  <div className={styles.suggestionGroup}>
+                    <div className={styles.suggestionLabel}>ประเภท</div>
+                    {suggestions.type.map(t => (
+                      <button key={t} className={styles.suggestionItem} onClick={() => handleSuggestionClick('type', t)}>
+                        <Bookmark size={14} className={styles.suggestionIcon} />
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
