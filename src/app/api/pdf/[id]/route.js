@@ -79,28 +79,9 @@ export async function GET(request, { params }) {
         return new Response('Invalid Google Drive URL format in database.', { status: 500 });
       }
 
-      let driveDownloadUrl = `https://drive.google.com/uc?export=download&id=${driveId}&confirm=t`;
-      let driveRes = await fetch(driveDownloadUrl);
-      
-      // If Google Drive STILL returns HTML (e.g. rate limit, or the confirm=t trick failed)
-      const contentType = driveRes.headers.get('content-type') || '';
-      if (contentType.includes('text/html')) {
-        const html = await driveRes.text();
-        const confirmMatch = html.match(/confirm=([a-zA-Z0-9_-]+)/);
-        if (confirmMatch) {
-          const confirmCode = confirmMatch[1];
-          driveRes = await fetch(`https://drive.google.com/uc?export=download&id=${driveId}&confirm=${confirmCode}`);
-        } else {
-          return new Response('Google Drive Virus Scan Warning blocked the direct download. Please download the file directly from Google Drive.', { status: 502 });
-        }
-      }
-
-      return new Response(driveRes.body, {
-        headers: {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `inline; filename="${encodeURIComponent(title)}.pdf"`,
-        },
-      });
+      // Redirect directly to Google Drive's native preview player
+      // This avoids Vercel bandwidth limits, timeouts, and Google Drive Virus Scan HTML warnings entirely.
+      return Response.redirect(`https://drive.google.com/file/d/${driveId}/preview`);
     }
 
     // 5. Handle Telegram Proxy (Fallback)
