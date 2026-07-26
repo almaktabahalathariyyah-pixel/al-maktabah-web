@@ -45,7 +45,7 @@ export default function FilterRail({ fields, books, active, onChange, onReset })
 }
 
 function FilterGroup({ field, books, value, onChange }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(!!value);
 
   const options = facetValues(books, field.key);
   if (options.length === 0) return null;
