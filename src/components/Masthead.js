@@ -10,8 +10,6 @@ import styles from './Masthead.module.css';
 
 const NAV = [
   { label: 'หน้าหลัก', href: '/' },
-  { label: 'บันทึกไว้', href: '/saved' },
-  { label: 'บัญชี', href: '/account' },
   { label: 'เกี่ยวกับ', href: '/about' },
 ];
 
@@ -51,14 +49,6 @@ export default function Masthead({ children }) {
                 {item.label}
               </Link>
             ))}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className={`${styles.navLink} ${pathname === '/admin' ? styles.navActive : ''}`}
-              >
-                ผู้ดูแลระบบ
-              </Link>
-            )}
           </nav>
 
           <div className={styles.tools}>
@@ -130,6 +120,12 @@ export default function Masthead({ children }) {
                 {item.label}
               </Link>
             ))}
+            {user && (
+              <>
+                <Link href="/saved" className={styles.drawerLink} onClick={() => setOpen(false)}>บันทึกไว้</Link>
+                <Link href="/account" className={styles.drawerLink} onClick={() => setOpen(false)}>บัญชี</Link>
+              </>
+            )}
             {isAdmin && (
               <Link
                 href="/admin"
