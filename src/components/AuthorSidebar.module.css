@@ -1,7 +1,6 @@
 .sidebar {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  background: transparent;
+  border: none;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -13,7 +12,7 @@
 
 .header {
   padding: 1rem 1.25rem 0.5rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
 }
 
 .title {
@@ -24,8 +23,8 @@
 }
 
 .searchWrap {
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 1.25rem;
+  border-bottom: none;
   position: relative;
   display: flex;
   align-items: center;
@@ -39,10 +38,10 @@
 
 .searchInput {
   width: 100%;
-  padding: 0.5rem 0.75rem 0.5rem 2rem;
+  padding: 0.5rem 0.75rem 0.5rem 2.2rem;
   border: 1px solid var(--border);
-  border-radius: 4px;
-  background: transparent;
+  border-radius: 6px;
+  background: var(--surface);
   color: var(--fg);
   font-size: 0.85rem;
   outline: none;
@@ -109,26 +108,34 @@
 .nameBtn {
   width: 100%;
   text-align: left;
-  padding: 0.4rem 1.25rem;
+  padding: 0.5rem 1.25rem;
   background: transparent;
   border: none;
+  border-radius: 6px;
   color: var(--fg);
   font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   cursor: pointer;
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .nameBtn:hover {
   background: var(--surface-2);
-  color: var(--accent);
+  color: var(--fg);
 }
 
 .nameBtn.active {
-  background: var(--surface-3);
-  color: var(--accent);
+  background: var(--surface-2);
+  color: var(--fg);
   font-weight: 600;
-  border-left: 3px solid var(--accent);
-  padding-left: calc(1.25rem - 3px);
+}
+
+.nameBtn.active::after {
+  content: "✓";
+  font-size: 0.8rem;
+  color: var(--fg);
 }
 
 .empty {
