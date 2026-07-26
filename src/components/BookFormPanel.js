@@ -418,7 +418,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
       let finalId = bookId;
       if (bookId) {
         await updateDoc(doc(db, 'books', bookId), payload);
-        toast.success('บันทึกการแก้ไขเรียบร้อย');
+      toast.success('บันทึกการแก้ไขเรียบร้อย');
       } else {
         payload.createdAt = new Date();
         finalId = await getNextBookId();
@@ -455,73 +455,114 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           ) : (
             <form className={styles.formLayout} onSubmit={submit}>
               <div className={styles.mainCol}>
-                <div className={styles.fieldGrid}>
-                  {fields.map((field) => (
-                    <label key={field.key} className={`${styles.field} ${field.type === 'textarea' ? styles.wide : ''}`}>
-                      <span className={styles.label}>{field.label}</span>
-                      {field.type === 'textarea' ? (
-                        <textarea rows={4} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
-                      ) : field.type === 'bool' ? (
-                        <select className={styles.input} value={values[field.key] ?? 'false'} onChange={(e) => set(field.key, e.target.value === 'true')}>
-                          <option value="false">ไม่ใช่</option>
-                          <option value="true">ใช่</option>
-                        </select>
-                      ) : field.type === 'select' ? (
-                        <CreatableSelect
-                          isClearable
-                          styles={selectStyles}
-                          options={options[field.key] || []}
-                          value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
-                          onChange={(selected) => set(field.key, selected ? selected.value : '')}
-                          placeholder="ค้นหาหรือเพิ่มใหม่..."
-                          formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
-                          classNamePrefix="react-select"
-                        />
-                      ) : (
-                        <input type={field.type === 'number' ? 'number' : 'text'} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
-                      )}
-                    </label>
-                  ))}
-                </div>
+                
+                {/* 1. ข้อมูลหลัก (Basic Info) */}
+                <fieldset className={styles.block}>
+                  <legend className={styles.blockTitle}>ข้อมูลหลัก</legend>
+                  <div className={styles.fieldGrid}>
+                    {fields.filter(f => f.key === 'title' || f.key === 'description').map((field) => (
+                      <label key={field.key} className={`${styles.field} ${field.type === 'textarea' ? styles.wide : ''}`}>
+                        <span className={styles.label}>{field.label}</span>
+                        {field.type === 'textarea' ? (
+                          <textarea rows={4} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
+                        ) : field.type === 'bool' ? (
+                          <select className={styles.input} value={values[field.key] ?? 'false'} onChange={(e) => set(field.key, e.target.value === 'true')}>
+                            <option value="false">ไม่ใช่</option>
+                            <option value="true">ใช่</option>
+                          </select>
+                        ) : field.type === 'select' ? (
+                          <CreatableSelect
+                            isClearable
+                            styles={selectStyles}
+                            options={options[field.key] || []}
+                            value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
+                            onChange={(selected) => set(field.key, selected ? selected.value : '')}
+                            placeholder="ค้นหาหรือเพิ่มใหม่..."
+                            formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
+                            classNamePrefix="react-select"
+                          />
+                        ) : (
+                          <input type={field.type === 'number' ? 'number' : 'text'} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
 
+                {/* 2. รายละเอียดหนังสือ (Details) */}
+                <fieldset className={styles.block}>
+                  <legend className={styles.blockTitle}>รายละเอียดหนังสือ</legend>
+                  <div className={styles.fieldGrid}>
+                    {fields.filter(f => f.key !== 'title' && f.key !== 'description').map((field) => (
+                      <label key={field.key} className={`${styles.field} ${field.type === 'textarea' ? styles.wide : ''}`}>
+                        <span className={styles.label}>{field.label}</span>
+                        {field.type === 'textarea' ? (
+                          <textarea rows={4} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
+                        ) : field.type === 'bool' ? (
+                          <select className={styles.input} value={values[field.key] ?? 'false'} onChange={(e) => set(field.key, e.target.value === 'true')}>
+                            <option value="false">ไม่ใช่</option>
+                            <option value="true">ใช่</option>
+                          </select>
+                        ) : field.type === 'select' ? (
+                          <CreatableSelect
+                            isClearable
+                            styles={selectStyles}
+                            options={options[field.key] || []}
+                            value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
+                            onChange={(selected) => set(field.key, selected ? selected.value : '')}
+                            placeholder="ค้นหาหรือเพิ่มใหม่..."
+                            formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
+                            classNamePrefix="react-select"
+                          />
+                        ) : (
+                          <input type={field.type === 'number' ? 'number' : 'text'} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                {/* 3. ไฟล์หนังสือ (PDF) */}
                 <fieldset className={styles.block}>
                   <legend className={styles.blockTitle}>ไฟล์ PDF (อัปโหลดคู่อัตโนมัติ)</legend>
                   
-                  {!googleToken && (
-                    <div style={{ marginBottom: '1rem', padding: '1rem', background: '#3b82f620', borderRadius: '8px', border: '1px solid #3b82f640' }}>
-                      <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem' }}>ในการอัปโหลดไฟล์เข้า Google Drive อัตโนมัติ คุณต้องเชื่อมต่อบัญชีก่อน</p>
-                      <button type="button" onClick={handleGoogleAuth} style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}>
+                  {!googleToken ? (
+                    <div style={{ background: 'var(--brand-muted)', padding: '1.5rem', borderRadius: '8px', textAlign: 'center' }}>
+                      <p style={{ color: 'var(--brand-dark)', fontSize: '0.9rem', marginBottom: '1rem', fontWeight: 500 }}>
+                        ในการอัปโหลดไฟล์เข้า Google Drive อัตโนมัติ คุณต้องเชื่อมต่อบัญชีก่อน
+                      </p>
+                      <button type="button" onClick={handleGoogleAuth} className="btn btn-solid" style={{ background: '#3b82f6', border: 'none' }}>
                         Sign in with Google
                       </button>
                     </div>
+                  ) : (
+                    <div 
+                      className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`}
+                      onDragOver={onDragOver}
+                      onDragLeave={onDragLeave}
+                      onDrop={onDrop}
+                      onClick={() => document.getElementById('pdf-upload').click()}
+                    >
+                      <input 
+                        id="pdf-upload" 
+                        type="file" 
+                        accept="application/pdf" 
+                        onChange={onFileChange} 
+                        style={{ display: 'none' }} 
+                      />
+                      <UploadCloud size={32} color="var(--fg-3)" style={{ marginBottom: '1rem' }} />
+                      <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>ลากไฟล์ PDF มาวางที่นี่</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--fg-3)' }}>ระบบจะอัปโหลดไปที่ Telegram และ Google Drive อัตโนมัติ (หากไฟล์ใหญ่กว่า 50MB จะอัปโหลดขึ้น Drive เพียงอย่างเดียว)</div>
+                    </div>
                   )}
 
-                  <div 
-                    className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`}
-                    onDragOver={onDragOver}
-                    onDragLeave={onDragLeave}
-                    onDrop={onDrop}
-                    style={{
-                      border: isDragging ? '2px dashed var(--brand)' : '2px dashed var(--border)',
-                      padding: '2rem',
-                      textAlign: 'center',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      marginBottom: '1rem',
-                      background: isDragging ? 'var(--bg-2)' : 'transparent'
-                    }}
-                    onClick={() => document.getElementById('pdfInput').click()}
-                  >
-                    <input type="file" id="pdfInput" accept="application/pdf" style={{ display: 'none' }} onChange={onFileChange} />
-                    <UploadCloud size={32} style={{ color: 'var(--brand)', marginBottom: '0.5rem' }} />
-                    <p style={{ margin: 0, fontWeight: 'bold' }}>ลากไฟล์ PDF มาวางที่นี่</p>
-                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: 'var(--fg-3)' }}>ระบบจะอัปโหลดไปที่ Telegram และ Google Drive อัตโนมัติ<br/>(หากไฟล์ใหญ่กว่า 50MB จะอัปโหลดขึ้น Drive เพียงอย่างเดียว)</p>
-                  </div>
-
                   {pdfFile && (
-                    <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--bg-2)', borderRadius: '8px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                        <span style={{ fontWeight: '500' }}>{pdfFile.name}</span>
+                    <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                          <FileText size={20} color="var(--brand)" />
+                          <span style={{ fontSize: '0.9rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pdfFile.name}</span>
+                        </div>
                         <span style={{ color: 'var(--fg-3)' }}>{(pdfFile.size / (1024 * 1024)).toFixed(2)} MB</span>
                       </div>
                       
@@ -570,7 +611,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                     </div>
                   )}
 
-                  <label className={styles.field}>
+                  <label className={styles.field} style={{ marginTop: '1.5rem' }}>
                     <span className={styles.label}>ลิงก์สำรอง Google Drive (ไฟล์ใหญ่ &gt; 50MB)</span>
                     <input type="text" className={styles.input} placeholder="https://drive.google.com/file/d/..." value={driveUrl} onChange={(e) => setDriveUrl(e.target.value)} />
                     <span style={{ fontSize: '0.75rem', color: 'var(--fg-3)', marginTop: '4px' }}>ถ้าไฟล์ใหญ่เกิน 50MB ให้อัปโหลดลง Drive ด้วยตัวเองแล้วนำลิงก์มาวางที่นี่</span>
@@ -581,8 +622,36 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                     <input type="hidden" value={telegramFileId} />
                     <input type="hidden" value={telegramUrl} />
                   </div>
+                </fieldset>
+              </div>
+
+              <div className={styles.sideCol}>
+                <fieldset className={styles.block} style={{ marginBottom: '0' }}>
+                  <legend className={styles.blockTitle}>ภาพหน้าปก</legend>
                   
-                  <label className={styles.toggle} style={{ marginTop: '1rem' }}>
+                  <div className={styles.preview}>
+                    <BookCover src={coverUrl} title={values.title || 'ชื่อหนังสือ'} author={values.author || 'ผู้แต่ง'} />
+                  </div>
+
+                  <label className={styles.field}>
+                    <span className={styles.label}>อัปโหลดรูปปก (อัตโนมัติ)</span>
+                    <input type="file" accept="image/*" className={styles.input} onChange={handleImageUpload} disabled={uploadingImage} style={{ padding: '0.4rem' }} />
+                  </label>
+                  {uploadingImage && <p style={{ fontSize: '12px', color: 'var(--brand)', marginBottom: '0.5rem' }}>กำลังอัปโหลด...</p>}
+                  
+                  <div style={{ textAlign: 'center', margin: '0.5rem 0', color: 'var(--fg-3)', fontSize: '12px' }}>หรือวางลิงก์</div>
+
+                  <label className={styles.field}>
+                    <span className={styles.label}>ลิงก์รูปปก</span>
+                    <input type="text" className={styles.input} placeholder="https://…" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} />
+                  </label>
+
+                  {note && <p className={styles.err}>{note}</p>}
+                </fieldset>
+
+                <fieldset className={styles.block}>
+                  <legend className={styles.blockTitle}>การมองเห็น</legend>
+                  <label className={styles.toggle} style={{ marginTop: '0' }}>
                     <input type="checkbox" checked={restricted} onChange={(e) => setRestricted(e.target.checked)} />
                     <span>
                       <strong>สงวนสิทธิ์</strong>
@@ -591,12 +660,6 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                   </label>
                 </fieldset>
               </div>
-
-              <div className={styles.sideCol}>
-                <span className={styles.label}>ตัวอย่างรูปปก</span>
-                <div className={styles.preview}>
-                  <BookCover src={coverUrl} title={values.title || 'ชื่อหนังสือ'} author={values.author || 'ผู้แต่ง'} />
-                </div>
 
                 <label className={styles.field}>
                   <span className={styles.label}>อัปโหลดรูปปก (อัตโนมัติ)</span>
