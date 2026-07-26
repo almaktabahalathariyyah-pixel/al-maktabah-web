@@ -1,7 +1,7 @@
 .sidebar {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -41,8 +41,8 @@
   width: 100%;
   padding: 0.5rem 0.75rem 0.5rem 2rem;
   border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
+  border-radius: 4px;
+  background: transparent;
   color: var(--fg);
   font-size: 0.85rem;
   outline: none;
