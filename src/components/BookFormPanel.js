@@ -72,11 +72,34 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           return;
         }
         setGoogleToken(response.access_token);
+        localStorage.setItem('googleDriveToken', JSON.stringify({
+          token: response.access_token,
+          expiresAt: Date.now() + 55 * 60 * 1000 // expires in 55 mins
+        }));
         toast.success('เชื่อมต่อ Google Drive สำเร็จ');
       },
     });
     tokenClient.requestAccessToken();
   };
+
+  // Restore Google Token from localStorage
+  useEffect(() => {
+    if (isOpen) {
+      const savedData = localStorage.getItem('googleDriveToken');
+      if (savedData) {
+        try {
+          const { token, expiresAt } = JSON.parse(savedData);
+          if (Date.now() < expiresAt) {
+            setGoogleToken(token);
+          } else {
+            localStorage.removeItem('googleDriveToken');
+          }
+        } catch (e) {
+          localStorage.removeItem('googleDriveToken');
+        }
+      }
+    }
+  }, [isOpen]);
 
   // Lock body scroll when open
   useEffect(() => {
