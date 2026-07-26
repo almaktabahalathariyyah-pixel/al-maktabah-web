@@ -269,7 +269,7 @@ export default function AdminPage() {
           <option value="restricted">สงวนสิทธิ์</option>
         </select>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <div className={styles.actionButtons}>
           <div className={styles.viewToggle}>
             <button 
               className={`${styles.viewBtn} ${viewMode === 'table' ? styles.viewBtnActive : ''}`}
@@ -287,16 +287,16 @@ export default function AdminPage() {
             </button>
           </div>
           <button onClick={() => setIsFieldsOpen(true)} className="btn" title="ตั้งค่าฟิลด์แบบฟอร์ม">
-            <Settings size={18} /> <span className="hide-mobile">ตั้งค่าฟิลด์</span>
+            <Settings size={18} /> <span className={styles.hideMobile}>ตั้งค่าฟิลด์</span>
           </button>
           <button onClick={() => setIsSettingsOpen(true)} className="btn" title="ตั้งค่าหมวดหมู่และภาษา">
-            <Settings size={18} /> <span className="hide-mobile">ตั้งค่าหมวดหมู่</span>
+            <Settings size={18} /> <span className={styles.hideMobile}>ตั้งค่าหมวดหมู่</span>
           </button>
-          <button onClick={() => setIsBulkUploadOpen(true)} className="btn btn-solid" style={{ background: 'var(--hot)' }}>
-            <UploadCloud size={18} /> <span className="hide-mobile">อัปโหลดหลายเล่ม</span>
+          <button onClick={() => setIsBulkUploadOpen(true)} className="btn btn-solid" style={{ background: 'var(--hot)', borderColor: 'var(--hot)' }}>
+            <UploadCloud size={18} /> <span className={styles.hideMobile}>อัปโหลดหลายเล่ม</span>
           </button>
           <button onClick={handleOpenNewBook} className="btn btn-solid">
-            <Plus size={18} /> <span className="hide-mobile">เพิ่มหนังสือใหม่</span>
+            <Plus size={18} /> <span className={styles.hideMobile}>เพิ่มหนังสือใหม่</span>
           </button>
         </div>
       </div>
