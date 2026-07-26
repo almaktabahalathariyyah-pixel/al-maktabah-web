@@ -91,7 +91,13 @@ export default function BookDetailPage({ params }) {
     }
     
     // เปิดหน้าต่างใหม่ไปที่ไฟล์ทันที
-    window.open(book.telegramUrl || '#', '_blank');
+    let downloadUrl = book.telegramUrl;
+    if (book.telegramFileId) {
+      const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'AlMaktabahBot';
+      downloadUrl = `https://t.me/${botUsername}?start=book_${id}`;
+    }
+    
+    window.open(downloadUrl || '#', '_blank');
 
     try {
       // 1. บันทึกสถิติลง Collection downloads
