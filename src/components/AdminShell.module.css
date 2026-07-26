@@ -51,10 +51,20 @@
 }
 
 .sidebarClosed {
-  width: 0;
-  padding: 0;
-  overflow: hidden;
-  border-right: none;
+  width: 72px;
+  padding: 1.5rem 0.5rem;
+  align-items: center;
+}
+
+.sidebarClosed .brandName,
+.sidebarClosed .navText {
+  display: none;
+}
+
+.sidebarClosed .navLink,
+.sidebarClosed .exit {
+  justify-content: center;
+  padding: 0.75rem;
 }
 
 .sidebarHeader {
@@ -63,6 +73,15 @@
   justify-content: space-between;
   margin-bottom: 2rem;
   padding: 0 0.5rem;
+  width: 100%;
+}
+
+.sidebarClosed .sidebarHeader {
+  justify-content: center;
+}
+
+.sidebarClosed .brand {
+  display: none;
 }
 
 .closeBtnMobile {
@@ -71,6 +90,22 @@
   border: none;
   color: var(--fg-2);
   cursor: pointer;
+}
+
+.toggleBtnDesktop {
+  background: none;
+  border: none;
+  color: var(--fg-2);
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+}
+.toggleBtnDesktop:hover {
+  background: var(--surface-2);
+  color: var(--fg);
 }
 
 .brand { display: flex; align-items: center; gap: 0.6rem; flex: none; }
@@ -166,8 +201,16 @@
     box-shadow: var(--shadow-lg);
   }
   .sidebarOpen { transform: translateX(0); }
-  .sidebarClosed { width: 280px; padding: 1.5rem 1rem; overflow: visible; }
+  .sidebarClosed { width: 280px; padding: 1.5rem 1rem; overflow: visible; align-items: stretch; }
+  .sidebarClosed .brandName,
+  .sidebarClosed .navText { display: block; }
+  .sidebarClosed .navLink,
+  .sidebarClosed .exit { justify-content: flex-start; padding: 0.75rem 1rem; }
+  .sidebarClosed .sidebarHeader { justify-content: space-between; }
+  .sidebarClosed .brand { display: flex; }
+
   .closeBtnMobile { display: block; }
+  .toggleBtnDesktop { display: none; }
   .backdrop { display: block; }
   .main { padding: 1.5rem 1rem; }
 }

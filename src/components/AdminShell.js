@@ -12,6 +12,8 @@ import {
   SlidersHorizontal,
   Menu,
   X,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useAdmin } from '@/context/AdminContext';
@@ -79,6 +81,9 @@ export default function AdminShell({ children }) {
           <button onClick={toggleSidebar} className={styles.closeBtnMobile}>
             <X size={20} />
           </button>
+          <button onClick={toggleSidebar} className={styles.toggleBtnDesktop} title={isSidebarOpen ? 'หุบเมนู' : 'ขยายเมนู'}>
+            {isSidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+          </button>
         </div>
 
         <nav className={styles.nav}>
@@ -92,12 +97,13 @@ export default function AdminShell({ children }) {
                 key={item.href}
                 href={item.href}
                 className={`${styles.navLink} ${active ? styles.navActive : ''}`}
+                title={!isSidebarOpen ? item.label : undefined}
                 onClick={() => {
                   if (window.innerWidth <= 900) toggleSidebar();
                 }}
               >
-                <item.icon size={18} />
-                {item.label}
+                <item.icon size={18} className={styles.navIcon} />
+                <span className={styles.navText}>{item.label}</span>
               </Link>
             );
           })}
@@ -106,17 +112,17 @@ export default function AdminShell({ children }) {
         <div className={styles.navDivider} />
         
         <div className={styles.settingsNav}>
-          <button onClick={openFields} className={styles.navLink}>
-            <SlidersHorizontal size={18} /> ตั้งค่าฟิลด์
+          <button onClick={openFields} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าฟิลด์' : undefined}>
+            <SlidersHorizontal size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าฟิลด์</span>
           </button>
-          <button onClick={openSettings} className={styles.navLink}>
-            <Settings size={18} /> ตั้งค่าหมวดหมู่
+          <button onClick={openSettings} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าหมวดหมู่' : undefined}>
+            <Settings size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าหมวดหมู่</span>
           </button>
         </div>
 
         <div style={{ marginTop: 'auto' }}>
-          <Link href="/" className={styles.exit}>
-            <ArrowLeft size={18} /> กลับหน้าเว็บ
+          <Link href="/" className={styles.exit} title={!isSidebarOpen ? 'กลับหน้าเว็บ' : undefined}>
+            <ArrowLeft size={18} className={styles.navIcon} /> <span className={styles.navText}>กลับหน้าเว็บ</span>
           </Link>
         </div>
       </aside>
