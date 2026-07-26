@@ -86,6 +86,8 @@
   top: calc(100% + 8px);
   right: 0;
   min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
   padding: 0.5rem;

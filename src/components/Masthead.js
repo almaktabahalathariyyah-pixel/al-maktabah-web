@@ -64,7 +64,7 @@ export default function Masthead({ children }) {
                   )}
                 </button>
                 {dropOpen && (
-                  <div className={`${styles.dropdown} glass`}>
+                  <div className={styles.dropdown}>
                     <div className={styles.dropdownInfo}>
                       <div className={styles.dropdownName}>{user.displayName || 'ผู้ใช้'}</div>
                       <div className={styles.dropdownEmail}>{user.email}</div>
