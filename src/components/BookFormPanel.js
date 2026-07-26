@@ -454,76 +454,45 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
             <div className={styles.loadingState}>กำลังโหลดข้อมูล...</div>
           ) : (
             <form className={styles.formLayout} onSubmit={submit}>
-              <div className={styles.mainCol}>
+              
+              {/* 1. ข้อมูลทั่วไป (General Info) */}
+              <fieldset className={styles.block}>
+                <legend className={styles.blockTitle}>ข้อมูลทั่วไป</legend>
+                <div className={styles.fieldGrid}>
+                  {fields.filter(f => f.key === 'title' || f.key === 'description').map((field) => (
+                    <label key={field.key} className={`${styles.field} ${field.type === 'textarea' ? styles.wide : ''}`}>
+                      <span className={styles.label}>{field.label}</span>
+                      {field.type === 'textarea' ? (
+                        <textarea rows={4} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
+                      ) : field.type === 'bool' ? (
+                        <select className={styles.input} value={values[field.key] ?? 'false'} onChange={(e) => set(field.key, e.target.value === 'true')}>
+                          <option value="false">ไม่ใช่</option>
+                          <option value="true">ใช่</option>
+                        </select>
+                      ) : field.type === 'select' ? (
+                        <CreatableSelect
+                          isClearable
+                          styles={selectStyles}
+                          options={options[field.key] || []}
+                          value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
+                          onChange={(selected) => set(field.key, selected ? selected.value : '')}
+                          placeholder="ค้นหาหรือเพิ่มใหม่..."
+                          formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
+                          classNamePrefix="react-select"
+                        />
+                      ) : (
+                        <input type={field.type === 'number' ? 'number' : 'text'} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {/* 2. ไฟล์และหน้าปก (Files & Cover) */}
+              <div className={styles.filesGrid}>
                 
-                {/* 1. ข้อมูลหลัก (Basic Info) */}
-                <fieldset className={styles.block}>
-                  <legend className={styles.blockTitle}>ข้อมูลหลัก</legend>
-                  <div className={styles.fieldGrid}>
-                    {fields.filter(f => f.key === 'title' || f.key === 'description').map((field) => (
-                      <label key={field.key} className={`${styles.field} ${field.type === 'textarea' ? styles.wide : ''}`}>
-                        <span className={styles.label}>{field.label}</span>
-                        {field.type === 'textarea' ? (
-                          <textarea rows={4} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
-                        ) : field.type === 'bool' ? (
-                          <select className={styles.input} value={values[field.key] ?? 'false'} onChange={(e) => set(field.key, e.target.value === 'true')}>
-                            <option value="false">ไม่ใช่</option>
-                            <option value="true">ใช่</option>
-                          </select>
-                        ) : field.type === 'select' ? (
-                          <CreatableSelect
-                            isClearable
-                            styles={selectStyles}
-                            options={options[field.key] || []}
-                            value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
-                            onChange={(selected) => set(field.key, selected ? selected.value : '')}
-                            placeholder="ค้นหาหรือเพิ่มใหม่..."
-                            formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
-                            classNamePrefix="react-select"
-                          />
-                        ) : (
-                          <input type={field.type === 'number' ? 'number' : 'text'} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
-                        )}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                {/* 2. รายละเอียดหนังสือ (Details) */}
-                <fieldset className={styles.block}>
-                  <legend className={styles.blockTitle}>รายละเอียดหนังสือ</legend>
-                  <div className={styles.fieldGrid}>
-                    {fields.filter(f => f.key !== 'title' && f.key !== 'description').map((field) => (
-                      <label key={field.key} className={`${styles.field} ${field.type === 'textarea' ? styles.wide : ''}`}>
-                        <span className={styles.label}>{field.label}</span>
-                        {field.type === 'textarea' ? (
-                          <textarea rows={4} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
-                        ) : field.type === 'bool' ? (
-                          <select className={styles.input} value={values[field.key] ?? 'false'} onChange={(e) => set(field.key, e.target.value === 'true')}>
-                            <option value="false">ไม่ใช่</option>
-                            <option value="true">ใช่</option>
-                          </select>
-                        ) : field.type === 'select' ? (
-                          <CreatableSelect
-                            isClearable
-                            styles={selectStyles}
-                            options={options[field.key] || []}
-                            value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
-                            onChange={(selected) => set(field.key, selected ? selected.value : '')}
-                            placeholder="ค้นหาหรือเพิ่มใหม่..."
-                            formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
-                            classNamePrefix="react-select"
-                          />
-                        ) : (
-                          <input type={field.type === 'number' ? 'number' : 'text'} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
-                        )}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                {/* 3. ไฟล์หนังสือ (PDF) */}
-                <fieldset className={styles.block}>
+                {/* 2.1 ไฟล์ PDF */}
+                <fieldset className={styles.block} style={{ margin: 0 }}>
                   <legend className={styles.blockTitle}>ไฟล์ PDF (อัปโหลดคู่อัตโนมัติ)</legend>
                   
                   {!googleToken ? (
@@ -623,10 +592,9 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                     <input type="hidden" value={telegramUrl} />
                   </div>
                 </fieldset>
-              </div>
 
-              <div className={styles.sideCol}>
-                <fieldset className={styles.block} style={{ marginBottom: '0' }}>
+                {/* 2.2 หน้าปก */}
+                <fieldset className={styles.block} style={{ margin: 0 }}>
                   <legend className={styles.blockTitle}>ภาพหน้าปก</legend>
                   
                   <div className={styles.preview}>
@@ -648,18 +616,53 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
 
                   {note && <p className={styles.err}>{note}</p>}
                 </fieldset>
-
-                <fieldset className={styles.block}>
-                  <legend className={styles.blockTitle}>การมองเห็น</legend>
-                  <label className={styles.toggle} style={{ marginTop: '0' }}>
-                    <input type="checkbox" checked={restricted} onChange={(e) => setRestricted(e.target.checked)} />
-                    <span>
-                      <strong>สงวนสิทธิ์</strong>
-                      <em>เปิดให้เฉพาะสมาชิกเท่านั้น</em>
-                    </span>
-                  </label>
-                </fieldset>
               </div>
+
+              {/* 3. รายละเอียดเพิ่มเติม (Additional Details) */}
+              <fieldset className={styles.block}>
+                <legend className={styles.blockTitle}>รายละเอียดเพิ่มเติม</legend>
+                <div className={styles.fieldGrid}>
+                  {fields.filter(f => f.key !== 'title' && f.key !== 'description').map((field) => (
+                    <label key={field.key} className={`${styles.field} ${field.type === 'textarea' ? styles.wide : ''}`}>
+                      <span className={styles.label}>{field.label}</span>
+                      {field.type === 'textarea' ? (
+                        <textarea rows={4} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
+                      ) : field.type === 'bool' ? (
+                        <select className={styles.input} value={values[field.key] ?? 'false'} onChange={(e) => set(field.key, e.target.value === 'true')}>
+                          <option value="false">ไม่ใช่</option>
+                          <option value="true">ใช่</option>
+                        </select>
+                      ) : field.type === 'select' ? (
+                        <CreatableSelect
+                          isClearable
+                          styles={selectStyles}
+                          options={options[field.key] || []}
+                          value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
+                          onChange={(selected) => set(field.key, selected ? selected.value : '')}
+                          placeholder="ค้นหาหรือเพิ่มใหม่..."
+                          formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
+                          classNamePrefix="react-select"
+                        />
+                      ) : (
+                        <input type={field.type === 'number' ? 'number' : 'text'} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {/* 4. การตั้งค่า (Settings) */}
+              <fieldset className={styles.block}>
+                <legend className={styles.blockTitle}>การมองเห็น</legend>
+                <label className={styles.toggle} style={{ marginTop: '0' }}>
+                  <input type="checkbox" checked={restricted} onChange={(e) => setRestricted(e.target.checked)} />
+                  <span>
+                    <strong>สงวนสิทธิ์</strong>
+                    <em>เปิดให้เฉพาะสมาชิกเท่านั้น</em>
+                  </span>
+                </label>
+              </fieldset>
+
             </form>
           )}
         </div>

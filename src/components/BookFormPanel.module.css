@@ -81,22 +81,14 @@
 
 .formLayout {
   display: flex;
-  gap: 2rem;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.mainCol {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.sideCol {
-  width: 250px;
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.filesGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
 }
 
 .fieldGrid {
@@ -192,9 +184,7 @@
 }
 
 @media (max-width: 768px) {
-  .formLayout { flex-direction: column-reverse; }
-  .sideCol { width: 100%; }
+  .filesGrid { grid-template-columns: 1fr; }
   .fieldGrid { grid-template-columns: 1fr; }
   .panel { width: 100%; max-width: 100%; }
-  .preview { width: 120px; margin-left: 0; }
 }
