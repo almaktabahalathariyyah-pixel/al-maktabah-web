@@ -412,13 +412,23 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
             <fieldset className={styles.block} style={{ marginBottom: 0 }}>
               <legend className={styles.blockTitle}>เลือกไฟล์ PDF (เพิ่มได้เรื่อยๆ)</legend>
               
-              {!googleToken && (
-                <div style={{ marginBottom: '1rem', padding: '1rem', background: '#3b82f620', borderRadius: '8px', border: '1px solid #3b82f640' }}>
-                  <button type="button" onClick={handleGoogleAuth} style={{ width: '100%', padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}>
-                    Sign in with Google เพื่ออัปโหลด
-                  </button>
+              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: googleToken ? '#10b98120' : '#3b82f620', borderRadius: '8px', border: `1px solid ${googleToken ? '#10b98140' : '#3b82f640'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: googleToken ? '#10b981' : '#ef4444' }} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--fg-1)' }}>
+                    Google Drive API: {googleToken ? 'เชื่อมต่อแล้ว' : 'ยังไม่เชื่อมต่อ'}
+                  </span>
                 </div>
-              )}
+                {!googleToken ? (
+                  <button type="button" onClick={handleGoogleAuth} style={{ padding: '0.3rem 0.8rem', background: '#3b82f6', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>
+                    เชื่อมต่อเลย
+                  </button>
+                ) : (
+                  <button type="button" onClick={handleGoogleAuth} style={{ padding: '0.3rem 0.8rem', background: 'transparent', color: 'var(--fg-2)', borderRadius: '4px', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.8rem' }}>
+                    ต่ออายุสิทธิ์
+                  </button>
+                )}
+              </div>
 
               <div 
                 className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`}

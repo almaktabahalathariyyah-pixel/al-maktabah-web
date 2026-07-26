@@ -535,16 +535,25 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                 <fieldset className={styles.block} style={{ margin: 0 }}>
                   <legend className={styles.blockTitle}>ไฟล์ PDF (อัปโหลดคู่อัตโนมัติ)</legend>
                   
-                  {!googleToken ? (
-                    <div style={{ background: 'var(--brand-muted)', padding: '1.5rem', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ color: 'var(--brand-dark)', fontSize: '0.9rem', marginBottom: '1rem', fontWeight: 500 }}>
-                        ในการอัปโหลดไฟล์เข้า Google Drive อัตโนมัติ คุณต้องเชื่อมต่อบัญชีก่อน
-                      </p>
-                      <button type="button" onClick={handleGoogleAuth} className="btn btn-solid" style={{ background: '#3b82f6', border: 'none' }}>
-                        Sign in with Google
-                      </button>
+                  <div style={{ marginBottom: '1rem', padding: '0.75rem', background: googleToken ? '#10b98120' : '#3b82f620', borderRadius: '8px', border: `1px solid ${googleToken ? '#10b98140' : '#3b82f640'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: googleToken ? '#10b981' : '#ef4444' }} />
+                      <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--fg-1)' }}>
+                        Google Drive API: {googleToken ? 'เชื่อมต่อแล้ว' : 'ยังไม่เชื่อมต่อ'}
+                      </span>
                     </div>
-                  ) : (
+                    {!googleToken ? (
+                      <button type="button" onClick={handleGoogleAuth} style={{ padding: '0.3rem 0.8rem', background: '#3b82f6', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        เชื่อมต่อเลย
+                      </button>
+                    ) : (
+                      <button type="button" onClick={handleGoogleAuth} style={{ padding: '0.3rem 0.8rem', background: 'transparent', color: 'var(--fg-2)', borderRadius: '4px', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        ต่ออายุสิทธิ์
+                      </button>
+                    )}
+                  </div>
+                  
+                  {googleToken && (
                     <div 
                       className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`}
                       onDragOver={onDragOver}
