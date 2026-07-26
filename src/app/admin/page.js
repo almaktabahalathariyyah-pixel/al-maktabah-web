@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { Search, Plus, Download, Edit2, Trash2, Settings, LayoutGrid, List, UploadCloud, Filter } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
+import Select from 'react-select';
+import { selectStyles } from '@/lib/selectStyles';
 import BookFormPanel from '@/components/BookFormPanel';
 import BulkUploadPanel from '@/components/BulkUploadPanel';
 import styles from './page.module.css';
@@ -334,67 +336,110 @@ export default function AdminPage() {
           <div className={styles.filterBottomRow}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>หมวดหมู่</label>
-              <select className={styles.filterSelect} value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select
+                styles={selectStyles}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...categories.map(c => ({ value: c, label: c }))]}
+                value={{ value: categoryFilter, label: categoryFilter || 'ทั้งหมด' }}
+                onChange={(selected) => setCategoryFilter(selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={true}
+                classNamePrefix="react-select"
+              />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ประเภท</label>
-              <select className={styles.filterSelect} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {types.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select
+                styles={selectStyles}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...types.map(c => ({ value: c, label: c }))]}
+                value={{ value: typeFilter, label: typeFilter || 'ทั้งหมด' }}
+                onChange={(selected) => setTypeFilter(selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={true}
+                classNamePrefix="react-select"
+              />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สถานะ</label>
-              <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                <option value="public">สาธารณะ</option>
-                <option value="restricted">สงวนสิทธิ์</option>
-              </select>
+              <Select
+                styles={selectStyles}
+                options={[
+                  { value: '', label: 'ทั้งหมด' },
+                  { value: 'public', label: 'สาธารณะ' },
+                  { value: 'restricted', label: 'สงวนสิทธิ์' }
+                ]}
+                value={{ value: statusFilter, label: statusFilter === 'public' ? 'สาธารณะ' : statusFilter === 'restricted' ? 'สงวนสิทธิ์' : 'ทั้งหมด' }}
+                onChange={(selected) => setStatusFilter(selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={false}
+                classNamePrefix="react-select"
+              />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ภาษา</label>
-              <select className={styles.filterSelect} value={languageFilter} onChange={(e) => setLanguageFilter(e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {languages.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select
+                styles={selectStyles}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...languages.map(c => ({ value: c, label: c }))]}
+                value={{ value: languageFilter, label: languageFilter || 'ทั้งหมด' }}
+                onChange={(selected) => setLanguageFilter(selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={true}
+                classNamePrefix="react-select"
+              />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ปีพิมพ์</label>
-              <select className={styles.filterSelect} value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {years.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select
+                styles={selectStyles}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...years.map(c => ({ value: c, label: c }))]}
+                value={{ value: yearFilter, label: yearFilter || 'ทั้งหมด' }}
+                onChange={(selected) => setYearFilter(selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={true}
+                classNamePrefix="react-select"
+              />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แต่ง</label>
-              <select className={styles.filterSelect} value={authorFilter} onChange={(e) => setAuthorFilter(e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {authors.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select
+                styles={selectStyles}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...authors.map(c => ({ value: c, label: c }))]}
+                value={{ value: authorFilter, label: authorFilter || 'ทั้งหมด' }}
+                onChange={(selected) => setAuthorFilter(selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={true}
+                classNamePrefix="react-select"
+              />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แปล</label>
-              <select className={styles.filterSelect} value={translatorFilter} onChange={(e) => setTranslatorFilter(e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {translators.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select
+                styles={selectStyles}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...translators.map(c => ({ value: c, label: c }))]}
+                value={{ value: translatorFilter, label: translatorFilter || 'ทั้งหมด' }}
+                onChange={(selected) => setTranslatorFilter(selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={true}
+                classNamePrefix="react-select"
+              />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สำนักพิมพ์</label>
-              <select className={styles.filterSelect} value={publisherFilter} onChange={(e) => setPublisherFilter(e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {publishers.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select
+                styles={selectStyles}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...publishers.map(c => ({ value: c, label: c }))]}
+                value={{ value: publisherFilter, label: publisherFilter || 'ทั้งหมด' }}
+                onChange={(selected) => setPublisherFilter(selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={true}
+                classNamePrefix="react-select"
+              />
             </div>
             
             <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
