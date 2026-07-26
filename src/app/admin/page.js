@@ -22,7 +22,12 @@ export default function AdminPage() {
   
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(true);
+  const [predefinedCategories, setPredefinedCategories] = useState([]);
+  const [predefinedAuthors, setPredefinedAuthors] = useState([]);
+  const [predefinedTranslators, setPredefinedTranslators] = useState([]);
+  const [predefinedPublishers, setPredefinedPublishers] = useState([]);
   const [predefinedLanguages, setPredefinedLanguages] = useState([]);
+  const [predefinedTypes, setPredefinedTypes] = useState([]);
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'card'
 
   // Form Panel State
@@ -73,7 +78,13 @@ export default function AdminPage() {
           fetchedBooks.push({ id: doc.id, ...doc.data() });
         });
         setBooks(fetchedBooks);
+        setPredefinedCategories(settings.categories || []);
+        setPredefinedAuthors(settings.authors || []);
+        setPredefinedTranslators(settings.translators || []);
+        setPredefinedPublishers(settings.publishers || []);
         setPredefinedLanguages(settings.languages || []);
+        // Note: types might be in categories or hardcoded, fallback to dynamic if missing
+        if (settings.types) setPredefinedTypes(settings.types);
       } catch (error) {
         console.error("Error fetching books:", error);
         toast.error('โหลดข้อมูลหนังสือไม่สำเร็จ');
@@ -208,12 +219,12 @@ export default function AdminPage() {
     return null;
   }
 
-  const categories = Array.from(new Set(books.map(b => b.category).filter(Boolean))).sort();
-  const authors = Array.from(new Set(books.map(b => b.author).filter(Boolean))).sort();
-  const translators = Array.from(new Set(books.map(b => b.translator).filter(Boolean))).sort();
-  const publishers = Array.from(new Set(books.map(b => b.publisher).filter(Boolean))).sort();
-  const languages = Array.from(new Set(books.map(b => b.language).filter(Boolean))).sort();
-  const types = Array.from(new Set(books.map(b => b.type).filter(Boolean))).sort();
+  const categories = predefinedCategories.length > 0 ? predefinedCategories : Array.from(new Set(books.map(b => b.category).filter(Boolean))).sort();
+  const authors = predefinedAuthors.length > 0 ? predefinedAuthors : Array.from(new Set(books.map(b => b.author).filter(Boolean))).sort();
+  const translators = predefinedTranslators.length > 0 ? predefinedTranslators : Array.from(new Set(books.map(b => b.translator).filter(Boolean))).sort();
+  const publishers = predefinedPublishers.length > 0 ? predefinedPublishers : Array.from(new Set(books.map(b => b.publisher).filter(Boolean))).sort();
+  const languages = predefinedLanguages.length > 0 ? predefinedLanguages : Array.from(new Set(books.map(b => b.language).filter(Boolean))).sort();
+  const types = predefinedTypes.length > 0 ? predefinedTypes : Array.from(new Set(books.map(b => b.type).filter(Boolean))).sort();
   const years = Array.from(new Set(books.map(b => b.year).filter(Boolean))).sort((a, b) => b - a);
 
   const filteredBooks = books.filter(book => {
