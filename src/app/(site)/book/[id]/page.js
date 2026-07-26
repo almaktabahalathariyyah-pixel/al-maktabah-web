@@ -90,13 +90,12 @@ export default function BookDetailPage({ params }) {
       return;
     }
     
-    // เปิดหน้าต่างใหม่ไปที่ไฟล์ทันที
-    let downloadUrl = book.telegramUrl;
+    // เปิดหน้าต่างใหม่ไปที่ไฟล์ (ถ้าเป็นลิงก์ภายนอก) หรือพาไปหน้าอ่าน PDF (ถ้ามีไฟล์ในระบบ)
     if (book.telegramFileId) {
-      downloadUrl = `/api/pdf/${id}`;
+      router.push(`/book/${id}/read`);
+    } else {
+      window.open(book.telegramUrl || '#', '_blank');
     }
-    
-    window.open(downloadUrl || '#', '_blank');
 
     try {
       // 1. บันทึกสถิติลง Collection downloads

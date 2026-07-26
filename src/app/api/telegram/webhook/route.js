@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { Telegraf } from 'telegraf';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { collection, addDoc, doc, getDoc, updateDoc, increment, setDoc } from 'firebase/firestore';
+import { getUniqueSlug } from '@/lib/uniqueSlug';
 
 // Replace with your actual bot token, or use environment variables
 const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -71,9 +72,10 @@ if (bot) {
         downloadCount: 0
       };
 
-      const docRef = await addDoc(collection(db, 'books'), payload);
+      const slug = await getUniqueSlug(title);
+      await setDoc(doc(db, 'books', slug), payload);
       
-      await ctx.reply(`✅ บันทึกหนังสือขึ้นเว็บสำเร็จ!\n\n📕 ชื่อ: ${title}\n👤 ผู้แต่ง: ${author || '-'}\n📁 หมวดหมู่: ${category}\n\nลิงก์ระบบ: book_${docRef.id}\n(สามารถเข้าไปแก้ไขรูปปกและข้อมูลเพิ่มเติมได้ในหน้าเว็บแอดมิน)`, {
+      await ctx.reply(`✅ บันทึกหนังสือขึ้นเว็บสำเร็จ!\n\n📕 ชื่อ: ${title}\n👤 ผู้แต่ง: ${author || '-'}\n📁 หมวดหมู่: ${category}\n\nลิงก์ระบบ: book_${slug}\n(สามารถเข้าไปแก้ไขรูปปกและข้อมูลเพิ่มเติมได้ในหน้าเว็บแอดมิน)`, {
         reply_parameters: { message_id: ctx.message.message_id }
       });
 

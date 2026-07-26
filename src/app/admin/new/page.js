@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { addDoc, collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadBookFields } from '@/lib/bookFields';
 import BookCover from '@/components/BookCover';
 import { useToast } from '@/context/ToastContext';
 import CreatableSelect from 'react-select/creatable';
 import { selectStyles } from '@/lib/selectStyles';
+import { getUniqueSlug } from '@/lib/uniqueSlug';
 import styles from './page.module.css';
 
 export default function NewBookPage() {
@@ -103,7 +104,10 @@ export default function NewBookPage() {
           payload[field.key] = Number(payload[field.key]) || 0;
         }
       }
-      await addDoc(collection(db, 'books'), payload);
+      
+      const slug = await getUniqueSlug(payload.title);
+      await setDoc(doc(db, 'books', slug), payload);
+      
       router.push('/admin');
     } catch (error) {
       console.error(error);
