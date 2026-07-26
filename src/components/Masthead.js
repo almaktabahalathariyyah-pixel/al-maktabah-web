@@ -80,6 +80,9 @@ export default function Masthead({ children }) {
                       <div className={styles.dropdownEmail}>{user.email}</div>
                     </div>
                     <div className={styles.dropdownDivider} />
+                    {isAdmin && (
+                      <Link href="/admin" className={styles.dropdownItem} onClick={() => setDropOpen(false)}>ผู้ดูแลระบบ</Link>
+                    )}
                     <Link href="/account" className={styles.dropdownItem} onClick={() => setDropOpen(false)}>บัญชี</Link>
                     <Link href="/saved" className={styles.dropdownItem} onClick={() => setDropOpen(false)}>บันทึกไว้</Link>
                     <div className={styles.dropdownDivider} />
