@@ -63,6 +63,12 @@
   font-size: 1.05rem;
   color: var(--fg-2);
   line-height: 1.6;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.authorIcon {
+  opacity: 0.6;
 }
 
 .description {

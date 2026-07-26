@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Download, Bookmark, Check } from 'lucide-react';
+import { ArrowLeft, Download, Bookmark, Check, User } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, limit, getDocs, addDoc, increment } from 'firebase/firestore';
@@ -173,7 +173,10 @@ export default function BookDetailPage({ params }) {
               {book.category}
             </p>
             <h1 className={styles.title}>{book.title}</h1>
-            <p className={styles.author}>{book.author}</p>
+            <p className={styles.author}>
+              <User size={14} className={styles.authorIcon} />
+              {book.author}
+            </p>
           </header>
 
           <p className={styles.description}>{book.description || '-'}</p>

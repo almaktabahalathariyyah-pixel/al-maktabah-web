@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X, User } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import FilterRail from '@/components/FilterRail';
 import { useAuth } from '@/context/AuthContext';
@@ -198,7 +198,10 @@ export default function Home() {
 
                     <div className={styles.meta}>
                       <h3 className={styles.bookTitle}>{book.title}</h3>
-                      <p className={styles.author}>{book.author}</p>
+                      <p className={styles.author}>
+                        <User size={12} className={styles.authorIcon} />
+                        {book.author}
+                      </p>
                     </div>
                   </Link>
                 );
