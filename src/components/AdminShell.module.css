@@ -177,6 +177,11 @@
 }
 .exit:hover { color: var(--fg); }
 
+.bottomNav {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
 .main {
   flex: 1;
   min-width: 0; /* allows flex children to shrink */
