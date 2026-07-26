@@ -10,7 +10,7 @@ import BookCover from '@/components/BookCover';
 import { useToast } from '@/context/ToastContext';
 import CreatableSelect from 'react-select/creatable';
 import { selectStyles } from '@/lib/selectStyles';
-import { getUniqueSlug } from '@/lib/uniqueSlug';
+import { getNextBookId } from '@/lib/sequentialId';
 import styles from './page.module.css';
 
 export default function NewBookPage() {
@@ -105,8 +105,8 @@ export default function NewBookPage() {
         }
       }
       
-      const slug = await getUniqueSlug(payload.title);
-      await setDoc(doc(db, 'books', slug), payload);
+      const newId = await getNextBookId();
+      await setDoc(doc(db, 'books', newId), payload);
       
       router.push('/admin');
     } catch (error) {
