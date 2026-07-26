@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
-import { Search, Plus, Download, Edit2, Trash2, Settings } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2, Settings, LayoutGrid, List } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
 import styles from './page.module.css';
@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(true);
   const [predefinedLanguages, setPredefinedLanguages] = useState([]);
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'card'
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -233,7 +234,23 @@ export default function AdminPage() {
           <option value="restricted">สงวนสิทธิ์</option>
         </select>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div className={styles.viewToggle}>
+            <button 
+              className={`${styles.viewBtn} ${viewMode === 'table' ? styles.viewBtnActive : ''}`}
+              onClick={() => setViewMode('table')}
+              title="มุมมองตาราง"
+            >
+              <List size={18} />
+            </button>
+            <button 
+              className={`${styles.viewBtn} ${viewMode === 'card' ? styles.viewBtnActive : ''}`}
+              onClick={() => setViewMode('card')}
+              title="มุมมองการ์ด"
+            >
+              <LayoutGrid size={18} />
+            </button>
+          </div>
           <Link href="/admin/settings" className="btn" title="ตั้งค่าหมวดหมู่และภาษา">
             <Settings size={18} /> <span className="hide-mobile">ตั้งค่าระบบ</span>
           </Link>
@@ -243,7 +260,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className={styles.tableHeader}>
+      <div className={styles.tableHeader} style={{ display: viewMode === 'card' ? 'none' : '' }}>
         <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '1.1rem' }}>
           <input 
             type="checkbox" 
@@ -257,7 +274,19 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <ul className={`${styles.rows} stagger`}>
+      {viewMode === 'card' && (
+        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <input 
+            type="checkbox" 
+            className={styles.checkbox} 
+            checked={allSelected} 
+            onChange={(e) => handleSelectAll(e, filteredBooks)} 
+          />
+          <span style={{ color: 'var(--fg-3)', fontSize: '0.85rem' }}>เลือกทั้งหมด</span>
+        </div>
+      )}
+
+      <ul className={`${viewMode === 'card' ? styles.rowsCard : styles.rows} stagger`}>
         {filteredBooks.length === 0 && (
           <li style={{color: 'var(--fg-3)', padding: '2rem', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)'}}>
             {searchQuery || categoryFilter || statusFilter ? 'ไม่พบหนังสือที่ค้นหา' : 'ยังไม่มีหนังสือในระบบ'}
