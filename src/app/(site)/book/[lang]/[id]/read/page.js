@@ -1,18 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function PdfReaderPage({ params }) {
-  const { id } = params;
+  const { lang, id } = use(params);
   const [loading, setLoading] = useState(true);
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <Link href={`/book/${id}`} className={styles.backBtn}>
+        <Link href={`/book/${lang}/${id}`} className={styles.backBtn}>
           <ArrowLeft size={18} />
           <span>กลับไปหน้าหนังสือ</span>
         </Link>

@@ -11,6 +11,7 @@ import { useToast } from '@/context/ToastContext';
 import CreatableSelect from 'react-select/creatable';
 import { selectStyles } from '@/lib/selectStyles';
 import { getNextBookId } from '@/lib/sequentialId';
+import { predefinedCategories, predefinedLanguages } from '@/lib/predefinedOptions';
 import styles from './page.module.css';
 
 export default function NewBookPage() {
@@ -34,17 +35,45 @@ export default function NewBookPage() {
 
       try {
         const snap = await getDocs(collection(db, 'books'));
-        const opts = { author: new Set(), category: new Set(), publisher: new Set(), translator: new Set(), language: new Set(), format: new Set(), type: new Set() };
+        const opts = { author: new Set(), category: new Set(), publisher: new Set(), translator: new Set(), language: new Set(), type: new Set(), year: new Set() };
         snap.forEach(doc => {
           const d = doc.data();
           Object.keys(opts).forEach(k => {
-            if (d[k]) opts[k].add(d[k]);
+            if (d[k] !== undefined && d[k] !== null && d[k] !== '') {
+              opts[k].add(String(d[k]));
+            }
           });
         });
+        
         const formattedOpts = {};
         Object.keys(opts).forEach(k => {
           formattedOpts[k] = Array.from(opts[k]).sort().map(v => ({ value: v, label: v }));
         });
+        
+        // Merge Category
+        const dynamicCats = formattedOpts.category.filter(c => 
+          !predefinedCategories.some(g => g.options.some(o => o.value === c.value))
+        );
+        formattedOpts.category = [...predefinedCategories];
+        if (dynamicCats.length > 0) {
+          formattedOpts.category.push({ label: 'หมวดหมู่อื่นๆ', options: dynamicCats });
+        }
+        
+        // Merge Language
+        const dynamicLangs = formattedOpts.language.filter(l => 
+          !predefinedLanguages.some(p => p.value === l.value)
+        );
+        formattedOpts.language = [...predefinedLanguages, ...dynamicLangs];
+        
+        // Year options (last 100 years)
+        const currentYear = new Date().getFullYear();
+        const yearOptions = Array.from({length: 100}, (_, i) => {
+          const y = String(currentYear - i);
+          return { value: y, label: y };
+        });
+        const dynamicYears = formattedOpts.year.filter(y => !yearOptions.some(o => o.value === y.value));
+        formattedOpts.year = [...yearOptions, ...dynamicYears].sort((a,b) => Number(b.value) - Number(a.value));
+
         setOptions(formattedOpts);
       } catch (err) {
         console.error("Error fetching options:", err);

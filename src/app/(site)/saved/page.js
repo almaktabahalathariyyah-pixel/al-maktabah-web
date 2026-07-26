@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Bookmark } from 'lucide-react';
 import BookCover from '@/components/BookCover';
+import { getLangPath } from '@/lib/langPath';
 import styles from './page.module.css';
 
 export default function SavedPage() {
@@ -117,7 +118,7 @@ export default function SavedPage() {
       ) : (
         <div className={styles.grid}>
           {savedBooks.map((book) => (
-            <Link key={book.id} href={`/book/${book.id}`} className={`${styles.item} hover-card`}>
+            <Link key={book.id} href={`/book/${getLangPath(book.language)}/${book.id}`} className={`${styles.item} hover-card`}>
               <div className={styles.coverWrap}>
                 <BookCover src={book.coverUrl} title={book.title} author={book.author} />
               </div>

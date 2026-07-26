@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadBookFields } from '@/lib/bookFields';
+import { getLangPath } from '@/lib/langPath';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -185,8 +186,8 @@ export default function Home() {
                 return (
                   <Link
                     key={book.id}
-                    className={styles.item}
-                    href={`/book/${book.id}`}
+                    href={`/book/${getLangPath(book.language)}/${book.id}`}
+                    className={`${styles.item} hover-card`}
                   >
                     <div className={styles.coverWrap}>
                       <BookCover

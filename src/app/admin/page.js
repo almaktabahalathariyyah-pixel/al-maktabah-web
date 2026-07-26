@@ -8,6 +8,8 @@ import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch } from 
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
 import { Search, Plus, Download, Edit2, Trash2 } from 'lucide-react';
+import { getLangPath } from '@/lib/langPath';
+import { predefinedLanguages } from '@/lib/predefinedOptions';
 import styles from './page.module.css';
 
 export default function AdminPage() {
@@ -26,7 +28,7 @@ export default function AdminPage() {
   // Selection & Bulk Edit
   const [selectedBooks, setSelectedBooks] = useState(new Set());
   const [bulkEditModalOpen, setBulkEditModalOpen] = useState(false);
-  const [bulkValues, setBulkValues] = useState({ category: '', author: '', restricted: '' });
+  const [bulkValues, setBulkValues] = useState({ category: '', author: '', language: '', restricted: '' });
   const [submittingBulk, setSubmittingBulk] = useState(false);
 
   useEffect(() => {
@@ -99,6 +101,7 @@ export default function AdminPage() {
       const updates = {};
       if (bulkValues.category) updates.category = bulkValues.category;
       if (bulkValues.author) updates.author = bulkValues.author;
+      if (bulkValues.language) updates.language = bulkValues.language;
       if (bulkValues.restricted !== '') updates.restricted = bulkValues.restricted === 'true';
       
       if (Object.keys(updates).length === 0) {
@@ -115,7 +118,7 @@ export default function AdminPage() {
       setBooks(books.map(b => selectedBooks.has(b.id) ? { ...b, ...updates } : b));
       setSelectedBooks(new Set());
       setBulkEditModalOpen(false);
-      setBulkValues({ category: '', author: '', restricted: '' });
+      setBulkValues({ category: '', author: '', language: '', restricted: '' });
       toast.success('แก้ไขข้อมูลสำเร็จ');
     } catch (err) {
       console.error(err);
@@ -251,6 +254,9 @@ export default function AdminPage() {
               <Download size={14} /> {book.downloadCount || 0}
             </span>
             <div className={styles.rowActions}>
+              <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.view}>
+                <span className="tlink">ดู</span>
+              </Link>
               <Link href={`/admin/edit/${book.id}`} className={styles.edit}>
                 <span className="tlink">แก้ไข</span>
               </Link>
@@ -301,6 +307,18 @@ export default function AdminPage() {
                 >
                   <option value="">ปล่อยว่างเพื่อคงเดิม</option>
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
+
+              <label>
+                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>ภาษาใหม่</div>
+                <select 
+                  value={bulkValues.language} 
+                  onChange={e => setBulkValues({...bulkValues, language: e.target.value})}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
+                >
+                  <option value="">ปล่อยว่างเพื่อคงเดิม</option>
+                  {predefinedLanguages.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
                 </select>
               </label>
 

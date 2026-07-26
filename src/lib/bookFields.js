@@ -22,9 +22,8 @@ export const DEFAULT_FIELDS = [
   { key: 'type',       label: 'ประเภท',        type: 'select',   form: true, filter: true },
   { key: 'translator', label: 'ผู้แปล',         type: 'select',   form: true, filter: true },
   { key: 'publisher',  label: 'สำนักพิมพ์',    type: 'select',   form: true, filter: true },
-  { key: 'year',       label: 'ปีพิมพ์',        type: 'number',   form: true, filter: true },
+  { key: 'year',       label: 'ปีพิมพ์',        type: 'select',   form: true, filter: true },
   { key: 'pages',      label: 'จำนวนหน้า',     type: 'number',   form: true, filter: false },
-  { key: 'format',     label: 'รูปแบบไฟล์',    type: 'select',   form: true, filter: true },
   { key: 'language',   label: 'ภาษา',          type: 'select',   form: true, filter: true },
   { key: 'description',label: 'คำอธิบาย',      type: 'textarea', form: true, filter: false },
 ];
