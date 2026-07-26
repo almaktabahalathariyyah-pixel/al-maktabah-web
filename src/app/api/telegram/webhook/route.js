@@ -45,45 +45,7 @@ if (bot) {
     }
   });
 
-  // Handle document uploads (when admin uploads a PDF in group or private chat)
-  bot.on('document', async (ctx) => {
-    const document = ctx.message.document;
-    const caption = ctx.message.caption || '';
-    
-    // Simple parsing: First line is Title, Second is Author, Third is Category
-    const lines = caption.split('\n').map(l => l.trim()).filter(Boolean);
-    let title = lines[0] || document.file_name.replace(/\.[^/.]+$/, ""); // Remove extension
-    let author = lines[1] || '';
-    let category = lines[2] || 'ทั่วไป';
-
-    const fileSizeMB = (document.file_size / (1024 * 1024)).toFixed(2) + ' MB';
-    const extension = document.file_name.split('.').pop().toUpperCase();
-
-    try {
-      const payload = {
-        title,
-        author,
-        category,
-        telegramFileId: document.file_id,
-        format: extension,
-        size: fileSizeMB,
-        createdAt: new Date(),
-        restricted: false,
-        downloadCount: 0
-      };
-
-      const newId = await getNextBookId();
-      await setDoc(doc(db, 'books', newId), payload);
-      
-      await ctx.reply(`✅ บันทึกหนังสือขึ้นเว็บสำเร็จ!\n\n📕 ชื่อ: ${title}\n👤 ผู้แต่ง: ${author || '-'}\n📁 หมวดหมู่: ${category}\n\nลิงก์ระบบ: book_${newId}\n(สามารถเข้าไปแก้ไขรูปปกและข้อมูลเพิ่มเติมได้ในหน้าเว็บแอดมิน)`, {
-        reply_parameters: { message_id: ctx.message.message_id }
-      });
-
-    } catch (err) {
-      console.error('Error saving book:', err);
-      await ctx.reply('❌ เกิดข้อผิดพลาด ไม่สามารถบันทึกลงเว็บได้');
-    }
-  });
+  // (Removed document listener to prevent duplicate books when admin manually uploads files to Telegram)
 }
 
 export async function POST(req) {
