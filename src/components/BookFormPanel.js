@@ -660,22 +660,6 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                   </label>
                 </fieldset>
               </div>
-
-                <label className={styles.field}>
-                  <span className={styles.label}>อัปโหลดรูปปก (อัตโนมัติ)</span>
-                  <input type="file" accept="image/*" className={styles.input} onChange={handleImageUpload} disabled={uploadingImage} style={{ padding: '0.4rem' }} />
-                </label>
-                {uploadingImage && <p style={{ fontSize: '12px', color: 'var(--brand)', marginBottom: '0.5rem' }}>กำลังอัปโหลด...</p>}
-                
-                <div style={{ textAlign: 'center', margin: '0.5rem 0', color: 'var(--fg-3)', fontSize: '12px' }}>หรือวางลิงก์</div>
-
-                <label className={styles.field}>
-                  <span className={styles.label}>ลิงก์รูปปก</span>
-                  <input type="text" className={styles.input} placeholder="https://…" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} />
-                </label>
-
-                {note && <p className={styles.err}>{note}</p>}
-              </div>
             </form>
           )}
         </div>
