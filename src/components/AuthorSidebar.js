@@ -55,8 +55,10 @@ export default function AuthorSidebar({ authors, translators, selectedPerson, on
                     className={`${styles.nameBtn} ${selectedPerson === name ? styles.active : ''}`}
                     onClick={() => onSelect(name === selectedPerson ? '' : name)}
                   >
-                    <User size={12} style={{ marginRight: '0.4rem', opacity: 0.6 }} />
-                    {name}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <User size={12} style={{ opacity: 0.6 }} />
+                      {name}
+                    </span>
                   </button>
                 </li>
               ))
