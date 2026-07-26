@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
-import { Search, Plus, Download, Edit2, Trash2, Settings, LayoutGrid, List, UploadCloud } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2, Settings, LayoutGrid, List, UploadCloud, Filter } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
 import BookFormPanel from '@/components/BookFormPanel';
@@ -39,6 +39,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState(''); // 'all', 'public', 'restricted'
+  const [showFilters, setShowFilters] = useState(false);
 
   // Selection & Bulk Edit
   const [selectedBooks, setSelectedBooks] = useState(new Set());
@@ -239,37 +240,27 @@ export default function AdminPage() {
       </div>
 
       <div className={styles.filterBar}>
-        <div className={styles.searchWrap}>
-          <Search className={styles.searchIcon} size={18} />
-          <input 
-            type="text" 
-            placeholder="ค้นหาชื่อ หรือผู้แต่ง..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
-        
-        <select 
-          className={styles.filterSelect}
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-        >
-          <option value="">ทุกหมวดหมู่</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+        <div className={styles.filterTopRow}>
+          <div className={styles.searchWrap}>
+            <Search className={styles.searchIcon} size={18} />
+            <input 
+              type="text" 
+              placeholder="ค้นหาชื่อ หรือผู้แต่ง..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
+          
+          <button 
+            className={`btn ${showFilters ? 'btn-solid' : ''}`} 
+            onClick={() => setShowFilters(!showFilters)}
+            title="ตัวกรอง"
+          >
+            <Filter size={18} /> <span className={styles.hideMobile}>ตัวกรอง {(categoryFilter || statusFilter) && '•'}</span>
+          </button>
 
-        <select 
-          className={styles.filterSelect}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">ทุกสถานะ</option>
-          <option value="public">สาธารณะ</option>
-          <option value="restricted">สงวนสิทธิ์</option>
-        </select>
-
-        <div className={styles.actionButtons}>
+          <div className={styles.actionButtons}>
           <div className={styles.viewToggle}>
             <button 
               className={`${styles.viewBtn} ${viewMode === 'table' ? styles.viewBtnActive : ''}`}
@@ -299,6 +290,30 @@ export default function AdminPage() {
             <Plus size={18} /> <span className={styles.hideMobile}>เพิ่มหนังสือใหม่</span>
           </button>
         </div>
+        </div>
+
+        {showFilters && (
+          <div className={styles.filterBottomRow}>
+            <select 
+              className={styles.filterSelect}
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="">ทุกหมวดหมู่</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            <select 
+              className={styles.filterSelect}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">ทุกสถานะ</option>
+              <option value="public">สาธารณะ</option>
+              <option value="restricted">สงวนสิทธิ์</option>
+            </select>
+          </div>
+        )}
       </div>
 
       <div className={styles.tableHeader} style={{ display: viewMode === 'card' ? 'none' : '' }}>

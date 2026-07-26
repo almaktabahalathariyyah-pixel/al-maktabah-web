@@ -49,10 +49,26 @@
 /* ---------------- Filters ---------------- */
 .filterBar {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.filterTopRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
   align-items: center;
+}
+
+.filterBottomRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+  animation: fadeIn 0.2s var(--ease);
 }
 
 .searchWrap {
