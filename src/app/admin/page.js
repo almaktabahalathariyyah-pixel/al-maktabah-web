@@ -93,6 +93,26 @@ export default function AdminPage() {
     }
   };
 
+  const handleSingleDelete = async (id) => {
+    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบหนังสือเล่มนี้?')) return;
+    try {
+      await deleteDoc(doc(db, 'books', id));
+      setBooks(books.filter(b => b.id !== id));
+      
+      // If it was selected, remove it from selection
+      const newSelected = new Set(selectedBooks);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+        setSelectedBooks(newSelected);
+      }
+      
+      toast.success('ลบหนังสือสำเร็จ');
+    } catch (err) {
+      console.error(err);
+      toast.error('ลบไม่สำเร็จ');
+    }
+  };
+
   const handleBulkUpdate = async (e) => {
     e.preventDefault();
     setSubmittingBulk(true);
@@ -260,6 +280,14 @@ export default function AdminPage() {
               <Link href={`/admin/edit/${book.id}`} className={styles.edit}>
                 <span className="tlink">แก้ไข</span>
               </Link>
+              <button 
+                onClick={() => handleSingleDelete(book.id)} 
+                className={styles.delete} 
+                style={{ background: 'none', border: 'none', color: 'var(--hot)', cursor: 'pointer', padding: '0.4rem', borderRadius: 'var(--r-sm)' }}
+                title="ลบหนังสือ"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           </li>
         ))}
