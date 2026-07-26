@@ -168,6 +168,28 @@
   box-shadow: var(--shadow);
 }
 
+.dropzone {
+  border: 2px dashed var(--border);
+  padding: 2rem;
+  text-align: center;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  background: transparent;
+  transition: all var(--dur-fast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dropzone:hover {
+  border-color: var(--brand);
+  background: var(--bg-1);
+}
+.dragging {
+  border-color: var(--brand);
+  background: var(--bg-2);
+}
+
 .err {
   font-size: var(--t-small);
   color: var(--hot);

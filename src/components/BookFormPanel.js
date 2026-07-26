@@ -436,6 +436,12 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -453,7 +459,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           {loading || !fields ? (
             <div className={styles.loadingState}>กำลังโหลดข้อมูล...</div>
           ) : (
-            <form className={styles.formLayout} onSubmit={submit}>
+            <form className={styles.formLayout} onSubmit={submit} onKeyDown={handleKeyDown}>
               
               {/* 1. ข้อมูลทั่วไป (General Info) */}
               <fieldset className={styles.block}>
