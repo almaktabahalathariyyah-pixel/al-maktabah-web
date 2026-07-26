@@ -127,13 +127,47 @@ export default function AdminPage() {
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบหนังสือ ${selectedBooks.size} เล่มนี้?`)) return;
+  const deleteFromDrive = async (driveUrl) => {
+    if (!driveUrl) return;
     try {
-      const batch = writeBatch(db);
-      selectedBooks.forEach(id => {
-        batch.delete(doc(db, 'books', id));
+      const savedData = localStorage.getItem('googleDriveToken');
+      if (!savedData) return; // Skip if no token
+      
+      const { token, expiresAt } = JSON.parse(savedData);
+      if (Date.now() > expiresAt) return; // Skip if token expired
+      
+      let driveId = null;
+      const matchD = driveUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (matchD) driveId = matchD[1];
+      else {
+        const matchId = driveUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (matchId) driveId = matchId[1];
+      }
+      
+      if (!driveId) return;
+      
+      await fetch(`https://www.googleapis.com/drive/v3/files/${driveId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      console.log('Deleted file from Google Drive:', driveId);
+    } catch (e) {
+      console.error('Error deleting from Drive:', e);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบหนังสือ ${selectedBooks.size} เล่มนี้? (หากมีการเชื่อมต่อ Google Drive ระบบจะพยายามลบไฟล์ในไดรฟ์ด้วย)`)) return;
+    try {
+      toast.success('กำลังทยอยลบข้อมูล กรุณารอสักครู่...');
+      const batch = writeBatch(db);
+      for (const id of selectedBooks) {
+        const bookToDelete = books.find(b => b.id === id);
+        if (bookToDelete && bookToDelete.driveUrl) {
+          await deleteFromDrive(bookToDelete.driveUrl);
+        }
+        batch.delete(doc(db, 'books', id));
+      }
       await batch.commit();
       setBooks(books.filter(b => !selectedBooks.has(b.id)));
       setSelectedBooks(new Set());
@@ -147,6 +181,11 @@ export default function AdminPage() {
   const handleSingleDelete = async (id) => {
     if (!confirm('คุณแน่ใจหรือไม่ที่จะลบหนังสือเล่มนี้?')) return;
     try {
+      const bookToDelete = books.find(b => b.id === id);
+      if (bookToDelete && bookToDelete.driveUrl) {
+        await deleteFromDrive(bookToDelete.driveUrl);
+      }
+
       await deleteDoc(doc(db, 'books', id));
       setBooks(books.filter(b => b.id !== id));
       
