@@ -365,9 +365,19 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
+    const inputEl = e.target; // save reference before async
     if (!file) return;
 
+    // 1. Show immediate preview using FileReader (instant feedback)
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setCoverUrl(ev.target.result); // data:image/... preview
+    };
+    reader.readAsDataURL(file);
+
+    // 2. Upload to Telegram in the background
     setUploadingImage(true);
+    setNote('');
     const formData = new FormData();
     formData.append('image', file);
 
@@ -384,17 +394,19 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
       const data = await res.json();
 
       if (data.success) {
-        setCoverUrl(data.url);
+        setCoverUrl(data.url); // replace preview with permanent Telegram URL
         toast.success('อัปโหลดรูปปกสำเร็จ');
       } else {
-        throw new Error(data.error || 'Upload failed');
+        // Keep the preview image but show warning
+        setNote('อัปโหลดไม่สำเร็จ แต่รูปตัวอย่างยังแสดงอยู่ — ลองวางลิงก์เองด้านล่าง');
+        console.error('Upload cover failed:', data.error);
       }
     } catch (err) {
-      console.error(err);
-      toast.error('อัปโหลดรูปปกไม่สำเร็จ: ' + err.message);
+      console.error('Upload cover error:', err);
+      setNote('อัปโหลดไม่สำเร็จ — ลองวางลิงก์รูปปกด้านล่างแทน');
     } finally {
       setUploadingImage(false);
-      e.target.value = '';
+      try { inputEl.value = ''; } catch (_) { /* ignore */ }
     }
   };
 
@@ -407,7 +419,9 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     setSaving(true);
     setNote('');
     try {
-      const payload = { ...values, coverUrl, telegramUrl, telegramFileId, driveUrl, restricted };
+      // Don't save base64 data URLs to Firestore (temporary preview only)
+      const finalCoverUrl = coverUrl.startsWith('data:') ? '' : coverUrl;
+      const payload = { ...values, coverUrl: finalCoverUrl, telegramUrl, telegramFileId, driveUrl, restricted };
       
       for (const field of fields) {
         if (field.type === 'number' && payload[field.key] !== undefined) {
