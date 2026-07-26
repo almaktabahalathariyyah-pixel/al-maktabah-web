@@ -11,7 +11,7 @@ import { useToast } from '@/context/ToastContext';
 import CreatableSelect from 'react-select/creatable';
 import { selectStyles } from '@/lib/selectStyles';
 import { getNextBookId } from '@/lib/sequentialId';
-import { predefinedCategories, predefinedLanguages } from '@/lib/predefinedOptions';
+import { getDropdownSettings } from '@/lib/settings';
 import styles from './page.module.css';
 
 export default function NewBookPage() {
@@ -34,7 +34,12 @@ export default function NewBookPage() {
       setFields(f.filter((x) => x.form));
 
       try {
-        const snap = await getDocs(collection(db, 'books'));
+        const [settings, snap] = await Promise.all([
+          getDropdownSettings(),
+          getDocs(collection(db, 'books'))
+        ]);
+        const { categories: predefinedCategories, languages: predefinedLanguages } = settings;
+
         const opts = { author: new Set(), category: new Set(), publisher: new Set(), translator: new Set(), language: new Set(), type: new Set(), year: new Set() };
         snap.forEach(doc => {
           const d = doc.data();

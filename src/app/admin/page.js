@@ -7,9 +7,9 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
-import { Search, Plus, Download, Edit2, Trash2 } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2, Settings } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
-import { predefinedLanguages } from '@/lib/predefinedOptions';
+import { getDropdownSettings } from '@/lib/settings';
 import styles from './page.module.css';
 
 export default function AdminPage() {
@@ -19,6 +19,7 @@ export default function AdminPage() {
   
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(true);
+  const [predefinedLanguages, setPredefinedLanguages] = useState([]);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,12 +43,17 @@ export default function AdminPage() {
       try {
         const booksRef = collection(db, 'books');
         const q = query(booksRef, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
+        const [querySnapshot, settings] = await Promise.all([
+          getDocs(q),
+          getDropdownSettings()
+        ]);
+        
         const fetchedBooks = [];
         querySnapshot.forEach((doc) => {
           fetchedBooks.push({ id: doc.id, ...doc.data() });
         });
         setBooks(fetchedBooks);
+        setPredefinedLanguages(settings.languages || []);
       } catch (error) {
         console.error("Error fetching books:", error);
         toast.error('โหลดข้อมูลหนังสือไม่สำเร็จ');
@@ -227,9 +233,14 @@ export default function AdminPage() {
           <option value="restricted">สงวนสิทธิ์</option>
         </select>
 
-        <Link href="/admin/new" className="btn btn-solid" style={{ marginLeft: 'auto' }}>
-          <Plus size={18} style={{ marginRight: '0.25rem' }} /> เพิ่มหนังสือใหม่
-        </Link>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+          <Link href="/admin/settings" className="btn" title="ตั้งค่าหมวดหมู่และภาษา">
+            <Settings size={18} /> <span className="hide-mobile">ตั้งค่าระบบ</span>
+          </Link>
+          <Link href="/admin/new" className="btn btn-solid">
+            <Plus size={18} /> <span className="hide-mobile">เพิ่มหนังสือใหม่</span>
+          </Link>
+        </div>
       </div>
 
       <div className={styles.tableHeader}>

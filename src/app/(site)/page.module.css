@@ -297,5 +297,9 @@
 }
 
 @media (max-width: 560px) {
-  .barTools { flex: 1 1 100%; }
+  .bar { padding: 1.5rem 0 1rem; flex-direction: column; align-items: flex-start; }
+  .barTools { flex: 1 1 100%; flex-direction: column; align-items: stretch; width: 100%; }
+  .searchWrap { max-width: 100%; }
+  .railToggle { justify-content: center; width: 100%; }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem 0.75rem; }
 }
