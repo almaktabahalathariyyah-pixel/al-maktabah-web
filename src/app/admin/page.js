@@ -12,9 +12,8 @@ import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
 import BookFormPanel from '@/components/BookFormPanel';
 import BulkUploadPanel from '@/components/BulkUploadPanel';
-import SettingsPanel from '@/components/SettingsPanel';
-import FieldsPanel from '@/components/FieldsPanel';
 import styles from './page.module.css';
+import { useAdmin } from '@/context/AdminContext';
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -31,9 +30,8 @@ export default function AdminPage() {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [editingBookId, setEditingBookId] = useState(null);
   
-  // Settings Panel State
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isFieldsOpen, setIsFieldsOpen] = useState(false);
+  // Admin Context for Sidebar Auto-Collapse
+  const { setIsSidebarOpen } = useAdmin();
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,6 +135,10 @@ export default function AdminPage() {
   const handleOpenNewBook = () => {
     setEditingBookId(null);
     setIsFormOpen(true);
+    // Auto-collapse sidebar to maximize workspace
+    if (window.innerWidth > 900) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const handleOpenEditBook = (id) => {
@@ -277,12 +279,6 @@ export default function AdminPage() {
               <LayoutGrid size={18} />
             </button>
           </div>
-          <button onClick={() => setIsFieldsOpen(true)} className="btn" title="ตั้งค่าฟิลด์แบบฟอร์ม">
-            <Settings size={18} /> <span className={styles.hideMobile}>ตั้งค่าฟิลด์</span>
-          </button>
-          <button onClick={() => setIsSettingsOpen(true)} className="btn" title="ตั้งค่าหมวดหมู่และภาษา">
-            <Settings size={18} /> <span className={styles.hideMobile}>ตั้งค่าหมวดหมู่</span>
-          </button>
           <button onClick={() => setIsBulkUploadOpen(true)} className="btn btn-solid" style={{ background: 'var(--hot)', borderColor: 'var(--hot)' }}>
             <UploadCloud size={18} /> <span className={styles.hideMobile}>อัปโหลดหลายเล่ม</span>
           </button>
@@ -483,16 +479,6 @@ export default function AdminPage() {
         isOpen={isBulkUploadOpen}
         onClose={() => setIsBulkUploadOpen(false)}
         onSaved={handleBookSaved}
-      />
-
-      <SettingsPanel
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
-
-      <FieldsPanel
-        isOpen={isFieldsOpen}
-        onClose={() => setIsFieldsOpen(false)}
       />
     </div>
   );
