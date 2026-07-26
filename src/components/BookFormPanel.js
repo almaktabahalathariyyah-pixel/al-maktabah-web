@@ -372,24 +372,26 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     formData.append('image', file);
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
-      if (!apiKey) throw new Error('ไม่พบ API Key ของ ImgBB');
-
-      const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+      const idToken = await user.getIdToken();
+      
+      const res = await fetch('/api/admin/upload-cover', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        },
         body: formData,
       });
       const data = await res.json();
 
       if (data.success) {
-        setCoverUrl(data.data.url);
-        toast.success('อัปโหลดรูปภาพสำเร็จ');
+        setCoverUrl(data.url);
+        toast.success('อัปโหลดรูปปกสำเร็จ');
       } else {
-        throw new Error(data.error?.message || 'Upload failed');
+        throw new Error(data.error || 'Upload failed');
       }
     } catch (err) {
       console.error(err);
-      toast.error('อัปโหลดรูปภาพไม่สำเร็จ: ' + err.message);
+      toast.error('อัปโหลดรูปปกไม่สำเร็จ: ' + err.message);
     } finally {
       setUploadingImage(false);
       e.target.value = '';
@@ -597,7 +599,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                 </div>
 
                 <label className={styles.field}>
-                  <span className={styles.label}>อัปโหลดรูปปก (ImgBB)</span>
+                  <span className={styles.label}>อัปโหลดรูปปก (อัตโนมัติ)</span>
                   <input type="file" accept="image/*" className={styles.input} onChange={handleImageUpload} disabled={uploadingImage} style={{ padding: '0.4rem' }} />
                 </label>
                 {uploadingImage && <p style={{ fontSize: '12px', color: 'var(--brand)', marginBottom: '0.5rem' }}>กำลังอัปโหลด...</p>}
