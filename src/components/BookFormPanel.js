@@ -108,6 +108,12 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  // Stable refs for callbacks used inside useEffect
+  const toastRef = useRef(toast);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { toastRef.current = toast; }, [toast]);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
   // Load data when opened
   useEffect(() => {
     if (!isOpen) return;
@@ -176,8 +182,8 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
             }
             setValues(vals);
           } else if (isMounted) {
-            toast.error('ไม่พบข้อมูลหนังสือ');
-            onClose();
+            toastRef.current.error('ไม่พบข้อมูลหนังสือ');
+            onCloseRef.current();
           }
         } else {
           setValues({});
@@ -193,7 +199,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         }
       } catch (err) {
         console.error("Error fetching data:", err);
-        if (isMounted) toast.error('เกิดข้อผิดพลาดในการโหลดข้อมูล');
+        if (isMounted) toastRef.current.error('เกิดข้อผิดพลาดในการโหลดข้อมูล');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -201,7 +207,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     
     fetchData();
     return () => { isMounted = false; };
-  }, [isOpen, bookId, onClose, toast]);
+  }, [isOpen, bookId]);
 
   const set = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
 
