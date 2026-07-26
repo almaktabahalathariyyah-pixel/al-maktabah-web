@@ -344,24 +344,28 @@
 
 /* ---------------- Filter Styles ---------------- */
 .filterBottomRow {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1.25rem;
   width: 100%;
   margin-top: 1rem;
-  padding: 1.5rem;
-  background: var(--surface-2);
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 1.25rem;
+  background: transparent;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.filterBottomRow > div {
+  flex: 1 1 140px;
+  max-width: 200px;
 }
 
 .filterSelect {
   width: 100%;
   padding: 0.6rem 1rem;
-  border-radius: var(--r-md);
+  border-radius: 4px;
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: transparent;
   color: var(--fg);
   font-family: inherit;
   font-size: 0.85rem;
