@@ -280,10 +280,10 @@ export default function AdminPage() {
             </button>
           </div>
           <button onClick={() => setIsBulkUploadOpen(true)} className="btn btn-solid" style={{ background: 'var(--hot)', borderColor: 'var(--hot)' }}>
-            <UploadCloud size={18} /> <span className={styles.hideMobile}>อัปโหลดหลายเล่ม</span>
+            <UploadCloud size={18} /> <span>อัปโหลดหลายเล่ม</span>
           </button>
           <button onClick={handleOpenNewBook} className="btn btn-solid">
-            <Plus size={18} /> <span className={styles.hideMobile}>เพิ่มหนังสือใหม่</span>
+            <Plus size={18} /> <span>เพิ่มหนังสือ</span>
           </button>
         </div>
         </div>

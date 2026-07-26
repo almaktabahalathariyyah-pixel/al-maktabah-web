@@ -369,14 +369,31 @@
 @media (max-width: 600px) {
   .hideMobile { display: none; }
   
+  .filterTopRow {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .searchWrap {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
   .actionButtons {
     display: flex;
-    flex-wrap: wrap;
     gap: 0.5rem;
     width: 100%;
     margin-left: 0;
     align-items: center;
     justify-content: flex-start;
+  }
+
+  .actionButtons .btn {
+    flex: 1;
+    justify-content: center;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8rem;
+    min-width: 0;
   }
 }
 
