@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { Search, Plus, Download, Edit2, Trash2, Settings, LayoutGrid, List } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
+import BookFormPanel from '@/components/BookFormPanel';
 import styles from './page.module.css';
 
 export default function AdminPage() {
@@ -21,6 +22,10 @@ export default function AdminPage() {
   const [loadingBooks, setLoadingBooks] = useState(true);
   const [predefinedLanguages, setPredefinedLanguages] = useState([]);
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'card'
+
+  // Form Panel State
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingBookId, setEditingBookId] = useState(null);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,6 +123,28 @@ export default function AdminPage() {
       console.error(err);
       toast.error('ลบไม่สำเร็จ');
     }
+  };
+
+  const handleOpenNewBook = () => {
+    setEditingBookId(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEditBook = (id) => {
+    setEditingBookId(id);
+    setIsFormOpen(true);
+  };
+
+  const handleBookSaved = (savedBook) => {
+    setBooks(prev => {
+      const idx = prev.findIndex(b => b.id === savedBook.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...next[idx], ...savedBook };
+        return next;
+      }
+      return [savedBook, ...prev];
+    });
   };
 
   const handleBulkUpdate = async (e) => {
@@ -257,9 +284,9 @@ export default function AdminPage() {
           <Link href="/admin/settings" className="btn" title="ตั้งค่าหมวดหมู่และภาษา">
             <Settings size={18} /> <span className="hide-mobile">ตั้งค่าหมวดหมู่</span>
           </Link>
-          <Link href="/admin/new" className="btn btn-solid">
+          <button onClick={handleOpenNewBook} className="btn btn-solid">
             <Plus size={18} /> <span className="hide-mobile">เพิ่มหนังสือใหม่</span>
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -320,9 +347,9 @@ export default function AdminPage() {
               <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.view}>
                 <span className="tlink">ดู</span>
               </Link>
-              <Link href={`/admin/edit/${book.id}`} className={styles.edit}>
+              <button onClick={() => handleOpenEditBook(book.id)} className={styles.edit} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem' }}>
                 <span className="tlink">แก้ไข</span>
-              </Link>
+              </button>
               <button 
                 onClick={() => handleSingleDelete(book.id)} 
                 className={styles.delete} 
@@ -416,6 +443,14 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Slide-over Form Panel */}
+      <BookFormPanel 
+        isOpen={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
+        bookId={editingBookId} 
+        onSaved={handleBookSaved}
+      />
     </div>
   );
 }
