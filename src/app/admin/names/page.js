@@ -160,18 +160,7 @@ export default function NamesPage() {
         )}
       </div>
       
-      {/* Fixed Save Button for Mobile */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '1rem', background: 'var(--surface-2)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center', zIndex: 10 }}>
-        <button 
-          className="btn btn-solid" 
-          onClick={handleSave} 
-          disabled={saving}
-          style={{ width: '100%', maxWidth: '400px', background: 'var(--accent)', borderColor: 'var(--accent)', fontSize: '1rem', padding: '0.75rem' }}
-        >
-          <Save size={18} /> 
-          <span>{saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}</span>
-        </button>
-      </div>
+
     </div>
   );
 }
