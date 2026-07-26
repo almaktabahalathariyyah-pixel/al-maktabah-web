@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Lock, SlidersHorizontal, X } from 'lucide-react';
+import { Search, SlidersHorizontal, X } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import FilterRail from '@/components/FilterRail';
 import { useAuth } from '@/context/AuthContext';
@@ -42,9 +42,13 @@ export default function Home() {
     load();
   }, []);
 
+  const visibleBooks = useMemo(() => {
+    return books.filter((book) => !book.restricted || approved);
+  }, [books, approved]);
+
   const results = useMemo(() => {
     const q = queryText.trim().toLowerCase();
-    return books.filter((book) => {
+    return visibleBooks.filter((book) => {
       for (const [key, value] of Object.entries(filters)) {
         if (!value) continue;
         if (String(book[key] ?? '').trim() !== value) return false;
@@ -54,10 +58,18 @@ export default function Home() {
         .toLowerCase()
         .includes(q);
     });
-  }, [books, filters, queryText]);
+  }, [visibleBooks, filters, queryText]);
 
   const activeCount = Object.values(filters).filter(Boolean).length;
   const narrowed = activeCount > 0 || queryText.trim() !== '';
+
+  const uniqueCategories = useMemo(() => {
+    const cats = new Set();
+    visibleBooks.forEach(b => {
+      if (b.category) cats.add(b.category);
+    });
+    return Array.from(cats).sort();
+  }, [visibleBooks]);
 
   const setFilter = (key, value) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -65,6 +77,15 @@ export default function Home() {
 
   return (
     <div className="container">
+      {/* ---------------- Hero Section ---------------- */}
+      <section className={styles.hero}>
+        <div className={styles.heroContent}>
+          <h1 className={styles.heroTitle}>คลังหนังสืออิสลาม</h1>
+          <p className={styles.heroSub}>รวบรวมตำราคลาสสิกไว้ในที่เดียว ค้นหาง่าย ดาวน์โหลดได้ทันที</p>
+        </div>
+        <div className={styles.heroGlow} aria-hidden />
+      </section>
+
       {/* ---------------- Compact header: the shelf is the page ---------------- */}
       <header className={styles.bar}>
         <div className={styles.barText}>
@@ -73,8 +94,8 @@ export default function Home() {
             {loading
               ? 'กำลังโหลด…'
               : narrowed
-                ? `พบ ${results.length} จาก ${books.length} เล่ม`
-                : `${books.length} เล่ม`}
+                ? `พบ ${results.length} จาก ${visibleBooks.length} เล่ม`
+                : `${visibleBooks.length} เล่ม`}
           </p>
         </div>
 
@@ -110,12 +131,20 @@ export default function Home() {
         </div>
       </header>
 
+      {/* ---------------- Quick Category Chips ---------------- */}
+      <div className={styles.chips}>
+        <button className={`chip ${!filters.category ? 'chip-on' : ''}`} onClick={() => setFilter('category', '')}>ทั้งหมด</button>
+        {uniqueCategories.map(cat => (
+          <button key={cat} className={`chip ${filters.category === cat ? 'chip-on' : ''}`} onClick={() => setFilter('category', cat)}>{cat}</button>
+        ))}
+      </div>
+
       <div className={styles.layout}>
         {/* ---------------- Filters ---------------- */}
         <div className={`${styles.railWrap} ${railOpen ? styles.railOpen : ''}`}>
           <FilterRail
             fields={fields}
-            books={books}
+            books={visibleBooks}
             active={filters}
             onChange={setFilter}
             onReset={resetAll}
@@ -127,7 +156,7 @@ export default function Home() {
           {loading ? (
             <section className={styles.grid} aria-hidden>
               {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className={styles.skeleton}>
+                <div key={i} className={`${styles.skeleton} shimmer`}>
                   <div className={styles.skeletonCover} />
                   <div className={styles.skeletonLine} />
                   <div className={`${styles.skeletonLine} ${styles.skeletonShort}`} />
@@ -137,14 +166,14 @@ export default function Home() {
           ) : results.length === 0 ? (
             <div className={styles.emptyBlock}>
               <p className={styles.emptyLead}>
-                {books.length === 0 ? 'ยังไม่มีหนังสือในคลัง' : 'ไม่พบหนังสือที่ตรงกับเงื่อนไข'}
+                {visibleBooks.length === 0 ? 'ยังไม่มีหนังสือในคลัง' : 'ไม่พบหนังสือที่ตรงกับเงื่อนไข'}
               </p>
               <p className={styles.emptyBody}>
-                {books.length === 0
+                {visibleBooks.length === 0
                   ? 'เริ่มต้นด้วยการเพิ่มเล่มแรก หรือนำเข้าทั้งหมดจาก Telegram ในครั้งเดียว'
                   : 'ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองบางตัวออก'}
               </p>
-              {books.length === 0 ? (
+              {visibleBooks.length === 0 ? (
                 <Link href="/admin" className="btn">เพิ่มหนังสือ</Link>
               ) : (
                 <button className="btn" onClick={resetAll}>ล้างทั้งหมด</button>
@@ -153,15 +182,11 @@ export default function Home() {
           ) : (
             <section className={`${styles.grid} stagger`}>
               {results.map((book) => {
-                const sealed = book.restricted && !approved;
-                const Wrapper = sealed ? 'div' : Link;
-                const props = sealed ? {} : { href: `/book/${book.id}` };
-
                 return (
-                  <Wrapper
+                  <Link
                     key={book.id}
-                    className={`${styles.item} ${sealed ? styles.sealed : ''}`}
-                    {...props}
+                    className={styles.item}
+                    href={`/book/${book.id}`}
                   >
                     <div className={styles.coverWrap}>
                       <BookCover
@@ -169,21 +194,13 @@ export default function Home() {
                         title={book.title}
                         author={book.author}
                       />
-                      {sealed && (
-                        <>
-                          <span className={styles.scrim} />
-                          <span className={styles.lockTag}>
-                            <Lock size={12} /> ต้องขอสิทธิ์
-                          </span>
-                        </>
-                      )}
                     </div>
 
                     <div className={styles.meta}>
                       <h3 className={styles.bookTitle}>{book.title}</h3>
                       <p className={styles.author}>{book.author}</p>
                     </div>
-                  </Wrapper>
+                  </Link>
                 );
               })}
             </section>

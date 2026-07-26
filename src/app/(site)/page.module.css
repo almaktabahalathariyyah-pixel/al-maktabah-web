@@ -1,3 +1,46 @@
+/* ---------------- Hero Section ---------------- */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(2.5rem, 5vw, 4rem) 2rem;
+  margin-top: 1.5rem;
+  border-radius: var(--r-xl);
+  background: linear-gradient(135deg, #064e3b, #022c22);
+  color: #fff;
+}
+.heroContent {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+}
+.heroTitle {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(to right, #fff, #a7f3d0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.heroSub {
+  font-size: var(--t-lede);
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+}
+.heroGlow {
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: var(--accent);
+  filter: blur(120px);
+  opacity: 0.15;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
 /* ---------------- Header bar ---------------- */
 .bar {
   display: flex;
@@ -100,6 +143,17 @@
   font-weight: 700;
 }
 
+/* ---------------- Chips ---------------- */
+.chips {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  scrollbar-width: none; /* Hide scrollbar for cleaner look */
+}
+.chips::-webkit-scrollbar { display: none; }
+
 /* ---------------- Layout: rail + shelf ---------------- */
 .layout {
   display: grid;
@@ -127,7 +181,7 @@
 }
 
 .item { display: block; }
-.sealed { cursor: default; }
+
 
 .coverWrap {
   position: relative;
@@ -136,37 +190,14 @@
   margin-bottom: 0.8rem;
   transition: transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease);
 }
-.item:not(.sealed):hover .coverWrap {
+.item:hover .coverWrap {
   transform: translateY(-6px);
-  box-shadow: var(--shadow-lg), 0 0 0 2px var(--accent-glow);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--accent-glow), 0 0 16px var(--accent-dim);
 }
-.item:not(.sealed):active .coverWrap { transform: translateY(-2px) scale(0.99); }
-.item:not(.sealed):hover :global(img) { transform: scale(1.06); }
+.item:active .coverWrap { transform: translateY(-2px) scale(0.99); }
+.item:hover :global(img) { transform: scale(1.06); }
 
-.scrim {
-  position: absolute;
-  inset: 0;
-  background: rgba(6, 9, 8, 0.62);
-  backdrop-filter: blur(1.5px);
-  pointer-events: none;
-}
-.lockTag {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: var(--r-pill);
-  background: var(--hot-dim);
-  color: var(--hot);
-  font-size: var(--t-micro);
-  font-weight: 600;
-  white-space: nowrap;
-  pointer-events: none;
-}
+
 
 .meta { display: flex; flex-direction: column; }
 
@@ -184,7 +215,7 @@
   overflow: hidden;
   transition: color var(--dur) var(--ease);
 }
-.item:not(.sealed):hover .bookTitle { color: var(--accent); }
+.item:hover .bookTitle { color: var(--accent); }
 
 .author {
   font-family: var(--text);
@@ -225,10 +256,14 @@
 }
 
 /* ---------------- Skeletons ---------------- */
-.skeleton { animation: pulse 1.4s var(--ease) infinite; }
+.skeleton {
+  border-radius: var(--r-md);
+  padding: 0.5rem;
+  margin: -0.5rem;
+}
 .skeletonCover {
   aspect-ratio: 2 / 3;
-  background: var(--surface-2);
+  background: transparent;
   border-radius: var(--r-md);
   margin-bottom: 0.8rem;
 }

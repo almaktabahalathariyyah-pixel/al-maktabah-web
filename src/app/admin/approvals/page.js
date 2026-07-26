@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { Check, X, ExternalLink, RotateCcw } from 'lucide-react';
 import { db } from '@/lib/firebase';
+import { useToast } from '@/context/ToastContext';
 import styles from './page.module.css';
 
 const TABS = [
@@ -17,6 +18,7 @@ export default function ApprovalsPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('pending');
   const [busy, setBusy] = useState(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const load = async () => {
@@ -49,9 +51,10 @@ export default function ApprovalsPage() {
             : u
         )
       );
+      toast.success('อัปเดตสถานะสำเร็จ');
     } catch (error) {
       console.error(error);
-      alert('อัปเดตสถานะไม่สำเร็จ');
+      toast.error('อัปเดตสถานะไม่สำเร็จ');
     } finally {
       setBusy(null);
     }
@@ -66,7 +69,7 @@ export default function ApprovalsPage() {
       <header className={styles.header}>
         <h1 className={styles.title}>อนุมัติสมาชิก</h1>
         <p className={styles.sub}>
-          ตรวจสอบตัวตนจากลิงก์โปรไฟล์ก่อนปล่อยหนังสือที่สงวนสิทธิ์ให้เข้าถึง
+          จัดการสิทธิ์การเข้าถึงของสมาชิก
         </p>
       </header>
 

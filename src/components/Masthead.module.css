@@ -75,14 +75,67 @@
   place-items: center;
 }
 
-/* ---------- Drawer ---------- */
-.drawer {
-  display: none;
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height var(--dur) var(--ease);
+/* ---------- User Menu & Dropdown ---------- */
+.userMenu { position: relative; }
+.avatarBtn { display: flex; align-items: center; justify-content: center; border-radius: var(--r-pill); overflow: hidden; }
+.avatar { width: 34px; height: 34px; border-radius: var(--r-pill); object-fit: cover; }
+.avatarFallback { width: 34px; height: 34px; border-radius: var(--r-pill); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 600; font-size: 1rem; }
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 0.5rem;
+  z-index: 60;
+  animation: slideInUp var(--dur) var(--ease) forwards;
 }
-.drawerOpen { max-height: 340px; border-top: 1px solid var(--border); }
+.dropdownInfo { padding: 0.5rem 0.75rem; }
+.dropdownName { font-weight: 600; color: var(--fg); font-size: var(--t-small); }
+.dropdownEmail { font-size: var(--t-micro); color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dropdownDivider { height: 1px; background: var(--border); margin: 0.5rem 0; }
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--r-sm);
+  font-size: var(--t-small);
+  color: var(--fg-2);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.dropdownItem:hover { background: var(--surface-2); color: var(--fg); }
+
+/* ---------- Drawer ---------- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99;
+  animation: fadeIn var(--dur) var(--ease);
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(320px, 85vw);
+  background: var(--surface);
+  z-index: 100;
+  transform: translateX(100%);
+  transition: transform var(--dur) var(--ease);
+  box-shadow: var(--shadow-lg);
+  overflow-y: auto;
+}
+.drawerOpen { transform: translateX(0); }
+.drawerHeader { display: flex; justify-content: flex-end; padding: 1rem; }
+.drawerClose { width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--r-pill); background: var(--surface-2); color: var(--fg); }
 .drawerLink {
   display: block;
   padding: 0.85rem 0;

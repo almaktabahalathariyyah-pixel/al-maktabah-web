@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   UserCheck,
   Upload,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import styles from './AdminShell.module.css';
@@ -20,6 +21,7 @@ const ADMIN_NAV = [
   { label: 'อนุมัติสมาชิก', href: '/admin/approvals', icon: UserCheck },
   { label: 'นำเข้า', href: '/admin/import', icon: Upload },
   { label: 'ตั้งค่าฟอร์ม', href: '/admin/fields', icon: SlidersHorizontal },
+  { label: 'ตั้งค่า', href: '/admin/settings', icon: Settings },
 ];
 
 /**

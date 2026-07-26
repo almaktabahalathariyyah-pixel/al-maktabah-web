@@ -9,7 +9,7 @@ import BookCover from '@/components/BookCover';
 import styles from './page.module.css';
 
 export default function SavedPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, approved, loading: authLoading } = useAuth();
   const [savedBooks, setSavedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,7 +44,7 @@ export default function SavedPage() {
             })
           );
           
-          setSavedBooks(booksData.filter(Boolean));
+          setSavedBooks(booksData.filter(b => b && (!b.restricted || approved)));
         }
       } catch (error) {
         console.error("Error fetching saved books:", error);
@@ -56,16 +56,33 @@ export default function SavedPage() {
     if (!authLoading) {
       fetchSavedBooks();
     }
-  }, [user, authLoading]);
+  }, [user, approved, authLoading]);
 
   if (authLoading || loading) {
-    return <div className="container" style={{paddingTop: '4rem'}}>กำลังโหลดข้อมูล...</div>;
+    return (
+      <div className="container">
+        <header className={`${styles.header} rise`}>
+          <p className="eyebrow">ชั้นหนังสือของคุณ</p>
+          <h1 className={styles.title}>บันทึกไว้</h1>
+        </header>
+        <div className={styles.grid}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className={`${styles.skeleton} shimmer`}>
+              <div className={styles.skeletonCover} />
+              <div className={styles.skeletonLine} />
+              <div className={`${styles.skeletonLine} ${styles.skeletonShort}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
     return (
       <div className="container">
         <div className={styles.empty}>
+          <div className={styles.emptyIcon}><Bookmark size={24} /></div>
           <p className={styles.emptyLead}>กรุณาเข้าสู่ระบบ</p>
           <p className={styles.emptyBody}>
             คุณต้องเข้าสู่ระบบก่อนเพื่อดูหนังสือที่บันทึกไว้
@@ -87,6 +104,7 @@ export default function SavedPage() {
 
       {savedBooks.length === 0 ? (
         <div className={styles.empty}>
+          <div className={styles.emptyIcon}><Bookmark size={24} /></div>
           <p className={styles.emptyLead}>ยังไม่มีหนังสือที่บันทึกไว้</p>
           <p className={styles.emptyBody}>
             คุณสามารถกดบันทึกหนังสือได้ที่หน้ารายละเอียดหนังสือ เพื่อเก็บไว้อ่านภายหลัง

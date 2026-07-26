@@ -1,0 +1,174 @@
+.container {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: var(--display);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+}
+
+.sectionHeader {
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.sectionDesc {
+  font-size: var(--t-small);
+  color: var(--fg-2);
+}
+
+.form {
+  background: var(--surface-2);
+  padding: 1.5rem;
+  border-radius: var(--r-md);
+  margin-bottom: 2rem;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .formGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  font-size: var(--t-micro);
+  font-weight: 500;
+  color: var(--fg-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--t-small);
+  transition: border-color var(--dur-fast);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition: all var(--dur-fast);
+}
+
+@media (min-width: 768px) {
+  .card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.inactive {
+  opacity: 0.6;
+}
+
+.cardInfo {
+  flex: 1;
+}
+
+.cardTitle {
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: var(--t-micro);
+  color: var(--fg-2);
+  margin-bottom: 0.5rem;
+}
+
+.urlDisplay {
+  font-family: monospace;
+  font-size: var(--t-small);
+  background: var(--surface);
+  padding: 0.5rem;
+  border-radius: var(--r-sm);
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.deleteBtn {
+  color: var(--hot);
+  border-color: var(--hot);
+}
+
+.deleteBtn:hover {
+  background: var(--hot);
+  color: white;
+}
+
+.empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+}

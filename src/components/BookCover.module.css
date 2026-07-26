@@ -23,30 +23,58 @@
   justify-content: flex-end;
   gap: 0.4rem;
   padding: 1rem 0.9rem;
-  background:
-    radial-gradient(120% 80% at 20% 0%, var(--surface-3), var(--surface-2) 70%);
-  border: 1px solid var(--border);
   border-radius: var(--r-md);
+  position: relative;
+  overflow: hidden;
 }
+
+.fallback::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    rgba(255,255,255,0.03) 8px,
+    rgba(255,255,255,0.03) 16px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Fallback content needs z-index to appear above pattern */
+.fallbackTitle, .fallbackRule, .fallbackAuthor { position: relative; z-index: 2; }
+
+/* Color variants */
+.emerald { background: linear-gradient(135deg, #064e3b, #10b981); }
+.indigo { background: linear-gradient(135deg, #312e81, #6366f1); }
+.amber { background: linear-gradient(135deg, #78350f, #f59e0b); }
+.rose { background: linear-gradient(135deg, #881337, #f43f5e); }
+.sky { background: linear-gradient(135deg, #0c4a6e, #0ea5e9); }
+.violet { background: linear-gradient(135deg, #4c1d95, #8b5cf6); }
+.teal { background: linear-gradient(135deg, #134e4a, #14b8a6); }
+.slate { background: linear-gradient(135deg, #1e293b, #64748b); }
 .fallbackTitle {
   font-family: var(--display);
   font-size: 0.92rem;
   font-weight: 500;
   line-height: 1.45;
   letter-spacing: 0;
-  color: var(--fg);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.fallbackRule { width: 20px; height: 2px; border-radius: var(--r-pill); background: var(--accent); }
+.fallbackRule { width: 20px; height: 2px; border-radius: var(--r-pill); background: rgba(255,255,255,0.7); }
 .fallbackAuthor {
   font-family: var(--text);
   font-size: var(--t-micro);
   letter-spacing: var(--tr-label);
   line-height: 1.5;
-  color: var(--fg-3);
+  color: rgba(255,255,255,0.8);
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;

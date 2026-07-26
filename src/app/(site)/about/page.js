@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, ShieldCheck, Send } from 'lucide-react';
+import { Search, Send } from 'lucide-react';
 import styles from './page.module.css';
 
 export const metadata = {
@@ -12,11 +12,6 @@ const STEPS = [
     icon: Search,
     title: 'ค้นหาได้ทุกเล่ม',
     body: 'รายการหนังสือทั้งหมดเปิดให้ค้นและดูรายละเอียดได้อย่างอิสระ ไม่ต้องสมัครสมาชิก',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'บางเล่มต้องขอสิทธิ์',
-    body: 'หนังสือที่ยังติดลิขสิทธิ์จะเปิดให้เฉพาะผู้ที่ผู้ดูแลยืนยันตัวตนแล้ว เพื่อไม่ให้เผยแพร่เป็นสาธารณะ',
   },
   {
     icon: Send,
@@ -51,14 +46,14 @@ export default function AboutPage() {
 
       <section className={styles.cta}>
         <div>
-          <h2 className={styles.ctaTitle}>อยากเข้าถึงหนังสือที่สงวนสิทธิ์?</h2>
+          <h2 className={styles.ctaTitle}>เริ่มต้นค้นหาหนังสือ</h2>
           <p className={styles.ctaBody}>
-            เข้าสู่ระบบแล้วส่งคำขอพร้อมลิงก์โปรไฟล์ เพื่อให้ผู้ดูแลยืนยันตัวตน
+            เข้าสู่ระบบเพื่อบันทึกหนังสือที่ชอบ
           </p>
         </div>
         <div className={styles.ctaActs}>
-          <Link href="/account" className="btn btn-solid">ขอสิทธิ์เข้าถึง</Link>
-          <Link href="/" className="btn">ดูคลังหนังสือ</Link>
+          <Link href="/" className="btn btn-solid">ดูคลังหนังสือ</Link>
+          <Link href="/login" className="btn">เข้าสู่ระบบ</Link>
         </div>
       </section>
     </div>

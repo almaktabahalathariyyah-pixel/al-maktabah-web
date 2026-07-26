@@ -5,17 +5,18 @@ import Link from 'next/link';
 import { ArrowLeft, Download, Bookmark, Check } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, limit, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import styles from './page.module.css';
 
 export default function BookDetailPage({ params }) {
   const { id } = use(params);
-  const { user } = useAuth();
+  const { user, approved } = useAuth();
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [relatedBooks, setRelatedBooks] = useState([]);
 
   useEffect(() => {
     const fetchBookAndUser = async () => {
@@ -24,7 +25,19 @@ export default function BookDetailPage({ params }) {
         const docRef = doc(db, 'books', id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setBook({ id: docSnap.id, ...docSnap.data() });
+          const data = docSnap.data();
+          setBook({ id: docSnap.id, ...data });
+
+          // Fetch related
+          if (data.category) {
+            const q = query(collection(db, 'books'), where('category', '==', data.category), limit(6));
+            const relSnap = await getDocs(q);
+            const related = [];
+            relSnap.forEach(d => {
+              if (d.id !== id && (!d.data().restricted || approved)) related.push({ id: d.id, ...d.data() });
+            });
+            setRelatedBooks(related.slice(0, 4));
+          }
         }
 
         // Fetch User Saved State
@@ -70,16 +83,23 @@ export default function BookDetailPage({ params }) {
   };
 
   if (loading) {
-    return <div className="container" style={{paddingTop: '4rem'}}>กำลังโหลดข้อมูล...</div>;
+    return (
+      <div className="container">
+        <div className={styles.layout} style={{ marginTop: '4rem' }}>
+          <div className={`${styles.skeletonCover} shimmer`} />
+          <div className={styles.main}>
+            <div className={`${styles.skeletonTitle} shimmer`} />
+            <div className={`${styles.skeletonText} shimmer`} />
+            <div className={`${styles.skeletonText} shimmer`} style={{ width: '60%' }} />
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  if (!book) {
+  if (!book || (book.restricted && !approved)) {
     return <div className="container" style={{paddingTop: '4rem'}}>ไม่พบข้อมูลหนังสือ</div>;
   }
-
-  // In a real app, you would check if user is approved to see restricted books.
-  const approved = !!user;
-  const sealed = book.restricted && !approved;
 
   return (
     <div className="container">
@@ -93,15 +113,9 @@ export default function BookDetailPage({ params }) {
           <BookCover src={book.coverUrl} title={book.title} author={book.author} />
 
           <div className={styles.actions}>
-            {sealed ? (
-              <button className="btn btn-solid btn-block" disabled>
-                <Download size={15} /> เฉพาะสมาชิก
-              </button>
-            ) : (
               <a href={book.telegramUrl || '#'} target="_blank" rel="noopener noreferrer" className="btn btn-solid btn-block" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', textDecoration: 'none'}}>
                 <Download size={15} /> ดาวน์โหลด {book.format || 'PDF'}
               </a>
-            )}
             
             <button
               className={`btn btn-block ${saved ? styles.savedOn : ''}`}
@@ -123,7 +137,6 @@ export default function BookDetailPage({ params }) {
           <header className={styles.header}>
             <p className="eyebrow">
               {book.category}
-              {book.restricted && <span className={styles.sep}>— เฉพาะสมาชิก</span>}
             </p>
             <h1 className={styles.title}>{book.title}</h1>
             <p className={styles.author}>{book.author}</p>
@@ -147,6 +160,23 @@ export default function BookDetailPage({ params }) {
           </dl>
         </div>
       </article>
+
+      {/* ---------- Related Books ---------- */}
+      {relatedBooks.length > 0 && (
+        <section className={styles.related}>
+          <h2 className={styles.relatedTitle}>หนังสือที่เกี่ยวข้อง</h2>
+          <div className={styles.relatedGrid}>
+            {relatedBooks.map(b => (
+              <Link key={b.id} href={`/book/${b.id}`} className={styles.relatedItem}>
+                <BookCover src={b.coverUrl} title={b.title} author={b.author} />
+                <div className={styles.relatedMeta}>
+                  <div className={styles.relatedBookTitle}>{b.title}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

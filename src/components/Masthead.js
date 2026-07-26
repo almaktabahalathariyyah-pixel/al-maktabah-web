@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, LogOut } from 'lucide-react';
@@ -17,8 +17,20 @@ const NAV = [
 
 export default function Masthead({ children }) {
   const [open, setOpen] = useState(false);
+  const [dropOpen, setDropOpen] = useState(false);
   const pathname = usePathname();
   const { user, isAdmin, logout } = useAuth();
+  const dropRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropRef.current && !dropRef.current.contains(e.target)) {
+        setDropOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <>
@@ -53,15 +65,29 @@ export default function Masthead({ children }) {
             <ThemeToggle />
             
             {user ? (
-              <div className={styles.userMenu}>
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt={user.displayName} className={styles.avatar} />
-                ) : (
-                  <div className={styles.avatarFallback}>{user.email?.charAt(0).toUpperCase()}</div>
-                )}
-                <button onClick={logout} className={styles.logoutBtn} title="ออกจากระบบ">
-                  <LogOut size={16} />
+              <div className={styles.userMenu} ref={dropRef}>
+                <button className={styles.avatarBtn} onClick={() => setDropOpen(!dropOpen)} aria-label="เมนูผู้ใช้">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt={user.displayName} className={styles.avatar} />
+                  ) : (
+                    <div className={styles.avatarFallback}>{user.email?.charAt(0).toUpperCase()}</div>
+                  )}
                 </button>
+                {dropOpen && (
+                  <div className={`${styles.dropdown} glass`}>
+                    <div className={styles.dropdownInfo}>
+                      <div className={styles.dropdownName}>{user.displayName || 'ผู้ใช้'}</div>
+                      <div className={styles.dropdownEmail}>{user.email}</div>
+                    </div>
+                    <div className={styles.dropdownDivider} />
+                    <Link href="/account" className={styles.dropdownItem} onClick={() => setDropOpen(false)}>บัญชี</Link>
+                    <Link href="/saved" className={styles.dropdownItem} onClick={() => setDropOpen(false)}>บันทึกไว้</Link>
+                    <div className={styles.dropdownDivider} />
+                    <button onClick={() => { logout(); setDropOpen(false); }} className={styles.dropdownItem}>
+                      ออกจากระบบ
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <Link href="/login" className={styles.signIn}>
@@ -80,8 +106,16 @@ export default function Masthead({ children }) {
           </div>
         </div>
 
+        {/* Mobile drawer backdrop */}
+        {open && <div className={styles.backdrop} onClick={() => setOpen(false)} />}
+        
         {/* Mobile drawer */}
         <div className={`${styles.drawer} ${open ? styles.drawerOpen : ''}`}>
+          <div className={styles.drawerHeader}>
+            <button onClick={() => setOpen(false)} className={styles.drawerClose} aria-label="ปิดเมนู">
+              <X size={20} />
+            </button>
+          </div>
           <div className="container">
             {NAV.map((item) => (
               <Link
