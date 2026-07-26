@@ -279,7 +279,10 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
             body: JSON.stringify(metadata)
           });
           
-          if (!initRes.ok) throw new Error('Drive Init Failed');
+          if (!initRes.ok) {
+            const errText = await initRes.text();
+            throw new Error(`Drive Init Failed (${initRes.status}): ${errText}`);
+          }
           const uploadUrl = initRes.headers.get('Location');
           
           const driveResult = await uploadWithProgress(

@@ -79,21 +79,19 @@ export async function GET(request, { params }) {
         return new Response('Invalid Google Drive URL format in database.', { status: 500 });
       }
 
-      let driveDownloadUrl = `https://drive.google.com/uc?export=download&id=${driveId}`;
+      let driveDownloadUrl = `https://drive.google.com/uc?export=download&id=${driveId}&confirm=t`;
       let driveRes = await fetch(driveDownloadUrl);
       
-      // If Google Drive returns HTML (Virus scan warning for >25MB files)
+      // If Google Drive STILL returns HTML (e.g. rate limit, or the confirm=t trick failed)
       const contentType = driveRes.headers.get('content-type') || '';
       if (contentType.includes('text/html')) {
         const html = await driveRes.text();
         const confirmMatch = html.match(/confirm=([a-zA-Z0-9_-]+)/);
         if (confirmMatch) {
           const confirmCode = confirmMatch[1];
-          // Refetch with confirm code to bypass warning
-          driveRes = await fetch(`${driveDownloadUrl}&confirm=${confirmCode}`);
+          driveRes = await fetch(`https://drive.google.com/uc?export=download&id=${driveId}&confirm=${confirmCode}`);
         } else {
-          // If we can't bypass, we might have to fallback or error, but let's try to stream whatever it is
-          return new Response('Google Drive Virus Scan Warning blocked the direct download.', { status: 502 });
+          return new Response('Google Drive Virus Scan Warning blocked the direct download. Please download the file directly from Google Drive.', { status: 502 });
         }
       }
 

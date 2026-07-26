@@ -338,7 +338,10 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           body: JSON.stringify(metadata)
         });
         
-        if (!initRes.ok) throw new Error('Failed to initiate Google Drive upload');
+        if (!initRes.ok) {
+          const errText = await initRes.text();
+          throw new Error(`Drive Init Failed (${initRes.status}): ${errText}`);
+        }
         const uploadUrl = initRes.headers.get('Location');
         
         if (!uploadUrl) throw new Error('No upload URL returned from Google Drive');
