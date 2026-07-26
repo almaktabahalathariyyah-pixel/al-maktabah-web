@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export async function GET(request, { params }) {
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const docRef = doc(db, 'books', id);
