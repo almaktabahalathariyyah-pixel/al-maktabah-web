@@ -9,6 +9,7 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadBookFields } from '@/lib/bookFields';
 import { getLangPath } from '@/lib/langPath';
+import AuthorSidebar from '@/components/AuthorSidebar';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -50,6 +51,10 @@ export default function Home() {
     return visibleBooks.filter((book) => {
       for (const [key, value] of Object.entries(filters)) {
         if (!value) continue;
+        if (key === 'person') {
+          if (book.author !== value && book.translator !== value) return false;
+          continue;
+        }
         // String conversion is important for year
         if (String(book[key] ?? '').trim() !== value) return false;
       }
@@ -269,22 +274,7 @@ export default function Home() {
               </select>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แต่ง</label>
-              <select className={styles.filterSelect} value={filters.author || ''} onChange={(e) => setFilter('author', e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {authors.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แปล</label>
-              <select className={styles.filterSelect} value={filters.translator || ''} onChange={(e) => setFilter('translator', e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {translators.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สำนักพิมพ์</label>
               <select className={styles.filterSelect} value={filters.publisher || ''} onChange={(e) => setFilter('publisher', e.target.value)}>
@@ -309,6 +299,12 @@ export default function Home() {
       </div>
 
       <div className={styles.layout}>
+        <AuthorSidebar 
+          authors={authors} 
+          translators={translators} 
+          selectedPerson={filters.person || ''} 
+          onSelect={(name) => setFilter('person', name)} 
+        />
         {/* ---------------- Shelf ---------------- */}
         <div className={styles.shelf}>
           {loading ? (
@@ -338,33 +334,72 @@ export default function Home() {
               )}
             </div>
           ) : (
-            <section className={`${styles.grid} stagger`}>
-              {results.map((book) => {
-                return (
-                  <Link
-                    key={book.id}
-                    href={`/book/${getLangPath(book.language)}/${book.id}`}
-                    className={`${styles.item} hover-card`}
-                  >
-                    <div className={styles.coverWrap}>
-                      <BookCover
-                        src={book.coverUrl}
-                        title={book.title}
-                        author={book.author}
-                      />
-                    </div>
-
-                    <div className={styles.meta}>
-                      <h3 className={styles.bookTitle}>{book.title}</h3>
-                      <p className={styles.author}>
-                        <User size={12} className={styles.authorIcon} />
-                        {book.author}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </section>
+            <>
+              {filters.person ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  {(() => {
+                    const authored = results.filter(b => b.author === filters.person);
+                    return authored.length > 0 && (
+                      <div>
+                        <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', color: 'var(--fg)' }}>
+                          ผลงานเขียน
+                        </h3>
+                        <section className={`${styles.grid} stagger`}>
+                          {authored.map(book => (
+                            <Link key={book.id} href={`/book/${getLangPath(book.language)}/${book.id}`} className={`${styles.item} hover-card`}>
+                              <div className={styles.coverWrap}>
+                                <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+                              </div>
+                              <div className={styles.meta}>
+                                <h3 className={styles.bookTitle}>{book.title}</h3>
+                                <p className={styles.author}><User size={12} className={styles.authorIcon} /> {book.author}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </section>
+                      </div>
+                    );
+                  })()}
+                  {(() => {
+                    const translated = results.filter(b => b.translator === filters.person);
+                    return translated.length > 0 && (
+                      <div>
+                        <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', color: 'var(--fg)' }}>
+                          ผลงานแปล
+                        </h3>
+                        <section className={`${styles.grid} stagger`}>
+                          {translated.map(book => (
+                            <Link key={book.id} href={`/book/${getLangPath(book.language)}/${book.id}`} className={`${styles.item} hover-card`}>
+                              <div className={styles.coverWrap}>
+                                <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+                              </div>
+                              <div className={styles.meta}>
+                                <h3 className={styles.bookTitle}>{book.title}</h3>
+                                <p className={styles.author}><User size={12} className={styles.authorIcon} /> {book.author}</p>
+                              </div>
+                            </Link>
+                          ))}
+                        </section>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <section className={`${styles.grid} stagger`}>
+                  {results.map((book) => (
+                    <Link key={book.id} href={`/book/${getLangPath(book.language)}/${book.id}`} className={`${styles.item} hover-card`}>
+                      <div className={styles.coverWrap}>
+                        <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+                      </div>
+                      <div className={styles.meta}>
+                        <h3 className={styles.bookTitle}>{book.title}</h3>
+                        <p className={styles.author}><User size={12} className={styles.authorIcon} /> {book.author}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </section>
+              )}
+            </>
           )}
         </div>
       </div>
