@@ -11,6 +11,8 @@ import { Search, Plus, Download, Edit2, Trash2, Settings, LayoutGrid, List } fro
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
 import BookFormPanel from '@/components/BookFormPanel';
+import SettingsPanel from '@/components/SettingsPanel';
+import FieldsPanel from '@/components/FieldsPanel';
 import styles from './page.module.css';
 
 export default function AdminPage() {
@@ -26,6 +28,10 @@ export default function AdminPage() {
   // Form Panel State
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBookId, setEditingBookId] = useState(null);
+  
+  // Settings Panel State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isFieldsOpen, setIsFieldsOpen] = useState(false);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -278,12 +284,12 @@ export default function AdminPage() {
               <LayoutGrid size={18} />
             </button>
           </div>
-          <Link href="/admin/fields" className="btn" title="ตั้งค่าฟิลด์แบบฟอร์ม">
+          <button onClick={() => setIsFieldsOpen(true)} className="btn" title="ตั้งค่าฟิลด์แบบฟอร์ม">
             <Settings size={18} /> <span className="hide-mobile">ตั้งค่าฟิลด์</span>
-          </Link>
-          <Link href="/admin/settings" className="btn" title="ตั้งค่าหมวดหมู่และภาษา">
+          </button>
+          <button onClick={() => setIsSettingsOpen(true)} className="btn" title="ตั้งค่าหมวดหมู่และภาษา">
             <Settings size={18} /> <span className="hide-mobile">ตั้งค่าหมวดหมู่</span>
-          </Link>
+          </button>
           <button onClick={handleOpenNewBook} className="btn btn-solid">
             <Plus size={18} /> <span className="hide-mobile">เพิ่มหนังสือใหม่</span>
           </button>
@@ -450,6 +456,16 @@ export default function AdminPage() {
         onClose={() => setIsFormOpen(false)} 
         bookId={editingBookId} 
         onSaved={handleBookSaved}
+      />
+
+      <SettingsPanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
+
+      <FieldsPanel
+        isOpen={isFieldsOpen}
+        onClose={() => setIsFieldsOpen(false)}
       />
     </div>
   );
