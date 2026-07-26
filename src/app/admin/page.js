@@ -36,8 +36,15 @@ export default function AdminPage() {
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [authorFilter, setAuthorFilter] = useState('');
+  const [translatorFilter, setTranslatorFilter] = useState('');
+  const [publisherFilter, setPublisherFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [languageFilter, setLanguageFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState(''); // 'all', 'public', 'restricted'
   const [showFilters, setShowFilters] = useState(false);
+
 
   // Selection & Bulk Edit
   const [selectedBooks, setSelectedBooks] = useState(new Set());
@@ -202,12 +209,24 @@ export default function AdminPage() {
   }
 
   const categories = Array.from(new Set(books.map(b => b.category).filter(Boolean))).sort();
+  const authors = Array.from(new Set(books.map(b => b.author).filter(Boolean))).sort();
+  const translators = Array.from(new Set(books.map(b => b.translator).filter(Boolean))).sort();
+  const publishers = Array.from(new Set(books.map(b => b.publisher).filter(Boolean))).sort();
+  const languages = Array.from(new Set(books.map(b => b.language).filter(Boolean))).sort();
+  const types = Array.from(new Set(books.map(b => b.type).filter(Boolean))).sort();
+  const years = Array.from(new Set(books.map(b => b.year).filter(Boolean))).sort((a, b) => b - a);
 
   const filteredBooks = books.filter(book => {
     const matchesSearch = book.title?.toLowerCase().includes(searchQuery.toLowerCase()) || book.author?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCat = categoryFilter ? book.category === categoryFilter : true;
+    const matchesAuthor = authorFilter ? book.author === authorFilter : true;
+    const matchesTranslator = translatorFilter ? book.translator === translatorFilter : true;
+    const matchesPublisher = publisherFilter ? book.publisher === publisherFilter : true;
+    const matchesLanguage = languageFilter ? book.language === languageFilter : true;
+    const matchesType = typeFilter ? book.type === typeFilter : true;
+    const matchesYear = yearFilter ? String(book.year) === yearFilter : true;
     const matchesStatus = statusFilter === 'restricted' ? book.restricted : statusFilter === 'public' ? !book.restricted : true;
-    return matchesSearch && matchesCat && matchesStatus;
+    return matchesSearch && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus;
   });
 
   const totalBooks = books.length;
@@ -290,24 +309,44 @@ export default function AdminPage() {
 
         {showFilters && (
           <div className={styles.filterBottomRow}>
-            <select 
-              className={styles.filterSelect}
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
+            <select className={styles.filterSelect} value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
               <option value="">ทุกหมวดหมู่</option>
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-
-            <select 
-              className={styles.filterSelect}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
+            <select className={styles.filterSelect} value={authorFilter} onChange={(e) => setAuthorFilter(e.target.value)}>
+              <option value="">ทุกผู้แต่ง</option>
+              {authors.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select className={styles.filterSelect} value={translatorFilter} onChange={(e) => setTranslatorFilter(e.target.value)}>
+              <option value="">ทุกผู้แปล</option>
+              {translators.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select className={styles.filterSelect} value={publisherFilter} onChange={(e) => setPublisherFilter(e.target.value)}>
+              <option value="">ทุกสำนักพิมพ์</option>
+              {publishers.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select className={styles.filterSelect} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+              <option value="">ทุกประเภท</option>
+              {types.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select className={styles.filterSelect} value={languageFilter} onChange={(e) => setLanguageFilter(e.target.value)}>
+              <option value="">ทุกภาษา</option>
+              {languages.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select className={styles.filterSelect} value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+              <option value="">ทุกปีพิมพ์</option>
+              {years.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">ทุกสถานะ</option>
               <option value="public">สาธารณะ</option>
               <option value="restricted">สงวนสิทธิ์</option>
             </select>
+            <button className="btn" onClick={() => {
+              setCategoryFilter(''); setAuthorFilter(''); setTranslatorFilter(''); 
+              setPublisherFilter(''); setTypeFilter(''); setLanguageFilter(''); 
+              setYearFilter(''); setStatusFilter(''); setSearchQuery('');
+            }}>ล้างตัวกรอง</button>
           </div>
         )}
       </div>
