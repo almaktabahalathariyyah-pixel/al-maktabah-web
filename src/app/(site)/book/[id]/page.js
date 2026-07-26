@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { ArrowLeft, Download, Bookmark, Check } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, limit, getDocs, addDoc, increment } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import styles from './page.module.css';
 
 export default function BookDetailPage({ params }) {
   const { id } = use(params);
   const { user, approved } = useAuth();
+  const { toast } = useToast();
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -62,7 +64,7 @@ export default function BookDetailPage({ params }) {
 
   const toggleSave = async () => {
     if (!user) {
-      alert("กรุณาเข้าสู่ระบบก่อนบันทึกหนังสือ");
+      toast.info("กรุณาเข้าสู่ระบบก่อนบันทึกหนังสือ");
       return;
     }
     setSaving(true);
@@ -79,6 +81,34 @@ export default function BookDetailPage({ params }) {
       console.error("Error updating saved books:", error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!user) {
+      toast.info("กรุณาเข้าสู่ระบบก่อนดาวน์โหลด");
+      return;
+    }
+    
+    // เปิดหน้าต่างใหม่ไปที่ไฟล์ทันที
+    window.open(book.telegramUrl || '#', '_blank');
+
+    try {
+      // 1. บันทึกสถิติลง Collection downloads
+      const downloadRef = collection(db, 'downloads');
+      await addDoc(downloadRef, {
+        bookId: id,
+        userId: user.uid,
+        timestamp: new Date()
+      });
+
+      // 2. เพิ่มยอดดาวน์โหลดใน Document หนังสือ
+      const bookRef = doc(db, 'books', id);
+      await updateDoc(bookRef, {
+        downloadCount: increment(1)
+      });
+    } catch (err) {
+      console.error("Error logging download:", err);
     }
   };
 
@@ -113,9 +143,13 @@ export default function BookDetailPage({ params }) {
           <BookCover src={book.coverUrl} title={book.title} author={book.author} />
 
           <div className={styles.actions}>
-              <a href={book.telegramUrl || '#'} target="_blank" rel="noopener noreferrer" className="btn btn-solid btn-block" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', textDecoration: 'none'}}>
-                <Download size={15} /> ดาวน์โหลด {book.format || 'PDF'}
-              </a>
+            <button 
+              onClick={handleDownload} 
+              className="btn btn-solid btn-block" 
+              style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem'}}
+            >
+              <Download size={15} /> ดาวน์โหลด {book.format || 'PDF'}
+            </button>
             
             <button
               className={`btn btn-block ${saved ? styles.savedOn : ''}`}

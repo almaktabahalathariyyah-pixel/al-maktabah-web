@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Download } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function AdminPage() {
@@ -135,6 +135,9 @@ export default function AdminPage() {
             <span className={styles.when}>{book.category}</span>
             <span className={book.restricted ? styles.flagOn : styles.flag}>
               {book.restricted ? 'สงวนสิทธิ์' : 'สาธารณะ'}
+            </span>
+            <span style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Download size={14} /> {book.downloadCount || 0}
             </span>
             <div className={styles.rowActions}>
               <Link href={`/admin/edit/${book.id}`} className={styles.edit}>
