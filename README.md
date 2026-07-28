@@ -14,7 +14,17 @@
 ```bash
 npm install -g firebase-tools
 firebase login
+firebase use --add
 firebase deploy --only firestore:rules,firestore:indexes
+```
+
+`firebase use --add` ให้เลือกโปรเจกต์แล้วสร้าง `.firebaserc` ทำครั้งเดียวพอ
+(`.firebaserc` ไม่ได้อยู่ใน repo เพราะผูกกับโปรเจกต์ของแต่ละคน)
+
+ถ้าไม่อยากสร้างไฟล์ ระบุโปรเจกต์ตรงๆ ก็ได้:
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes --project <project-id>
 ```
 
 สิ่งที่ rules บังคับไว้:
@@ -46,30 +56,37 @@ Rules บังคับให้ผู้อ่านที่ยังไม�
 
 ## ตัวแปรสภาพแวดล้อม
 
-สร้าง `.env.local` (ไฟล์นี้อยู่ใน `.gitignore` แล้ว)
+รายการเต็มพร้อมคำอธิบายว่าหาค่าแต่ละตัวได้จากที่ไหน อยู่ใน [`.env.example`](.env.example)
 
-```env
-# Firebase — ดูได้จาก Project settings → Your apps
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
+**ถ้าตั้งค่าไว้ใน Vercel แล้ว** ดึงลงมาทีเดียวจบ:
 
-# Google Drive — ที่เก็บไฟล์ PDF
-# Google Cloud console → Credentials → OAuth client ID (Web application)
-# ต้องใส่โดเมนเว็บใน "Authorized JavaScript origins"
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=
-
-# Telegram — ใช้เก็บภาพหน้าปกเท่านั้น (ฝั่งเซิร์ฟเวอร์)
-# ห้ามใส่ NEXT_PUBLIC_ นำหน้า เด็ดขาด
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_CHAT_ID=
-
-# ไม่บังคับ — ลิงก์แชนแนลที่แสดงใน footer
-NEXT_PUBLIC_TELEGRAM_CHANNEL_URL=
+```bash
+npx vercel link
+npx vercel env pull .env.local
 ```
+
+**ถ้าจะกรอกเอง:**
+
+```bash
+cp .env.example .env.local
+```
+
+สรุปว่าต้องมีอะไรบ้าง:
+
+| ตัวแปร | จำเป็น | หาจากไหน |
+|---|---|---|
+| `NEXT_PUBLIC_FIREBASE_*` (6 ตัว) | ใช่ | Firebase console → Project settings → Your apps |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | ใช่ (ถ้าจะอัปโหลด) | Google Cloud → Credentials → OAuth client ID |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | ใช่ (ปก + สำเนาสำรอง) | @BotFather / `getUpdates` |
+| `NEXT_PUBLIC_TELEGRAM_CHANNEL_URL` | ไม่ | ลิงก์แชนแนล แสดงท้ายเว็บ |
+| `NEXT_PUBLIC_LINE_OA_URL` | ไม่ | สำรองของค่าที่ตั้งในเว็บได้ |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` | ไม่ | เมื่อเปิด Analytics |
+
+> **`NEXT_PUBLIC_` = เปิดเผยต่อสาธารณะ** ค่าเหล่านี้ถูกฝังลงในหน้าเว็บ ใครกด View Source ก็เห็น
+> ซึ่ง**ไม่ใช่ช่องโหว่** สำหรับคีย์ Firebase — Google ออกแบบมาแบบนั้น สิ่งที่กันข้อมูลจริงๆ คือ
+> `firestore.rules` ไม่ใช่การซ่อนคีย์
+>
+> แต่ `TELEGRAM_BOT_TOKEN` **ห้ามมี `NEXT_PUBLIC_`** เพราะมันคือสิทธิ์ควบคุมบอททั้งหมด
 
 ---
 
