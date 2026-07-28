@@ -10,6 +10,7 @@ import { dayKey } from '@/lib/stats';
 import { formatBytes } from '@/lib/googleDrive';
 import { canMirror, bookSizeBytes } from '@/lib/mirror';
 import MirrorRunner from '@/components/MirrorRunner';
+import CoverCheck from '@/components/CoverCheck';
 import styles from './page.module.css';
 
 const WINDOW_DAYS = 30;
@@ -184,6 +185,12 @@ export default function StatsPage() {
             ? `${summary.noCover} เล่มยังไม่มีภาพหน้าปก (ระบบแสดงปกตัวอักษรแทน)`
             : 'ทุกเล่มมีภาพหน้าปกแล้ว'}
         </p>
+      </section>
+
+      {/* A record HAVING a coverUrl and that cover actually LOADING are two
+          different things, and the count above only knows the first. */}
+      <section className={styles.section}>
+        <CoverCheck books={books} />
       </section>
 
       {/* ---------- Storage runway ---------- */}

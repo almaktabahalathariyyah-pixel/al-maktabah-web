@@ -19,9 +19,15 @@ const MAX_BYTES = 8 * 1024 * 1024;
 export async function GET(request, { params }) {
   const { id: fileId } = await params;
 
-  if (!fileId || !FILE_ID.test(fileId)) {
-    return new Response('Invalid file id', { status: 400 });
-  }
+  // Same contract as the Telegram proxy: the stage that broke rides on
+  // X-Cover-Error so the admin cover check can name it.
+  const fail = (status, reason) =>
+    new Response(reason === 'bad-id' ? 'Invalid file id' : 'Image not available', {
+      status,
+      headers: { 'X-Cover-Error': reason, 'Cache-Control': 'no-store' },
+    });
+
+  if (!fileId || !FILE_ID.test(fileId)) return fail(400, 'bad-id');
 
   try {
     const upstream = await fetch(
@@ -29,17 +35,15 @@ export async function GET(request, { params }) {
       { redirect: 'follow' }
     );
 
-    if (!upstream.ok) return new Response('Image not found', { status: 404 });
+    if (!upstream.ok) return fail(404, 'download-failed');
 
     const contentType = upstream.headers.get('content-type') || '';
     // A private or deleted file answers with Drive's HTML sign-in page rather
     // than an error status, so the type is the only reliable tell.
-    if (!contentType.startsWith('image/')) {
-      return new Response('Not an image', { status: 415 });
-    }
+    if (!contentType.startsWith('image/')) return fail(415, 'not-shared');
 
     const length = Number(upstream.headers.get('content-length') || 0);
-    if (length > MAX_BYTES) return new Response('Image too large', { status: 413 });
+    if (length > MAX_BYTES) return fail(413, 'too-large');
 
     return new Response(upstream.body, {
       headers: {
@@ -50,6 +54,6 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error('Drive Image Proxy Error:', error);
-    return new Response('Image not available', { status: 500 });
+    return fail(500, 'proxy-threw');
   }
 }

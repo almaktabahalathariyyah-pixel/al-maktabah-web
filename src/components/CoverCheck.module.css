@@ -1,0 +1,80 @@
+.box {
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.45;
+  margin-bottom: 0.2rem;
+}
+.titleIcon { color: var(--accent); flex: none; }
+
+.lede {
+  font-size: var(--t-small);
+  line-height: var(--lh-body);
+  color: var(--fg-3);
+  max-width: 58ch;
+}
+
+.result { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
+
+.verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: var(--t-small);
+  line-height: var(--lh-body);
+  color: var(--fg-2);
+  margin-bottom: 0.9rem;
+}
+.verdict svg { flex: none; margin-top: 0.28rem; }
+.verdict strong { color: var(--fg); }
+
+.good { color: var(--accent); }
+.bad { color: var(--hot); }
+
+.rows { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+
+.row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--t-micro);
+  line-height: 1.6;
+}
+
+.rowTitle {
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowNote { color: var(--fg-3); text-align: right; }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 600px) {
+  /* The reason is the point of the row, so it gets its own line rather than
+     being squeezed against an ellipsised title. */
+  .row { grid-template-columns: 14px minmax(0, 1fr); row-gap: 0.1rem; }
+  .rowNote { grid-column: 2; text-align: left; }
+}
