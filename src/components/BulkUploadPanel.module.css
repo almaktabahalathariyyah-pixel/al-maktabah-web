@@ -214,7 +214,6 @@
 .badge.done { background: var(--accent-dim); color: var(--accent); }
 .badge.error { background: var(--hot-dim); color: var(--hot); }
 .badge.uploading,
-.badge.mirroring,
 .badge.saving { background: var(--accent-dim); color: var(--accent); }
 
 .rowMeta {

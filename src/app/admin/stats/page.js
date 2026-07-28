@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { BookOpen, Download, HardDrive, TrendingUp, AlertTriangle, LifeBuoy } from 'lucide-react';
+import { BookOpen, Download, HardDrive, TrendingUp, AlertTriangle } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { getLangPath } from '@/lib/langPath';
 import { dayKey } from '@/lib/stats';
 import { formatBytes } from '@/lib/googleDrive';
-import { canMirror, bookSizeBytes, MIRROR_LIMIT } from '@/lib/mirror';
+import { canMirror, bookSizeBytes } from '@/lib/mirror';
+import MirrorRunner from '@/components/MirrorRunner';
 import styles from './page.module.css';
 
 const WINDOW_DAYS = 30;
@@ -72,9 +73,6 @@ export default function StatsPage() {
       // Eligible for a Telegram backup but not mirrored yet.
       unmirrored: books.filter(
         (b) => b.driveUrl && !b.telegramFileId && canMirror(bookSizeBytes(b))
-      ).length,
-      tooBigToMirror: books.filter(
-        (b) => b.driveUrl && !b.telegramFileId && bookSizeBytes(b) > MIRROR_LIMIT
       ).length,
       noCover: books.filter((b) => !b.coverUrl).length,
       downloads: books.reduce((sum, b) => sum + (b.downloadCount || 0), 0),
@@ -173,25 +171,13 @@ export default function StatsPage() {
                 </span>
               </Link>
             )}
-            {summary.unmirrored > 0 && (
-              <Link href="/admin?health=unmirrored" className={styles.alert}>
-                <LifeBuoy size={16} />
-                <span>
-                  <strong>{summary.unmirrored} เล่มยังไม่มีสำเนาสำรอง</strong>
-                  ขนาดไม่เกิน 20MB จึงสำรองไปที่ Telegram ได้ — เปิดเล่มนั้นแล้วกด
-                  &ldquo;สำรองตอนนี้&rdquo;
-                </span>
-              </Link>
-            )}
           </div>
         )}
 
-        {summary.tooBigToMirror > 0 && (
-          <p className={styles.subNote}>
-            อีก {summary.tooBigToMirror} เล่มใหญ่เกิน 20MB จึงสำรองไปที่ Telegram ไม่ได้
-            — เล่มเหล่านี้พึ่ง Google Drive อย่างเดียว
-          </p>
-        )}
+        <div style={{ marginTop: '1.25rem' }}>
+          <MirrorRunner />
+        </div>
+
 
         <p className={styles.subNote}>
           {summary.noCover > 0

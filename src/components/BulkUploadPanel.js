@@ -8,8 +8,8 @@ import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { getNextBookId } from '@/lib/sequentialId';
 import { uploadPdfToDrive } from '@/lib/googleDrive';
-import { mirrorToTelegram, canMirror } from '@/lib/mirror';
 import { loadCatalog, matchRow, bookFromRow } from '@/lib/csvCatalog';
+import { canMirror } from '@/lib/mirror';
 import { makeCover } from '@/lib/pdfCover';
 import {
   X, UploadCloud, CheckCircle, AlertCircle, Loader2, FileSpreadsheet,
@@ -17,13 +17,12 @@ import {
 } from 'lucide-react';
 import styles from './BulkUploadPanel.module.css';
 
-/** Telegram throttles a channel at roughly 20 messages a minute. */
-const DEFAULT_DELAY_MS = 3000;
+/** A small gap between books; Drive is happy back-to-back, this is courtesy. */
+const DEFAULT_DELAY_MS = 500;
 
 const STATUS_LABEL = {
   pending: 'รอคิว',
   uploading: 'กำลังอัป',
-  mirroring: 'กำลังสำรอง',
   covering: 'ทำหน้าปก',
   saving: 'กำลังบันทึก',
   done: 'เสร็จแล้ว',
@@ -43,7 +42,6 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
   const [existing, setExisting] = useState(new Set());
 
   const [restricted, setRestricted] = useState(false);
-  const [mirrorBackup, setMirrorBackup] = useState(true);
   const [autoCover, setAutoCover] = useState(true);
   const [delayMs, setDelayMs] = useState(DEFAULT_DELAY_MS);
 
@@ -138,7 +136,6 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
           status: existing.has(f.name.toLowerCase()) ? 'skipped' : 'pending',
           progress: 0,
           error: '',
-          mirrored: false,
         }));
       return [...prev, ...added];
     });
@@ -198,26 +195,6 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
 
         if (cancelled.current) break;
 
-        // Backup copy, when the file is inside Telegram's 20MB fetch ceiling.
-        // A failure here is not fatal — the book still uploads to Drive — but
-        // it must be visible. Swallowing it into console.warn meant the owner
-        // watched 5 books "succeed" with no backup and no idea why.
-        let telegramFileId = '';
-        let mirrorError = '';
-        if (mirrorBackup && canMirror(item.file.size)) {
-          patch(item.id, { status: 'mirroring' });
-          const idToken = await user.getIdToken();
-          const mirrored = await mirrorToTelegram({
-            idToken,
-            driveUrl: url,
-            title,
-            sizeBytes: item.file.size,
-            persist: false,
-          });
-          if (mirrored.ok) telegramFileId = mirrored.fileId;
-          else mirrorError = mirrored.error;
-        }
-
         // The first page of these books is the cover, so render it rather
         // than leaving 362 blank frames for the owner to fill by hand.
         let coverUrl = '';
@@ -232,7 +209,6 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         const payload = bookFromRow(item.row, {
           file: item.file,
           driveUrl: url,
-          telegramFileId,
           coverUrl,
           restricted,
         });
@@ -241,12 +217,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         await setDoc(doc(db, 'books', id), payload);
         onSaved?.({ id, ...payload });
 
-        patch(item.id, {
-          status: 'done',
-          progress: 100,
-          mirrored: Boolean(telegramFileId),
-          mirrorError,
-        });
+        patch(item.id, { status: 'done', progress: 100 });
         setExisting((prev) => new Set(prev).add(item.file.name.toLowerCase()));
         ok += 1;
 
@@ -357,7 +328,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
                 <span><strong>{items.length}</strong> ไฟล์</span>
                 <span>จับคู่ CSV ได้ <strong>{matched}</strong></span>
                 {counts.skipped > 0 && <span>มีอยู่แล้ว <strong>{counts.skipped}</strong></span>}
-                {tooBig > 0 && <span className={styles.warn}>เกิน 20MB (ไม่มีสำเนาสำรอง) <strong>{tooBig}</strong></span>}
+                {tooBig > 0 && <span className={styles.warn}>เกิน 20MB (สำรองไม่ได้) <strong>{tooBig}</strong></span>}
               </div>
             )}
           </section>
@@ -367,14 +338,6 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
             <h3 className={styles.stepTitle}>
               <span className={styles.stepNum}>3</span> ตัวเลือก
             </h3>
-
-            <label className={styles.toggle}>
-              <input type="checkbox" checked={mirrorBackup} onChange={(e) => setMirrorBackup(e.target.checked)} />
-              <span>
-                <strong>สำรองไปที่ Telegram</strong>
-                <em>เฉพาะไฟล์ไม่เกิน 20MB · ใช้เปิดแทนเมื่อ Drive ติดโควตา</em>
-              </span>
-            </label>
 
             <label className={styles.toggle}>
               <input type="checkbox" checked={autoCover} onChange={(e) => setAutoCover(e.target.checked)} />
@@ -399,13 +362,13 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
                 value={delayMs}
                 onChange={(e) => setDelayMs(Number(e.target.value))}
               >
-                <option value={0}>ไม่หน่วง (เสี่ยงโดนจำกัด)</option>
-                <option value={1500}>1.5 วินาที</option>
-                <option value={3000}>3 วินาที (แนะนำ)</option>
-                <option value={6000}>6 วินาที (ปลอดภัยสุด)</option>
+                <option value={0}>ไม่หน่วง (เร็วสุด)</option>
+                <option value={500}>0.5 วินาที (แนะนำ)</option>
+                <option value={2000}>2 วินาที</option>
               </select>
               <span className={styles.fieldHint}>
-                Telegram จำกัดราวๆ 20 ข้อความต่อนาทีต่อแชนแนล การหน่วงช่วยไม่ให้โดนตัด
+                การสำรองไปที่ Telegram แยกไปอยู่หน้า &ldquo;สถิติและสุขภาพคลัง&rdquo; แล้ว
+                จึงไม่ต้องหน่วงรอ Telegram ระหว่างอัปอีก
               </span>
             </label>
           </section>
@@ -448,20 +411,15 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
                         <span className={styles.dim}>{(it.file.size / 1024 / 1024).toFixed(1)} MB</span>
                       </div>
 
-                      {(it.status === 'uploading' || it.status === 'mirroring') && (
+                      {it.status === 'uploading' && (
                         <div className={styles.progressTrack}>
                           <div className={styles.progressFill} style={{ width: `${it.progress}%` }} />
                         </div>
                       )}
                       {it.status === 'error' && <p className={styles.err}>{it.error}</p>}
-                      {it.status === 'done' && it.mirrorError && (
-                        <p className={styles.softErr}>
-                          ขึ้น Drive แล้ว แต่สำรองไปที่ Telegram ไม่สำเร็จ — {it.mirrorError}
-                        </p>
-                      )}
                     </div>
 
-                    {['uploading', 'mirroring', 'covering', 'saving'].includes(it.status) ? (
+                    {['uploading', 'covering', 'saving'].includes(it.status) ? (
                       <Loader2 size={16} className={styles.spin} />
                     ) : it.status === 'done' ? (
                       <CheckCircle size={16} className={styles.iconOk} />
