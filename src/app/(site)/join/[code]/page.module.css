@@ -27,7 +27,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 1.5rem;
-  color: var(--text);
+  color: var(--fg);
 }
 
 .iconWrapperSuccess {
@@ -64,7 +64,7 @@
   font-size: var(--display);
   font-weight: 700;
   margin-bottom: 0.75rem;
-  color: var(--text);
+  color: var(--fg);
 }
 
 .desc {

@@ -30,7 +30,7 @@
   font-family: var(--display);
   font-size: 2rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--fg);
   line-height: 1.2;
 }
 
@@ -94,7 +94,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  color: var(--text);
+  color: var(--fg);
   font-family: inherit;
   font-size: var(--t-small);
   transition: all var(--dur-fast);
@@ -111,7 +111,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  color: var(--text);
+  color: var(--fg);
   font-family: inherit;
   font-size: var(--t-small);
   cursor: pointer;
@@ -405,4 +405,21 @@
     align-items: center;
     margin-left: auto;
   }
+}
+
+/* Shown when the stats page sends the owner here to fix specific books. */
+.healthBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: var(--t-small);
+  line-height: 1.6;
+  color: var(--fg-2);
 }

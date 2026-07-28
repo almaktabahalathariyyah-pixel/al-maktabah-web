@@ -12,10 +12,26 @@ import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
 import Select from 'react-select';
 import { selectStyles } from '@/lib/selectStyles';
+import {
+  loadGoogleScript,
+  readSavedToken,
+  connectDrive,
+  deleteFromDrive,
+  DELETE_REASONS,
+} from '@/lib/googleDrive';
+import { canMirror, bookSizeBytes } from '@/lib/mirror';
 import BookFormPanel from '@/components/BookFormPanel';
 import BulkUploadPanel from '@/components/BulkUploadPanel';
 import styles from './page.module.css';
 import { useAdmin } from '@/context/AdminContext';
+
+// A template literal, not '\\n' inside a quoted string — the old version
+// printed a literal backslash-n in the browser dialog.
+const GOOGLE_PROMPT = `ยังไม่ได้เชื่อมต่อ Google Drive (หรือสิทธิ์หมดอายุแล้ว)
+หากดำเนินการต่อ ไฟล์จะถูกลบเฉพาะในเว็บไซต์ ส่วนไฟล์ในไดรฟ์จะยังอยู่
+
+กด OK  — เชื่อมต่อ Google Drive ก่อนลบ
+กด Cancel — ลบเฉพาะในเว็บไซต์`;
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -51,6 +67,8 @@ export default function AdminPage() {
   const [yearFilter, setYearFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState(''); // 'all', 'public', 'restricted'
   const [showFilters, setShowFilters] = useState(false);
+  // Set by the links on the stats page: 'nofile' | 'telegram' | ''
+  const [healthFilter, setHealthFilter] = useState('');
 
 
   // Selection & Bulk Edit
@@ -59,15 +77,15 @@ export default function AdminPage() {
   const [bulkValues, setBulkValues] = useState({ category: '', author: '', language: '', restricted: '' });
   const [submittingBulk, setSubmittingBulk] = useState(false);
 
-  // Load Google Auth script for deletion if needed
+  // The Google script is only needed when a delete touches Drive.
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.google) {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
+    loadGoogleScript();
+  }, []);
+
+  // Arriving from the stats page pre-narrows the table to the problem books.
+  useEffect(() => {
+    const health = new URLSearchParams(window.location.search).get('health');
+    if (['nofile', 'telegram', 'unmirrored'].includes(health)) setHealthFilter(health);
   }, []);
 
   useEffect(() => {
@@ -130,152 +148,104 @@ export default function AdminPage() {
     setSelectedBooks(newSelected);
   };
 
+  // Select-all applies to what is on screen, and only clears what is on
+  // screen — a selection made under a different filter is not thrown away.
   const handleSelectAll = (e, currentList) => {
-    if (e.target.checked) {
-      setSelectedBooks(new Set(currentList.map(b => b.id)));
-    } else {
-      setSelectedBooks(new Set());
-    }
-  };
-
-  const hasValidGoogleToken = () => {
-    const savedData = localStorage.getItem('googleDriveToken');
-    if (!savedData) return false;
-    try {
-      const { expiresAt } = JSON.parse(savedData);
-      return Date.now() < expiresAt;
-    } catch {
-      return false;
-    }
-  };
-
-  const triggerGoogleAuth = (callback) => {
-    if (!window.google) {
-      toast.error('Google API ยังไม่พร้อมใช้งาน กรุณารอสักครู่');
-      return;
-    }
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      toast.error('ยังไม่ได้ตั้งค่า Google Client ID');
-      return;
-    }
-    const tokenClient = window.google.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope: 'https://www.googleapis.com/auth/drive.file',
-      callback: (response) => {
-        if (response.error) {
-          toast.error('การยืนยันตัวตนล้มเหลว');
-          return;
-        }
-        localStorage.setItem('googleDriveToken', JSON.stringify({
-          token: response.access_token,
-          expiresAt: Date.now() + 55 * 60 * 1000
-        }));
-        toast.success('เชื่อมต่อสำเร็จ กำลังดำเนินการต่อ...');
-        if (callback) callback();
-      },
+    const ids = currentList.map((b) => b.id);
+    setSelectedBooks((prev) => {
+      const next = new Set(prev);
+      if (e.target.checked) ids.forEach((id) => next.add(id));
+      else ids.forEach((id) => next.delete(id));
+      return next;
     });
-    tokenClient.requestAccessToken();
   };
 
-  const deleteFromDrive = async (driveUrl) => {
-    if (!driveUrl) return;
+  /**
+   * Ensures we hold a Drive token before a delete, asking for one if needed.
+   * Returns the token, or null when the owner chose to delete site-side only.
+   */
+  const ensureDriveToken = async () => {
+    const saved = readSavedToken();
+    if (saved) return saved.token;
+
+    if (!confirm(GOOGLE_PROMPT)) return null;
     try {
-      const savedData = localStorage.getItem('googleDriveToken');
-      if (!savedData) return; // Skip if no token
-      
-      const { token, expiresAt } = JSON.parse(savedData);
-      if (Date.now() > expiresAt) return; // Skip if token expired
-      
-      let driveId = null;
-      const matchD = driveUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-      if (matchD) driveId = matchD[1];
-      else {
-        const matchId = driveUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-        if (matchId) driveId = matchId[1];
-      }
-      
-      if (!driveId) return;
-      
-      await fetch(`https://www.googleapis.com/drive/v3/files/${driveId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      console.log('Deleted file from Google Drive:', driveId);
-    } catch (e) {
-      console.error('Error deleting from Drive:', e);
+      const fresh = await connectDrive();
+      return fresh.token;
+    } catch (err) {
+      toast.error(err.message);
+      return null;
+    }
+  };
+
+  /**
+   * Removes the Drive copies for the given books and reports what happened.
+   * Failures used to be swallowed entirely — which matters most when a file
+   * lives in a different Google account than the one currently connected.
+   */
+  const removeDriveCopies = async (targets, token) => {
+    const withFiles = targets.filter((b) => b?.driveUrl);
+    if (!token || withFiles.length === 0) return;
+
+    const failures = new Map();
+    for (const book of withFiles) {
+      const result = await deleteFromDrive(book.driveUrl, token);
+      if (!result.ok) failures.set(result.reason, (failures.get(result.reason) || 0) + 1);
+    }
+
+    if (failures.size > 0) {
+      const worst = [...failures.entries()].sort((a, b) => b[1] - a[1])[0];
+      const count = [...failures.values()].reduce((a, b) => a + b, 0);
+      toast.error(
+        `ลบออกจากเว็บแล้ว แต่ไฟล์ใน Drive ${count} ไฟล์ลบไม่สำเร็จ — ${DELETE_REASONS[worst[0]] || worst[0]}`
+      );
     }
   };
 
   const handleBulkDelete = async () => {
     if (selectedBooks.size === 0) return;
+    if (!confirm(`ยืนยันลบหนังสือ ${selectedBooks.size} เล่ม? การลบนี้ย้อนกลับไม่ได้`)) return;
 
-    const performDelete = async () => {
-      if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบหนังสือ ${selectedBooks.size} เล่มนี้? (หากมีการเชื่อมต่อ Google Drive ระบบจะพยายามลบไฟล์ในไดรฟ์ด้วย)`)) return;
-      try {
-        toast.success('กำลังทยอยลบข้อมูล กรุณารอสักครู่...');
-        const batch = writeBatch(db);
-        for (const id of selectedBooks) {
-          const bookToDelete = books.find(b => b.id === id);
-          if (bookToDelete && bookToDelete.driveUrl) {
-            await deleteFromDrive(bookToDelete.driveUrl);
-          }
-          batch.delete(doc(db, 'books', id));
-        }
-        await batch.commit();
-        setBooks(books.filter(b => !selectedBooks.has(b.id)));
-        setSelectedBooks(new Set());
-        toast.success('ลบหนังสือสำเร็จ');
-      } catch (err) {
-        console.error(err);
-        toast.error('ลบไม่สำเร็จ');
-      }
-    };
+    const token = await ensureDriveToken();
+    const targets = books.filter((b) => selectedBooks.has(b.id));
 
-    if (!hasValidGoogleToken()) {
-      if (confirm('คุณยังไม่ได้เชื่อมต่อ Google Drive (หรือสิทธิ์หมดอายุ)\\nหากดำเนินการต่อ จะลบได้แค่ในเว็บไซต์เท่านั้น\\n\\n- กด OK เพื่อ "เชื่อมต่อ Google Drive ก่อนลบ"\\n- กด Cancel เพื่อ "ยอมให้ลบแค่ในเว็บไซต์"')) {
-        triggerGoogleAuth(performDelete);
-      } else {
-        performDelete();
-      }
-    } else {
-      performDelete();
+    try {
+      await removeDriveCopies(targets, token);
+
+      const batch = writeBatch(db);
+      targets.forEach((b) => batch.delete(doc(db, 'books', b.id)));
+      await batch.commit();
+
+      setBooks((prev) => prev.filter((b) => !selectedBooks.has(b.id)));
+      setSelectedBooks(new Set());
+      toast.success(`ลบหนังสือ ${targets.length} เล่มสำเร็จ`);
+    } catch (err) {
+      console.error(err);
+      toast.error('ลบไม่สำเร็จ');
     }
   };
 
   const handleSingleDelete = async (id) => {
-    const performDelete = async () => {
-      if (!confirm('คุณแน่ใจหรือไม่ที่จะลบหนังสือเล่มนี้? (หากเชื่อมต่อ Google Drive ระบบจะพยายามลบไฟล์ในไดรฟ์ด้วย)')) return;
-      try {
-        const bookToDelete = books.find(b => b.id === id);
-        if (bookToDelete && bookToDelete.driveUrl) {
-          await deleteFromDrive(bookToDelete.driveUrl);
-        }
+    const book = books.find((b) => b.id === id);
+    if (!confirm(`ยืนยันลบ "${book?.title || 'เล่มนี้'}"? การลบนี้ย้อนกลับไม่ได้`)) return;
 
-        await deleteDoc(doc(db, 'books', id));
-        setBooks(books.filter(b => b.id !== id));
-        
-        const newSelected = new Set(selectedBooks);
-        if (newSelected.has(id)) {
-          newSelected.delete(id);
-          setSelectedBooks(newSelected);
-        }
-        
-        toast.success('ลบหนังสือสำเร็จ');
-      } catch (err) {
-        console.error(err);
-        toast.error('ลบไม่สำเร็จ');
-      }
-    };
+    const token = book?.driveUrl ? await ensureDriveToken() : null;
 
-    if (!hasValidGoogleToken()) {
-      if (confirm('คุณยังไม่ได้เชื่อมต่อ Google Drive (หรือสิทธิ์หมดอายุ)\\nหากดำเนินการต่อ จะลบได้แค่ในเว็บไซต์เท่านั้น\\n\\n- กด OK เพื่อ "เชื่อมต่อ Google Drive ก่อนลบ"\\n- กด Cancel เพื่อ "ยอมให้ลบแค่ในเว็บไซต์"')) {
-        triggerGoogleAuth(performDelete);
-      } else {
-        performDelete();
-      }
-    } else {
-      performDelete();
+    try {
+      await removeDriveCopies([book], token);
+      await deleteDoc(doc(db, 'books', id));
+
+      setBooks((prev) => prev.filter((b) => b.id !== id));
+      setSelectedBooks((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      toast.success('ลบหนังสือสำเร็จ');
+    } catch (err) {
+      console.error(err);
+      toast.error('ลบไม่สำเร็จ');
     }
   };
 
@@ -366,14 +336,23 @@ export default function AdminPage() {
     const matchesType = typeFilter ? book.type === typeFilter : true;
     const matchesYear = yearFilter ? String(book.year) === yearFilter : true;
     const matchesStatus = statusFilter === 'restricted' ? book.restricted : statusFilter === 'public' ? !book.restricted : true;
-    return matchesSearch && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus;
+
+    const hasAnyFile = book.driveUrl || book.telegramFileId || book.telegramUrl;
+    const matchesHealth =
+      healthFilter === 'nofile' ? !hasAnyFile
+      : healthFilter === 'telegram' ? !book.driveUrl && (book.telegramFileId || book.telegramUrl)
+      : healthFilter === 'unmirrored' ? book.driveUrl && !book.telegramFileId && canMirror(bookSizeBytes(book))
+      : true;
+
+    return matchesSearch && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus && matchesHealth;
   });
 
   const totalBooks = books.length;
   const restrictedCount = books.filter(b => b.restricted).length;
   const publicCount = totalBooks - restrictedCount;
   
-  const allSelected = filteredBooks.length > 0 && selectedBooks.size === filteredBooks.length;
+  const allSelected =
+    filteredBooks.length > 0 && filteredBooks.every((b) => selectedBooks.has(b.id));
 
   return (
     <div className="container">
@@ -399,6 +378,19 @@ export default function AdminPage() {
           <div className={styles.statLabel}>สงวนสิทธิ์</div>
         </div>
       </div>
+
+      {healthFilter && (
+        <div className={styles.healthBanner}>
+          <span>
+            {healthFilter === 'nofile'
+              ? 'กำลังแสดงเฉพาะเล่มที่ยังไม่มีไฟล์แนบเลย'
+              : healthFilter === 'unmirrored'
+                ? 'กำลังแสดงเฉพาะเล่มที่ยังไม่มีสำเนาสำรอง — เปิดเล่มนั้นแล้วกด "สำรองตอนนี้"'
+                : 'กำลังแสดงเฉพาะเล่มที่มีแต่ไฟล์ Telegram (เล่มใหญ่กว่า 20MB จะเปิดไม่ได้)'}
+          </span>
+          <button className="btn" onClick={() => setHealthFilter('')}>แสดงทั้งหมด</button>
+        </div>
+      )}
 
       <div className={styles.filterBar}>
         <div className={styles.filterTopRow}>
@@ -694,7 +686,9 @@ export default function AdminPage() {
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                 >
                   <option value="">ปล่อยว่างเพื่อคงเดิม</option>
-                  {predefinedLanguages.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                  {/* `languages` is a flat list of strings — reading .value/.label
+                      off it produced a dropdown of blank options. */}
+                  {languages.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
               </label>
 

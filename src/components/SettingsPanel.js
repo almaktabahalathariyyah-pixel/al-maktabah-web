@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { getDropdownSettings, saveDropdownSettings } from '@/lib/settings';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useToast } from '@/context/ToastContext';
 import { X, Plus, Trash2, GripVertical, Save } from 'lucide-react';
 import panelStyles from './BookFormPanel.module.css';
@@ -14,6 +16,9 @@ export default function SettingsPanel({ isOpen, onClose }) {
   const [categories, setCategories] = useState([]);
   const [languages, setLanguages] = useState([]);
   const [types, setTypes] = useState([]);
+  // Shown on the account page, and used by /api/pdf as the last resort when a
+  // book cannot be served at all.
+  const [contactChannels, setContactChannels] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,8 +41,16 @@ export default function SettingsPanel({ isOpen, onClose }) {
     const fetchSettings = async () => {
       setLoading(true);
       try {
-        const settings = await getDropdownSettings();
+        const [settings, siteSnap] = await Promise.all([
+          getDropdownSettings(),
+          getDoc(doc(db, 'config', 'siteSettings')),
+        ]);
         if (!isMounted) return;
+        setContactChannels(
+          siteSnap.exists() && Array.isArray(siteSnap.data().contactChannels)
+            ? siteSnap.data().contactChannels
+            : []
+        );
         setCategories(settings.categories || []);
         setLanguages(settings.languages || []);
         setTypes(settings.types || ['หนังสือ', 'ไฟล์ออนไลน์', 'รายงาน', 'แผ่นพับ', 'วารสาร', 'งานวิจัย', 'วิทยานิพนธ์']);
@@ -61,6 +74,15 @@ export default function SettingsPanel({ isOpen, onClose }) {
         types: types.filter(Boolean),
       };
       const success = await saveDropdownSettings(payload);
+
+      // Contact channels live in config/siteSettings, which is what the
+      // account page and the "book unavailable" page both read.
+      await setDoc(
+        doc(db, 'config', 'siteSettings'),
+        { contactChannels: contactChannels.filter((c) => c.link?.trim()) },
+        { merge: true }
+      );
+
       if (success) {
         toast.success('บันทึกการตั้งค่าสำเร็จ');
         onClose();
@@ -163,6 +185,19 @@ export default function SettingsPanel({ isOpen, onClose }) {
   };
 
   // --- Type Handlers ---
+  // --- Contact channel handlers ---
+  const addChannel = () => setContactChannels([...contactChannels, { label: '', link: '' }]);
+  const updateChannel = (index, key, value) => {
+    const next = [...contactChannels];
+    next[index] = { ...next[index], [key]: value };
+    setContactChannels(next);
+  };
+  const removeChannel = (index) => {
+    const next = [...contactChannels];
+    next.splice(index, 1);
+    setContactChannels(next);
+  };
+
   const addType = () => setTypes([...types, '']);
   const updateType = (index, val) => {
     const newTypes = [...types];
@@ -288,6 +323,43 @@ export default function SettingsPanel({ isOpen, onClose }) {
                     </div>
                   ))}
                   {types.length === 0 && <div style={{color:'var(--fg-3)', padding:'1rem', textAlign:'center'}}>ยังไม่มีประเภท</div>}
+                </div>
+              </section>
+
+              {/* Contact Channels */}
+              <section className={styles.section}>
+                <div className={styles.sectionHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h2 className={styles.sectionTitle} style={{ margin: 0, fontSize: '1.2rem' }}>ช่องทางติดต่อ (LINE OA)</h2>
+                  <button className="btn" onClick={addChannel}><Plus size={16}/> เพิ่มช่องทาง</button>
+                </div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--fg-3)', lineHeight: 1.7, marginBottom: '1rem' }}>
+                  แสดงในหน้าบัญชี และใช้เป็นทางออกสุดท้ายเมื่อหนังสือเปิดไม่ได้
+                  ระบบจะบอกผู้อ่านให้ทักมาขอไฟล์ทางช่องทางแรกในรายการนี้
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {contactChannels.map((channel, cIdx) => (
+                    <div key={cIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="text"
+                        value={channel.label || ''}
+                        onChange={(e) => updateChannel(cIdx, 'label', e.target.value)}
+                        placeholder="ชื่อที่แสดง เช่น ติดต่อผ่าน LINE"
+                        style={{ flex: '0 1 240px', padding: '0.5rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
+                      />
+                      <input
+                        type="text"
+                        value={channel.link || ''}
+                        onChange={(e) => updateChannel(cIdx, 'link', e.target.value)}
+                        placeholder="https://lin.ee/xxxxxxx"
+                        style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
+                      />
+                      <button className={styles.iconBtn} onClick={() => removeChannel(cIdx)} title="ลบช่องทาง" style={{ padding: '0.5rem', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--fg-3)' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  {contactChannels.length === 0 && <div style={{color:'var(--fg-3)', padding:'1rem', textAlign:'center'}}>ยังไม่มีช่องทางติดต่อ</div>}
                 </div>
               </section>
 

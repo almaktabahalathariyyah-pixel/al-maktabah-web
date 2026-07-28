@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   LayoutGrid,
   UserCheck,
-  Upload,
+  BarChart3,
   Settings,
   SlidersHorizontal,
   Menu,
@@ -23,6 +23,7 @@ import styles from './AdminShell.module.css';
 
 const ADMIN_NAV = [
   { label: 'คลังหนังสือ', href: '/admin', icon: LayoutGrid },
+  { label: 'สถิติและสุขภาพคลัง', href: '/admin/stats', icon: BarChart3 },
   { label: 'อนุมัติสมาชิก', href: '/admin/approvals', icon: UserCheck },
 ];
 
@@ -33,6 +34,7 @@ export default function AdminShell({ children }) {
   
   const {
     isSidebarOpen,
+    setIsSidebarOpen,
     toggleSidebar,
     isSettingsOpen,
     openSettings,
@@ -42,15 +44,16 @@ export default function AdminShell({ children }) {
     closeFields,
   } = useAdmin();
 
-  // Used to prevent hydration mismatch for window.innerWidth
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   useEffect(() => {
     if (!loading && !isAdmin) router.replace('/');
   }, [loading, isAdmin, router]);
 
-  if (loading || !mounted) {
+  // On phones the sidebar is an overlay, so following a link should close it.
+  const closeOnMobile = () => {
+    if (window.matchMedia('(max-width: 900px)').matches) setIsSidebarOpen(false);
+  };
+
+  if (loading) {
     return <div className={styles.gate}>กำลังตรวจสอบสิทธิ์…</div>;
   }
 
@@ -97,9 +100,7 @@ export default function AdminShell({ children }) {
                 href={item.href}
                 className={`${styles.navLink} ${active ? styles.navActive : ''}`}
                 title={!isSidebarOpen ? item.label : undefined}
-                onClick={() => {
-                  if (window.innerWidth <= 900) toggleSidebar();
-                }}
+                onClick={closeOnMobile}
               >
                 <item.icon size={18} className={styles.navIcon} />
                 <span className={styles.navText}>{item.label}</span>
@@ -111,7 +112,7 @@ export default function AdminShell({ children }) {
         <div className={styles.navDivider} />
         
         <div className={styles.settingsNav}>
-          <Link href="/admin/names" className={styles.navLink} title={!isSidebarOpen ? 'จัดการรายชื่อ' : undefined} onClick={() => { if (window.innerWidth <= 900) toggleSidebar(); }}>
+          <Link href="/admin/names" className={styles.navLink} title={!isSidebarOpen ? 'จัดการรายชื่อ' : undefined} onClick={closeOnMobile}>
             <UserCheck size={18} className={styles.navIcon} /> <span className={styles.navText}>จัดการรายชื่อ</span>
           </Link>
           <button onClick={openFields} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าฟิลด์' : undefined}>
@@ -134,10 +135,9 @@ export default function AdminShell({ children }) {
       <SettingsPanel isOpen={isSettingsOpen} onClose={closeSettings} />
       <FieldsPanel isOpen={isFieldsOpen} onClose={closeFields} />
 
-      {/* Mobile Backdrop */}
-      {isSidebarOpen && window.innerWidth <= 900 && (
-        <div className={styles.backdrop} onClick={toggleSidebar} />
-      )}
+      {/* Backdrop. Whether it is visible is a CSS question (it only appears
+          under 900px), never a window.innerWidth read during render. */}
+      {isSidebarOpen && <div className={styles.backdrop} onClick={toggleSidebar} />}
     </div>
   );
 }

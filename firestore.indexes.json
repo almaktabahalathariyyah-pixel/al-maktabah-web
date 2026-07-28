@@ -1,0 +1,32 @@
+{
+  "indexes": [
+    {
+      "//": "The shelf as a guest sees it: public titles, newest first. Required because the security rules force an unapproved reader to ask only for restricted == false.",
+      "collectionGroup": "books",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "restricted", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "Related titles on a book page, filtered by shelf visibility.",
+      "collectionGroup": "books",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "restricted", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "Admin download reports, newest first for one book.",
+      "collectionGroup": "downloads",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "bookId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

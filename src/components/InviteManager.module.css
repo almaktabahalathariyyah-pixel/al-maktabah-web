@@ -1,0 +1,102 @@
+.wrap {
+  margin-top: 3.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.head { margin-bottom: 1.5rem; }
+.title {
+  font-family: var(--display);
+  font-size: var(--t-h2);
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+.sub {
+  font-size: var(--t-small);
+  line-height: var(--lh-body);
+  color: var(--fg-3);
+  max-width: 52ch;
+}
+
+.maker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 1.1rem;
+  margin-bottom: 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.makerField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  min-width: 140px;
+}
+.makerField span {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  color: var(--fg-2);
+  letter-spacing: var(--tr-label);
+}
+
+.state {
+  padding: 2rem 0;
+  font-size: var(--t-small);
+  color: var(--fg-3);
+  text-align: center;
+}
+
+.list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, auto) 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.spent { opacity: 0.55; }
+
+.codeCell { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.codeIcon { flex: none; color: var(--fg-3); }
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--t-small);
+  letter-spacing: 0.08em;
+  color: var(--fg);
+}
+
+.meta {
+  font-size: var(--t-micro);
+  color: var(--fg-3);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acts { display: flex; gap: 0.25rem; flex: none; }
+.act {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  color: var(--fg-2);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.act:hover { background: var(--surface-3); color: var(--fg); }
+.danger:hover { background: var(--hot-dim); color: var(--hot); }
+
+@media (max-width: 640px) {
+  .row { grid-template-columns: 1fr auto; }
+  .meta { grid-column: 1 / -1; white-space: normal; }
+}

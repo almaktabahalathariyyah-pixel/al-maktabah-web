@@ -1,279 +1,103 @@
-'use client';
-
-import { use, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, Download, Bookmark, Check, User } from 'lucide-react';
-import BookCover from '@/components/BookCover';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, limit, getDocs, addDoc, increment } from 'firebase/firestore';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
-import { getLangPath } from '@/lib/langPath';
-import styles from './page.module.css';
+import BookDetail from './BookDetail';
 
-export default function BookDetailPage({ params }) {
-  const router = useRouter();
-  const { lang, id } = use(params);
-  const { user, approved } = useAuth();
-  const { toast } = useToast();
-  const [book, setBook] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [relatedBooks, setRelatedBooks] = useState([]);
+/**
+ * Server shell around the reader-facing book page.
+ *
+ * The page itself has to stay a client component — it reads the session to
+ * decide what the reader may open. But metadata cannot come from a client
+ * component, so every shared link used to unfurl as the bare site title with
+ * no cover. Reading the book once here gives crawlers and chat previews a
+ * real title, description and image.
+ *
+ * A restricted title deliberately gets a neutral card: its existence is not
+ * something to advertise.
+ */
+async function fetchBook(id) {
+  try {
+    const snap = await getDoc(doc(db, 'books', id));
+    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  } catch (error) {
+    console.error('Error loading book for metadata:', error);
+    return null;
+  }
+}
 
-  useEffect(() => {
-    const fetchBookAndUser = async () => {
-      try {
-        // Fetch Book
-        const docRef = doc(db, 'books', id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const correctLang = getLangPath(data.language);
-          
-          if (lang !== correctLang) {
-            router.replace(`/book/${correctLang}/${id}`);
-            return;
-          }
-          
-          setBook({ id: docSnap.id, ...data });
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const book = await fetchBook(id);
 
-          // Fetch related
-          if (data.category) {
-            const q = query(collection(db, 'books'), where('category', '==', data.category), limit(6));
-            const relSnap = await getDocs(q);
-            const related = [];
-            relSnap.forEach(d => {
-              if (d.id !== id && (!d.data().restricted || approved)) related.push({ id: d.id, ...d.data() });
-            });
-            setRelatedBooks(related.slice(0, 4));
-          }
-        }
+  if (!book) {
+    return { title: 'ไม่พบหนังสือ · Al-Maktabah Al-Athariyyah' };
+  }
 
-        // Fetch User Saved State
-        if (user) {
-          const userRef = doc(db, 'users', user.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            if (userData.savedBooks && userData.savedBooks.includes(id)) {
-              setSaved(true);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
+  if (book.restricted) {
+    return {
+      title: 'หนังสือสงวนสิทธิ์ · Al-Maktabah Al-Athariyyah',
+      description: 'เล่มนี้เปิดให้เฉพาะสมาชิกที่ได้รับอนุมัติ',
+      robots: { index: false, follow: false },
     };
-    fetchBookAndUser();
-  }, [id, user]);
-
-  const toggleSave = async () => {
-    if (!user) {
-      toast.info("กรุณาเข้าสู่ระบบก่อนบันทึกหนังสือ");
-      return;
-    }
-    setSaving(true);
-    try {
-      const userRef = doc(db, 'users', user.uid);
-      if (saved) {
-        await updateDoc(userRef, { savedBooks: arrayRemove(id) });
-        setSaved(false);
-      } else {
-        await updateDoc(userRef, { savedBooks: arrayUnion(id) });
-        setSaved(true);
-      }
-    } catch (error) {
-      console.error("Error updating saved books:", error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!user) {
-      toast.info("กรุณาเข้าสู่ระบบก่อนดาวน์โหลด");
-      return;
-    }
-    
-    // เปิดหน้าต่างใหม่ไปที่ไฟล์ (ถ้าเป็นลิงก์ภายนอก) หรือพาไปหน้าอ่าน PDF (ถ้ามีไฟล์ในระบบ)
-    if (book.telegramFileId) {
-      router.push(`/book/${lang}/${id}/read`);
-    } else {
-      window.open(book.telegramUrl || '#', '_blank');
-    }
-
-    try {
-      // 1. บันทึกสถิติลง Collection downloads
-      const downloadRef = collection(db, 'downloads');
-      await addDoc(downloadRef, {
-        bookId: id,
-        userId: user.uid,
-        timestamp: new Date(),
-        type: 'read'
-      });
-
-      // 2. เพิ่มยอดดาวน์โหลดใน Document หนังสือ
-      const bookRef = doc(db, 'books', id);
-      await updateDoc(bookRef, {
-        downloadCount: increment(1)
-      });
-    } catch (err) {
-      console.error("Error logging download:", err);
-    }
-  };
-
-  const handleDirectDownload = async () => {
-    if (!user) {
-      toast.error('คุณต้องเข้าสู่ระบบเพื่อดาวน์โหลด');
-      router.push('/login');
-      return;
-    }
-    if (book.restricted && !approved) {
-      toast.error('คุณไม่มีสิทธิ์ดาวน์โหลดหนังสือเล่มนี้');
-      return;
-    }
-
-    try {
-      // 1. บันทึกสถิติ
-      const downloadRef = collection(db, 'downloads');
-      await addDoc(downloadRef, {
-        bookId: id,
-        userId: user.uid,
-        timestamp: new Date(),
-        type: 'download'
-      });
-      // 2. เพิ่มยอดดาวน์โหลด
-      const bookRef = doc(db, 'books', id);
-      await updateDoc(bookRef, { downloadCount: increment(1) });
-    } catch (err) {
-      console.error("Error logging download:", err);
-    }
-
-    try {
-      const token = await user.getIdToken();
-      window.open(`/api/pdf/${id}?token=${token}&action=download`, '_blank');
-    } catch (err) {
-      console.error(err);
-      toast.error('เกิดข้อผิดพลาด กรุณาลองใหม่');
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="container">
-        <div className={styles.layout} style={{ marginTop: '4rem' }}>
-          <div className={`${styles.skeletonCover} shimmer`} />
-          <div className={styles.main}>
-            <div className={`${styles.skeletonTitle} shimmer`} />
-            <div className={`${styles.skeletonText} shimmer`} />
-            <div className={`${styles.skeletonText} shimmer`} style={{ width: '60%' }} />
-          </div>
-        </div>
-      </div>
-    );
   }
 
-  if (!book || (book.restricted && !approved)) {
-    return <div className="container" style={{paddingTop: '4rem'}}>ไม่พบข้อมูลหนังสือ</div>;
-  }
+  const byline = book.author ? `โดย ${book.author}` : '';
+  const description =
+    (book.description || '').trim().slice(0, 180) ||
+    [byline, book.publisher, book.year].filter(Boolean).join(' · ') ||
+    'คลังหนังสืออิสลาม Al-Maktabah Al-Athariyyah';
+
+  const cover = book.coverUrl && !book.coverUrl.startsWith('data:') ? book.coverUrl : null;
+
+  return {
+    title: `${book.title} · Al-Maktabah Al-Athariyyah`,
+    description,
+    openGraph: {
+      type: 'book',
+      title: book.title,
+      description,
+      images: cover ? [cover] : undefined,
+    },
+    twitter: {
+      card: cover ? 'summary_large_image' : 'summary',
+      title: book.title,
+      description,
+      images: cover ? [cover] : undefined,
+    },
+  };
+}
+
+export default async function BookDetailPage({ params }) {
+  const { lang, id } = await params;
+  const book = await fetchBook(id);
+
+  // Structured data, so a search result can show the author and format
+  // rather than just a URL. Restricted titles are left out entirely.
+  const jsonLd =
+    book && !book.restricted
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Book',
+          name: book.title,
+          ...(book.author ? { author: { '@type': 'Person', name: book.author } } : {}),
+          ...(book.translator ? { translator: { '@type': 'Person', name: book.translator } } : {}),
+          ...(book.publisher ? { publisher: { '@type': 'Organization', name: book.publisher } } : {}),
+          ...(book.description ? { description: book.description } : {}),
+          ...(book.language ? { inLanguage: book.language } : {}),
+          ...(book.pages ? { numberOfPages: Number(book.pages) || undefined } : {}),
+          ...(book.coverUrl && !book.coverUrl.startsWith('data:') ? { image: book.coverUrl } : {}),
+          bookFormat: 'https://schema.org/EBook',
+        }
+      : null;
 
   return (
-    <div className="container">
-      <Link href="/" className={styles.back}>
-        <ArrowLeft size={15} /> <span className="tlink">คลังหนังสือ</span>
-      </Link>
-
-      <article className={`${styles.layout} rise`}>
-        {/* ---------- Left rail: cover + actions ---------- */}
-        <aside className={styles.rail}>
-          <BookCover src={book.coverUrl} title={book.title} author={book.author} />
-
-          <div className={styles.actions}>
-            <button 
-              onClick={handleDownload} 
-              className="btn btn-solid btn-block" 
-              style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem'}}
-            >
-              <Check size={15} /> เปิดอ่านหนังสือ
-            </button>
-
-            <button 
-              onClick={handleDirectDownload} 
-              className="btn btn-outline btn-block" 
-              style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', marginTop: '0.5rem', marginBottom: '0.5rem'}}
-            >
-              <Download size={15} /> ดาวน์โหลดไฟล์ PDF
-            </button>
-            
-            <button
-              className={`btn btn-block ${saved ? styles.savedOn : ''}`}
-              onClick={toggleSave}
-              disabled={saving}
-            >
-              {saved ? <Check size={15} /> : <Bookmark size={15} />}
-              {saved ? 'บันทึกแล้ว' : 'บันทึกไว้อ่าน'}
-            </button>
-          </div>
-
-          <p className={styles.delivery}>
-            เปิดอ่านไฟล์ PDF จากระบบได้โดยตรง
-          </p>
-        </aside>
-
-        {/* ---------- Main text ---------- */}
-        <div className={styles.main}>
-          <header className={styles.header}>
-            <p className="eyebrow">
-              {book.category}
-            </p>
-            <h1 className={styles.title}>{book.title}</h1>
-            <p className={styles.author}>
-              <User size={14} className={styles.authorIcon} />
-              {book.author}
-            </p>
-          </header>
-
-          <p className={styles.description}>{book.description || '-'}</p>
-
-          <dl className={styles.specs}>
-            {[
-              ['สำนักพิมพ์', book.publisher || '-'],
-              ['ปีที่พิมพ์', book.year || '-'],
-              ['ผู้แปล', book.translator || '-'],
-              ['จำนวนหน้า', `${book.pages || '-'} หน้า`],
-              ['ภาษา', book.language || 'ไทย'],
-              ['ขนาดไฟล์', `${book.size || '-'} (PDF)`],
-            ].map(([label, value]) => (
-              <div key={label} className={styles.spec}>
-                <dt>{label}</dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </article>
-
-      {/* ---------- Related Books ---------- */}
-      {relatedBooks.length > 0 && (
-        <section className={styles.related}>
-          <h2 className={styles.relatedTitle}>หนังสือที่เกี่ยวข้อง</h2>
-          <div className={styles.relatedGrid}>
-            {relatedBooks.map(b => (
-              <Link key={b.id} href={`/book/${getLangPath(b.language)}/${b.id}`} className={styles.relatedItem}>
-                <BookCover src={b.coverUrl} title={b.title} author={b.author} />
-                <div className={styles.relatedMeta}>
-                  <div className={styles.relatedBookTitle}>{b.title}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       )}
-    </div>
+      <BookDetail lang={lang} id={id} />
+    </>
   );
 }

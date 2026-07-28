@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { Bookmark } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { getLangPath } from '@/lib/langPath';
@@ -37,16 +37,31 @@ export default function SavedPage() {
             return;
           }
 
-          // Fetch details for each saved book
-          const booksData = await Promise.all(
-            savedIds.map(async (id) => {
-              const bookRef = doc(db, 'books', id);
-              const bookSnap = await getDoc(bookRef);
-              return bookSnap.exists() ? { id: bookSnap.id, ...bookSnap.data() } : null;
-            })
+          // One query per 10 ids instead of one read per book — a shelf of
+          // forty titles used to cost forty round trips.
+          const chunks = [];
+          for (let i = 0; i < savedIds.length; i += 10) {
+            chunks.push(savedIds.slice(i, i + 10));
+          }
+
+          const snaps = await Promise.all(
+            chunks.map((chunk) =>
+              getDocs(query(collection(db, 'books'), where(documentId(), 'in', chunk)))
+            )
           );
-          
-          setSavedBooks(booksData.filter(b => b && (!b.restricted || approved)));
+
+          const byId = new Map();
+          snaps.forEach((snap) =>
+            snap.forEach((d) => byId.set(d.id, { id: d.id, ...d.data() }))
+          );
+
+          // Keep the reader's own ordering; drop titles that no longer exist
+          // or that they are not cleared for.
+          setSavedBooks(
+            savedIds
+              .map((id) => byId.get(id))
+              .filter((b) => b && (!b.restricted || approved))
+          );
         }
       } catch (error) {
         console.error("Error fetching saved books:", error);

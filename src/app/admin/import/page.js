@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { addDoc, collection } from 'firebase/firestore';
+import { setDoc, doc } from 'firebase/firestore';
 import { Upload, FileJson, AlertTriangle } from 'lucide-react';
 import { db } from '@/lib/firebase';
+import { getNextBookId } from '@/lib/sequentialId';
 import styles from './page.module.css';
 
 /**
@@ -66,7 +67,11 @@ export default function ImportPage() {
     try {
       for (let i = 0; i < parsed.length; i++) {
         const msg = parsed[i];
-        await addDoc(collection(db, 'books'), {
+        // Running ids, the same as every other way a book enters the library.
+        // addDoc used to mint random ids here, leaving the collection with two
+        // incompatible id schemes and breaking the /book/<id> links people share.
+        const id = await getNextBookId();
+        await setDoc(doc(db, 'books', id), {
           title: msg.file_name ? msg.file_name.replace(/\.pdf$/i, '') : 'ไม่ทราบชื่อ',
           author: '',
           category: 'อื่นๆ',
@@ -75,9 +80,11 @@ export default function ImportPage() {
           pages: 0,
           format: 'PDF',
           coverUrl: '',
+          driveUrl: '',
           telegramUrl: `${base}/${msg.id}`,
           description: typeof msg.text === 'string' ? msg.text : '',
           restricted: false,
+          downloadCount: 0,
           createdAt: new Date(msg.date || Date.now()),
         });
         setProgress({ done: i + 1, total: parsed.length });

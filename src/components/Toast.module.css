@@ -21,7 +21,7 @@
   max-width: 350px;
   background: var(--surface);
   border: 1px solid var(--border);
-  color: var(--text);
+  color: var(--fg);
 }
 
 .success {
@@ -39,10 +39,10 @@
 }
 
 .info {
-  border-left: 4px solid var(--text);
+  border-left: 4px solid var(--fg-2);
 }
 .info .icon {
-  color: var(--text);
+  color: var(--fg);
 }
 
 .message {
@@ -53,7 +53,7 @@
 .close {
   background: none;
   border: none;
-  color: var(--text);
+  color: var(--fg);
   opacity: 0.5;
   cursor: pointer;
   padding: 0.25rem;

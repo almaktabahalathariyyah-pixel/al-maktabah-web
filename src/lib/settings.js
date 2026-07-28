@@ -2,19 +2,38 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 /**
- * Get dropdown settings (categories and languages) from Firestore.
- * If they don't exist, returns empty arrays.
+ * Every list the admin forms read, so a partially-written settings document
+ * can never hand a caller `undefined` where it expects to call .some/.map.
+ */
+const EMPTY_SETTINGS = {
+  categories: [],
+  languages: [],
+  types: [],
+  authors: [],
+  translators: [],
+  publishers: [],
+};
+
+/** Normalises whatever is in Firestore into the shape above. */
+function withDefaults(data) {
+  const merged = { ...EMPTY_SETTINGS, ...(data || {}) };
+  for (const key of Object.keys(EMPTY_SETTINGS)) {
+    if (!Array.isArray(merged[key])) merged[key] = [];
+  }
+  return merged;
+}
+
+/**
+ * Get dropdown settings (categories, languages, names…) from Firestore.
+ * Missing or malformed keys come back as empty arrays.
  */
 export async function getDropdownSettings() {
   try {
     const docSnap = await getDoc(doc(db, 'settings', 'dropdowns'));
-    if (docSnap.exists()) {
-      return docSnap.data();
-    }
-    return { categories: [], languages: [] };
+    return withDefaults(docSnap.exists() ? docSnap.data() : null);
   } catch (err) {
     console.error('Error fetching dropdown settings:', err);
-    return { categories: [], languages: [] };
+    return withDefaults(null);
   }
 }
 

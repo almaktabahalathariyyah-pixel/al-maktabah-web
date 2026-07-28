@@ -5,6 +5,7 @@ import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { Check, X, ExternalLink, RotateCcw } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/context/ToastContext';
+import InviteManager from '@/components/InviteManager';
 import styles from './page.module.css';
 
 const TABS = [
@@ -162,6 +163,8 @@ export default function ApprovalsPage() {
           ))}
         </ul>
       )}
+
+      <InviteManager />
     </div>
   );
 }

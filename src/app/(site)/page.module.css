@@ -1,69 +1,62 @@
-/* ---------------- Hero Section ---------------- */
+/* ----------------------------------------------------------------
+   Masthead. Deliberately typographic: the covers below carry the
+   colour, so the page opens on quiet type and a rule, not a banner.
+   ---------------------------------------------------------------- */
 .hero {
-  position: relative;
-  overflow: hidden;
-  padding: clamp(2.5rem, 5vw, 4rem) 2rem;
-  margin-top: 1.5rem;
-  border-radius: var(--r-xl);
-  background: linear-gradient(135deg, #064e3b, #022c22);
-  color: #fff;
+  padding: clamp(2.5rem, 6vw, 4.25rem) 0 clamp(1.5rem, 3vw, 2rem);
+  border-bottom: 1px solid var(--border);
 }
-.heroContent {
-  position: relative;
-  z-index: 2;
-  max-width: 600px;
-}
+.hero .eyebrow { display: block; margin-bottom: 0.85rem; }
 .heroTitle {
   font-family: var(--display);
-  font-size: clamp(2.2rem, 5vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 0.5rem;
-  background: linear-gradient(to right, #fff, #a7f3d0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  font-weight: 600;
+  line-height: var(--lh-display);
+  margin-bottom: 0.6rem;
 }
 .heroSub {
   font-size: var(--t-lede);
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.6;
-}
-.heroGlow {
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 400px;
-  height: 400px;
-  background: var(--accent);
-  filter: blur(120px);
-  opacity: 0.15;
-  border-radius: 50%;
-  pointer-events: none;
+  line-height: var(--lh-body);
+  color: var(--fg-2);
+  max-width: 46ch;
 }
 
 /* ---------------- Header bar ---------------- */
 .bar {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1.25rem;
   flex-wrap: wrap;
-  padding: clamp(1.5rem, 3.5vw, 2.5rem) 0 1.25rem;
+  padding: 1.5rem 0 1.25rem;
 }
 
-.barText { display: flex; align-items: baseline; gap: 0.85rem; min-width: 0; }
-.title {
-  font-family: var(--display);
-  font-size: clamp(1.5rem, 3.2vw, 2.1rem);
-  font-weight: 600;
-  line-height: var(--lh-display);
-  letter-spacing: 0;
-}
 .count {
   font-size: var(--t-small);
   color: var(--fg-3);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+.stillLoading {
+  color: var(--accent);
+  animation: pulse 1.6s var(--ease) infinite;
+}
+
+/* The keyboard hint sits where the clear button will be. */
+.kbd {
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  border: 1px solid var(--border-2);
+  background: var(--surface-2);
+  color: var(--fg-3);
+  font-family: var(--text);
+  font-size: 0.7rem;
+  line-height: 1;
 }
 
 .barTools {
@@ -75,6 +68,7 @@
 }
 
 .searchWrap {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -128,46 +122,43 @@
   overflow-y: auto;
   z-index: 50;
 }
-.suggestionGroup {
-  padding: 0.5rem 0;
-}
+.suggestionGroup { padding: 0.35rem 0; }
+.suggestionGroup + .suggestionGroup { border-top: 1px solid var(--border); }
+
 .suggestionTitle {
-  font-size: 0.75rem;
+  font-size: var(--t-micro);
   font-weight: 600;
   color: var(--fg-3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.25rem 1rem;
+  letter-spacing: var(--tr-label);
+  padding: 0.4rem 0.9rem 0.25rem;
 }
 .suggestionItem {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.5rem 0.9rem;
   border: none;
   background: transparent;
-  width: 100%;
+  text-align: left;
+  font-family: var(--text);
+  font-size: var(--t-small);
+  line-height: 1.5;
+  color: var(--fg-2);
 }
+.suggestionOn,
 .suggestionItem:hover {
   background: var(--surface-3);
-  color: var(--accent);
-}
-.suggestionIcon {
-  color: var(--fg-3);
-}
-
-/* Filter toggle only appears once the rail collapses */
-.railToggle {
-  display: none;
-  align-items: center;
-  gap: 0.45rem;
-  flex: none;
-  padding: 0.55rem 1rem;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  font-size: var(--t-small);
-  font-weight: 600;
   color: var(--fg);
-  transition: background-color var(--dur) var(--ease), transform var(--dur-fast) var(--spring);
 }
-.railToggle:hover { background: var(--surface-3); }
-.railToggle:active { transform: scale(0.96); }
+.suggestionText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.suggestionIcon { flex: none; color: var(--fg-3); }
+
 .pip {
   min-width: 18px;
   height: 18px;
@@ -180,6 +171,41 @@
   font-size: 0.66rem;
   font-weight: 700;
 }
+
+/* ---------------- Active filters ---------------- */
+.activeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1.1rem;
+}
+.activePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem 0.4rem 0.6rem;
+  border-radius: var(--r-pill);
+  background: var(--accent-dim);
+  border: 1px solid transparent;
+  color: var(--fg);
+  font-size: var(--t-small);
+  line-height: 1.4;
+  transition: background-color var(--dur) var(--ease), transform var(--dur-fast) var(--spring);
+}
+.activePill:hover { background: var(--surface-3); }
+.activePill:active { transform: scale(0.96); }
+.activeKey {
+  font-size: var(--t-micro);
+  color: var(--fg-3);
+}
+.activeClear {
+  font-size: var(--t-small);
+  color: var(--fg-3);
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--r-sm);
+}
+.activeClear:hover { color: var(--fg); }
 
 /* ---------------- Chips ---------------- */
 .chips {
@@ -201,15 +227,32 @@
   align-items: flex-start;
 }
 
-.railWrap {
-  position: sticky;
-  top: 5rem;
-  max-height: calc(100vh - 7rem);
-  overflow-y: auto;
-  padding-right: 0.35rem;
+.shelf { min-width: 0; }
+
+.personSections { display: flex; flex-direction: column; gap: 2.5rem; }
+.sectionHead {
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--border);
 }
 
-.shelf { min-width: 0; }
+/* ---------------- Load more ---------------- */
+.moreRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 2.5rem 0 0.5rem;
+}
+.moreCount {
+  font-size: var(--t-micro);
+  color: var(--fg-3);
+  font-variant-numeric: tabular-nums;
+}
 
 /* ---------------- Cover grid ---------------- */
 .grid {
@@ -316,54 +359,42 @@
 /* ---------------- Collapse the rail on narrow screens ---------------- */
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
-  .railToggle { display: inline-flex; }
-  .railWrap {
-    position: static;
-    max-height: 0;
-    overflow: hidden;
-    padding: 0;
-    transition: max-height var(--dur) var(--ease);
-  }
-  .railOpen {
-    max-height: 1400px;
-    overflow-y: auto;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-  }
   .grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
 }
 
 @media (max-width: 560px) {
-  .bar { padding: 1.5rem 0 1rem; flex-direction: column; align-items: flex-start; }
-  .barTools { flex: 1 1 100%; flex-direction: column; align-items: stretch; width: 100%; }
+  .bar { padding: 1.25rem 0 1rem; flex-direction: column; align-items: stretch; }
+  .barTools { flex: 1 1 100%; width: 100%; }
   .searchWrap { max-width: 100%; }
-  .railToggle { justify-content: center; width: 100%; }
   .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem 0.75rem; }
 }
 
 /* ---------------- Filter Styles ---------------- */
 .filterBottomRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem 1.25rem;
   width: 100%;
-  margin-top: 1rem;
+  margin-bottom: 1.5rem;
   padding: 1.25rem;
-  background: transparent;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
 }
 
-.filterBottomRow > div {
-  flex: 1 1 140px;
-  max-width: 200px;
+.filterField { display: flex; flex-direction: column; gap: 0.4rem; }
+.filterLabel {
+  margin: 0;
+  font-size: var(--t-micro);
+  font-weight: 600;
+  color: var(--fg-2);
+  letter-spacing: var(--tr-label);
 }
 
 .filterSelect {
   width: 100%;
   padding: 0.6rem 1rem;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--fg);

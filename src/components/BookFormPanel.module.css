@@ -119,7 +119,7 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
-  color: var(--text);
+  color: var(--fg);
   font-family: inherit;
   font-size: 0.95rem;
   transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
@@ -168,32 +168,207 @@
   box-shadow: var(--shadow);
 }
 
+/* --brand / --bg-1 / --bg-2 were never defined in globals.css, so every rule
+   below that referenced them silently did nothing. */
 .dropzone {
-  border: 2px dashed var(--border);
-  padding: 2rem;
-  text-align: center;
-  border-radius: var(--r-md);
-  cursor: pointer;
-  margin-bottom: 1.5rem;
-  background: transparent;
-  transition: all var(--dur-fast);
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 2px dashed var(--border);
+  border-radius: var(--r-md);
+  background: transparent;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
 }
-.dropzone:hover {
-  border-color: var(--brand);
-  background: var(--bg-1);
+.dropzone:hover { border-color: var(--accent); background: var(--surface-2); }
+.dragging { border-color: var(--accent); background: var(--accent-dim); }
+
+.dropIcon { color: var(--fg-3); flex: none; }
+.dropLead {
+  margin: 0.85rem 0 0.3rem;
+  font-family: var(--display);
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--fg);
 }
-.dragging {
-  border-color: var(--brand);
-  background: var(--bg-2);
+.dropHint {
+  font-size: var(--t-micro);
+  line-height: 1.6;
+  color: var(--fg-3);
+  max-width: 38ch;
+}
+
+/* ---------------- Selected file + progress ---------------- */
+.uploadCard {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.uploadHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+.uploadName {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: var(--t-small);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.uploadSize {
+  flex: none;
+  font-size: var(--t-micro);
+  color: var(--fg-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.progressRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+  font-size: var(--t-micro);
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+}
+.progressTrack {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: var(--accent);
+  transition: width var(--dur) var(--ease);
+}
+
+.uploadOk,
+.uploadFail {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  font-size: var(--t-small);
+  line-height: 1.5;
+}
+.uploadOk { color: var(--accent); }
+.uploadFail { color: var(--hot); }
+
+/* ---------------- Notes ---------------- */
+.warnNote,
+.legacyNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--r-sm);
+  font-size: var(--t-micro);
+  line-height: 1.7;
+}
+.warnNote { background: var(--hot-dim); color: var(--hot); }
+.warnNote svg { flex: none; margin-top: 0.2rem; }
+.legacyNote {
+  margin: 1rem 0 0;
+  background: var(--surface-2);
+  color: var(--fg-3);
+}
+
+.fieldHint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: var(--t-micro);
+  line-height: 1.6;
+  color: var(--fg-3);
+}
+
+.orRule {
+  margin: 0.75rem 0;
+  text-align: center;
+  font-size: var(--t-micro);
+  color: var(--fg-3);
 }
 
 .err {
   font-size: var(--t-small);
   color: var(--hot);
   margin-top: 0.5rem;
+}
+
+/* ---------------- Bulk upload queue ---------------- */
+.queue {
+  margin-top: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+.queueHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.queueTitle {
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+.queueClear {
+  font-size: var(--t-micro);
+  color: var(--hot);
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--r-sm);
+}
+.queueClear:hover { background: var(--hot-dim); }
+
+.queueList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.queueRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.queueRow:last-child { border-bottom: none; }
+.queueBody { flex: 1; min-width: 0; }
+.queueRemove {
+  flex: none;
+  padding: 0.25rem;
+  border-radius: var(--r-sm);
+  color: var(--fg-3);
+}
+.queueRemove:hover { background: var(--surface-3); color: var(--fg); }
+
+.spin {
+  flex: none;
+  color: var(--accent);
+  animation: spinner 1s linear infinite;
+}
+@keyframes spinner {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .footer {
@@ -209,4 +384,64 @@
   .filesGrid { grid-template-columns: 1fr; }
   .fieldGrid { grid-template-columns: 1fr; }
   .panel { width: 100%; max-width: 100%; }
+}
+
+/* ---------------- Telegram backup copy ---------------- */
+.mirrorBox {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.mirrorHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.mirrorState {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--fg);
+}
+.mirrorDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--fg-3);
+}
+.mirrorOn { background: var(--accent); }
+
+.mirrorBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--fg-2);
+  font-family: var(--text);
+  font-size: var(--t-micro);
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.mirrorBtn:hover:not(:disabled) { background: var(--surface-3); color: var(--fg); }
+.mirrorBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.mirrorHint {
+  margin-top: 0.5rem;
+  font-size: var(--t-micro);
+  line-height: 1.6;
+  color: var(--fg-3);
+}
+.mirrorErr {
+  margin-top: 0.5rem;
+  font-size: var(--t-micro);
+  line-height: 1.6;
+  color: var(--hot);
 }

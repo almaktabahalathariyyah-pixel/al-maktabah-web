@@ -1,0 +1,197 @@
+rules_version = '2';
+
+// =============================================================================
+//  Al-Maktabah Al-Athariyyah — Firestore security rules
+//
+//  Everything in this app talks to Firestore straight from the browser, so
+//  these rules ARE the access control. Nothing enforced only in React counts:
+//  a reader can open devtools and issue any query the rules permit.
+//
+//  Deploy with:   firebase deploy --only firestore:rules
+//  Test locally:  firebase emulators:start --only firestore
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------- helpers
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // One extra document read, billed per call. Kept small and used sparingly.
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isApproved() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approved == true;
+    }
+
+    // The set of fields whose value this write actually changes.
+    function changed() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // --------------------------------------------------------------- books
+
+    match /books/{bookId} {
+      // A restricted title must not be readable — not its cover, not its
+      // description — by anyone who has not been cleared. Filtering it out in
+      // the React list was never protection.
+      allow get: if resource.data.restricted != true || isApproved() || isAdmin();
+
+      // For a query, this rule runs against every document the query would
+      // return and the whole query fails if any one of them is denied. Rules
+      // cannot read the `where` clauses, so the shelf must ask a question it
+      // is allowed to have answered: an unapproved reader queries with
+      // where('restricted','==',false), which is exactly what page.js does.
+      //
+      // NOTE: a book with no `restricted` field at all does not match
+      // `== false` and will be invisible to guests. The admin health page has
+      // a one-click backfill for that.
+      allow list: if resource.data.restricted != true || isApproved() || isAdmin();
+
+      allow create, delete: if isAdmin();
+
+      // Admins edit freely. Everyone else may only bump the download counter,
+      // and only upward by one — the site increments it when a book is opened.
+      allow update: if isAdmin()
+        || (signedIn()
+            && changed().hasOnly(['downloadCount'])
+            && request.resource.data.downloadCount == resource.data.downloadCount + 1);
+    }
+
+    // --------------------------------------------------------------- users
+
+    match /users/{uid} {
+      allow get: if isSelf(uid) || isAdmin();
+      allow list: if isAdmin();
+
+      // A fresh sign-in creates its own record — but never as an admin, and
+      // never pre-approved.
+      allow create: if isSelf(uid)
+        && request.resource.data.role == 'user'
+        && request.resource.data.approved == false;
+
+      allow update: if
+        // The owner runs the approvals desk.
+        isAdmin()
+
+        // A reader may curate their own shelf and profile, and nothing else.
+        // `role` and `approved` are deliberately absent from this list.
+        || (isSelf(uid) && changed().hasOnly(['savedBooks', 'social', 'displayName', 'photoURL']))
+
+        // Redeeming an invite. The code is checked HERE, in the rule, because
+        // the join page runs in the reader's own browser and can be edited.
+        || (isSelf(uid)
+            && changed().hasOnly(['approved', 'accessStatus', 'invitedBy', 'decidedAt'])
+            && request.resource.data.approved == true
+            && request.resource.data.accessStatus == 'approved'
+            && inviteIsValid(request.resource.data.invitedBy));
+
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------- invites
+    //
+    // One document per code, at invites/{code}. The previous design kept every
+    // code inside a single array on config/inviteLinks, which rules cannot
+    // inspect — so redemption could not be validated server-side at all.
+
+    function inviteIsValid(code) {
+      return code is string
+        && exists(/databases/$(database)/documents/invites/$(code))
+        && inviteData(code).active == true
+        && (!('expiresAt' in inviteData(code)) || inviteData(code).expiresAt > request.time)
+        && (!('maxUses' in inviteData(code))
+            || inviteData(code).maxUses == 0
+            || inviteData(code).usedCount < inviteData(code).maxUses);
+    }
+
+    function inviteData(code) {
+      return get(/databases/$(database)/documents/invites/$(code)).data;
+    }
+
+    match /invites/{code} {
+      // Fetching one code by its exact value is fine — that is what following
+      // an invite link does. Enumerating every code is not.
+      allow get: if signedIn();
+      allow list: if isAdmin();
+
+      allow create, delete: if isAdmin();
+
+      // Admins edit the code itself; a redeemer may only tick the counter up
+      // by one, and only while the code is still valid.
+      allow update: if isAdmin()
+        || (signedIn()
+            && changed().hasOnly(['usedCount'])
+            && request.resource.data.usedCount == resource.data.usedCount + 1
+            && inviteIsValid(code));
+    }
+
+    // ------------------------------------------------------------ downloads
+    //
+    // An append-only ledger. Nobody edits or erases their reading history,
+    // and nobody reads anyone else's.
+
+    match /downloads/{entry} {
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.bookId is string;
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Pre-aggregated daily totals for the admin dashboard. Written by the
+    // client on each open, so the counter may only ever move up by one, and
+    // only the counter fields may be touched.
+    function statFieldsOnly() {
+      return request.resource.data.keys().hasOnly(['total', 'read', 'download', 'day']);
+    }
+
+    match /stats/{day} {
+      allow read: if isAdmin();
+      allow create: if signedIn() && statFieldsOnly() && request.resource.data.total == 1;
+      allow update: if signedIn()
+        && statFieldsOnly()
+        && request.resource.data.total == resource.data.total + 1;
+      allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------- configuration & lists
+    //
+    // Public to read (the shelf needs the field schema and the account page
+    // needs the contact links), owner-only to write.
+
+    match /config/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/{document} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // The running book-id counter. getNextBookId() runs a transaction from the
+    // admin's browser, so it needs read AND write — but only for the owner.
+    match /metadata/{document} {
+      allow read, write: if isAdmin();
+    }
+
+    // Anything not named above is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

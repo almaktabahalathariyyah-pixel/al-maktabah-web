@@ -26,9 +26,32 @@ export default function Masthead({ children }) {
         setDropOpen(false);
       }
     }
+    function handleEscape(e) {
+      if (e.key !== 'Escape') return;
+      setDropOpen(false);
+      setOpen(false);
+    }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, []);
+
+  // Navigating away should never leave a menu hanging open behind the page.
+  useEffect(() => {
+    setDropOpen(false);
+    setOpen(false);
+  }, [pathname]);
+
+  // The mobile drawer covers the page; the page behind it must not scroll.
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
 
   return (
     <>
@@ -56,9 +79,16 @@ export default function Masthead({ children }) {
             
             {user ? (
               <div className={styles.userMenu} ref={dropRef}>
-                <button className={styles.avatarBtn} onClick={() => setDropOpen(!dropOpen)} aria-label="เมนูผู้ใช้">
+                <button
+                  className={styles.avatarBtn}
+                  onClick={() => setDropOpen((v) => !v)}
+                  aria-label="เมนูผู้ใช้"
+                  aria-expanded={dropOpen}
+                  aria-haspopup="menu"
+                >
                   {user.photoURL ? (
-                    <img src={user.photoURL} alt={user.displayName} className={styles.avatar} />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.photoURL} alt="" className={styles.avatar} />
                   ) : (
                     <div className={styles.avatarFallback}>{user.email?.charAt(0).toUpperCase()}</div>
                   )}

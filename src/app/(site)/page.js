@@ -1,50 +1,205 @@
 'use client';
 
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Search, Filter, X, User, Book, Languages, Building, Bookmark } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { useAuth } from '@/context/AuthContext';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, limit, startAfter } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { loadBookFields } from '@/lib/bookFields';
 import { getLangPath } from '@/lib/langPath';
 import AuthorSidebar from '@/components/AuthorSidebar';
 import styles from './page.module.css';
 
+/** Filters that live in the URL, so a shelf can be linked to and bookmarked. */
+const URL_FILTERS = ['category', 'type', 'language', 'year', 'publisher', 'person'];
+const PAGE_SIZE = 36;
+/** Books fetched per Firestore round trip while the shelf fills in. */
+const FETCH_CHUNK = 150;
+
+const FILTER_LABELS = {
+  category: 'หมวดหมู่',
+  type: 'ประเภท',
+  language: 'ภาษา',
+  year: 'ปีพิมพ์',
+  publisher: 'สำนักพิมพ์',
+  person: 'บุคคล',
+};
+
+const SUGGESTION_GROUPS = [
+  { key: 'title', label: 'ชื่อเรื่อง', icon: Book },
+  { key: 'author', label: 'ผู้แต่ง', icon: User },
+  { key: 'translator', label: 'ผู้แปล', icon: Languages },
+  { key: 'publisher', label: 'สำนักพิมพ์', icon: Building },
+  { key: 'type', label: 'ประเภท', icon: Bookmark },
+];
+
+/** Reads the opening state out of the address bar (client-only). */
+function readUrlState() {
+  if (typeof window === 'undefined') return { q: '', filters: {} };
+  const params = new URLSearchParams(window.location.search);
+  const filters = {};
+  for (const key of URL_FILTERS) {
+    const value = params.get(key);
+    if (value) filters[key] = value;
+  }
+  return { q: params.get('q') || '', filters };
+}
+
+function BookCard({ book }) {
+  return (
+    <Link
+      href={`/book/${getLangPath(book.language)}/${book.id}`}
+      className={`${styles.item} hover-card`}
+    >
+      <div className={styles.coverWrap}>
+        <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+      </div>
+      <div className={styles.meta}>
+        <h3 className={styles.bookTitle}>{book.title}</h3>
+        {book.author && (
+          <p className={styles.author}>
+            <User size={12} className={styles.authorIcon} /> {book.author}
+          </p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 export default function Home() {
+  // Starts empty so the server and the first client render agree; the address
+  // bar is read once on mount, below.
   const [queryText, setQueryText] = useState('');
   const [filters, setFilters] = useState({});
+  const [urlReady, setUrlReady] = useState(false);
   const [books, setBooks] = useState([]);
-  const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const { approved, isAdmin } = useAuth();
+  const [highlight, setHighlight] = useState(-1);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [fieldConfig, snapshot] = await Promise.all([
-          loadBookFields(),
-          getDocs(query(collection(db, 'books'), orderBy('createdAt', 'desc'))),
-        ]);
-        const fetched = [];
-        snapshot.forEach((d) => fetched.push({ id: d.id, ...d.data() }));
-        setFields(fieldConfig);
-        setBooks(fetched);
-      } catch (error) {
-        console.error('Error loading library:', error);
-      } finally {
+  const [fullyLoaded, setFullyLoaded] = useState(false);
+  const searchRef = useRef(null);
+  const { approved, isAdmin, loading: authLoading } = useAuth();
+
+  const canSeeAll = approved || isAdmin;
+
+  /**
+   * Fills the shelf in chunks, painting after each one.
+   *
+   * Two reasons this is not a single getDocs any more. The first page now
+   * appears without waiting for the whole collection, and — since the security
+   * rules judge a query by every document it could return — a reader who is
+   * not approved has to ASK only for public titles. Requesting everything
+   * would be refused outright rather than quietly filtered.
+   */
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    setFullyLoaded(false);
+
+    const base = collection(db, 'books');
+
+    const fetchAll = async (filterRestricted) => {
+      const scoped = (...extra) =>
+        filterRestricted
+          ? query(base, where('restricted', '==', false), orderBy('createdAt', 'desc'), ...extra)
+          : query(base, orderBy('createdAt', 'desc'), ...extra);
+
+      const collected = [];
+      let cursor = null;
+
+      for (;;) {
+        const snapshot = await getDocs(
+          cursor ? scoped(startAfter(cursor), limit(FETCH_CHUNK)) : scoped(limit(FETCH_CHUNK))
+        );
+        if (snapshot.empty) break;
+
+        snapshot.forEach((d) => collected.push({ id: d.id, ...d.data() }));
+        setBooks([...collected]);
         setLoading(false);
+
+        if (snapshot.size < FETCH_CHUNK) break;
+        cursor = snapshot.docs[snapshot.docs.length - 1];
       }
+      return collected;
     };
+
+    try {
+      await fetchAll(!canSeeAll);
+      setFullyLoaded(true);
+    } catch (error) {
+      // The narrowed query needs a composite index and the new rules. Until
+      // both are deployed it throws, so fall back to the plain query rather
+      // than showing an empty library. Once the rules ARE live this fallback
+      // is refused for a guest, and the error path below takes over.
+      console.warn('Filtered query failed, retrying unfiltered:', error);
+      try {
+        await fetchAll(false);
+        setFullyLoaded(true);
+      } catch (retryError) {
+        console.error('Error loading library:', retryError);
+        setLoadError(true);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [canSeeAll]);
+
+  // Re-runs once the session settles, because what a reader may ask for
+  // depends on whether they have been approved.
+  useEffect(() => {
+    if (authLoading) return;
     load();
+  }, [load, authLoading]);
+
+  // Adopt whatever the shared link asked for. This runs once, after mount,
+  // so hydration never compares a server-rendered empty box against a
+  // pre-filled one.
+  useEffect(() => {
+    const { q, filters: fromUrl } = readUrlState();
+    if (q) setQueryText(q);
+    if (Object.keys(fromUrl).length) setFilters(fromUrl);
+    setUrlReady(true);
   }, []);
 
-  const visibleBooks = useMemo(() => {
-    return books.filter((book) => !book.restricted || approved);
-  }, [books, approved]);
+  // Mirror the current view back into the address bar. replaceState rather
+  // than push: the back button should leave the library, not step through
+  // every keystroke of a search.
+  useEffect(() => {
+    if (!urlReady) return;
+    const params = new URLSearchParams();
+    if (queryText.trim()) params.set('q', queryText.trim());
+    for (const key of URL_FILTERS) {
+      if (filters[key]) params.set(key, filters[key]);
+    }
+    const search = params.toString();
+    const next = `${window.location.pathname}${search ? `?${search}` : ''}`;
+    if (next !== window.location.pathname + window.location.search) {
+      window.history.replaceState(null, '', next);
+    }
+  }, [queryText, filters, urlReady]);
+
+  // "/" jumps to the search box the way it does in every library catalogue.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const visibleBooks = useMemo(
+    () => books.filter((book) => !book.restricted || approved),
+    [books, approved]
+  );
 
   const results = useMemo(() => {
     const q = queryText.trim().toLowerCase();
@@ -55,7 +210,7 @@ export default function Home() {
           if (book.author !== value && book.translator !== value) return false;
           continue;
         }
-        // String conversion is important for year
+        // String conversion matters for year, which may be stored as a number.
         if (String(book[key] ?? '').trim() !== value) return false;
       }
       if (!q) return true;
@@ -64,248 +219,299 @@ export default function Home() {
         .includes(q);
     });
   }, [visibleBooks, filters, queryText]);
-  
-  // --- Autocomplete Suggestions ---
+
+  // A fresh query means a fresh first page.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [queryText, filters]);
+
+  // --- Autocomplete ---
   const suggestions = useMemo(() => {
-    if (!queryText.trim()) return { author: [], translator: [], publisher: [], type: [], title: [] };
-    const q = queryText.toLowerCase();
-    
-    const authors = new Set();
-    const translators = new Set();
-    const publishers = new Set();
-    const types = new Set();
-    const titles = new Set();
-    
-    visibleBooks.forEach(b => {
-      if (b.author && b.author.toLowerCase().includes(q)) authors.add(b.author);
-      if (b.translator && b.translator.toLowerCase().includes(q)) translators.add(b.translator);
-      if (b.publisher && b.publisher.toLowerCase().includes(q)) publishers.add(b.publisher);
-      if (b.type && b.type.toLowerCase().includes(q)) types.add(b.type);
-      if (b.title && b.title.toLowerCase().includes(q)) titles.add(b.title);
-    });
-    
-    return {
-      author: Array.from(authors).slice(0, 3),
-      translator: Array.from(translators).slice(0, 3),
-      publisher: Array.from(publishers).slice(0, 2),
-      type: Array.from(types).slice(0, 2),
-      title: Array.from(titles).slice(0, 3)
-    };
+    const q = queryText.trim().toLowerCase();
+    if (!q) return [];
+
+    const buckets = { author: [], translator: [], publisher: [], type: [], title: [] };
+    const seen = { author: new Set(), translator: new Set(), publisher: new Set(), type: new Set(), title: new Set() };
+    const caps = { title: 3, author: 3, translator: 3, publisher: 2, type: 2 };
+
+    for (const book of visibleBooks) {
+      for (const key of Object.keys(buckets)) {
+        const value = book[key];
+        if (!value || seen[key].has(value)) continue;
+        if (buckets[key].length >= caps[key]) continue;
+        if (String(value).toLowerCase().includes(q)) {
+          seen[key].add(value);
+          buckets[key].push(value);
+        }
+      }
+    }
+
+    // Flatten so arrow keys can walk the list as one sequence.
+    return SUGGESTION_GROUPS.flatMap((group) =>
+      buckets[group.key].map((value) => ({ ...group, value }))
+    );
   }, [queryText, visibleBooks]);
 
-  const hasSuggestions = Object.values(suggestions).some(arr => arr.length > 0);
+  const suggestionsOpen = showSuggestions && queryText.trim() !== '' && suggestions.length > 0;
 
-  const activeCount = Object.values(filters).filter(Boolean).length;
+  useEffect(() => {
+    setHighlight(-1);
+  }, [queryText]);
+
+  const activeFilters = Object.entries(filters).filter(([, v]) => Boolean(v));
+  const activeCount = activeFilters.length;
   const narrowed = activeCount > 0 || queryText.trim() !== '';
 
-  const categories = useMemo(() => Array.from(new Set(visibleBooks.map(b => b.category).filter(Boolean))).sort(), [visibleBooks]);
-  const authors = useMemo(() => Array.from(new Set(visibleBooks.map(b => b.author).filter(Boolean))).sort(), [visibleBooks]);
-  const translators = useMemo(() => Array.from(new Set(visibleBooks.map(b => b.translator).filter(Boolean))).sort(), [visibleBooks]);
-  const publishers = useMemo(() => Array.from(new Set(visibleBooks.map(b => b.publisher).filter(Boolean))).sort(), [visibleBooks]);
-  const types = useMemo(() => Array.from(new Set(visibleBooks.map(b => b.type).filter(Boolean))).sort(), [visibleBooks]);
-  const languages = useMemo(() => Array.from(new Set(visibleBooks.map(b => b.language).filter(Boolean))).sort(), [visibleBooks]);
-  const years = useMemo(() => Array.from(new Set(visibleBooks.map(b => b.year).filter(Boolean))).sort((a,b) => b - a), [visibleBooks]);
+  const uniqueSorted = useCallback(
+    (key, sorter) =>
+      Array.from(new Set(visibleBooks.map((b) => b[key]).filter(Boolean))).sort(sorter),
+    [visibleBooks]
+  );
 
-  const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
-  const resetAll = () => { setFilters({}); setQueryText(''); };
-  
-  const handleSuggestionClick = (key, value) => {
-    if (key === 'title') {
-      setQueryText(value);
-    } else {
-      setFilter(key, value);
+  const thai = (a, b) => String(a).localeCompare(String(b), 'th');
+  const categories = useMemo(() => uniqueSorted('category', thai), [uniqueSorted]);
+  const authors = useMemo(() => uniqueSorted('author', thai), [uniqueSorted]);
+  const translators = useMemo(() => uniqueSorted('translator', thai), [uniqueSorted]);
+  const publishers = useMemo(() => uniqueSorted('publisher', thai), [uniqueSorted]);
+  const types = useMemo(() => uniqueSorted('type', thai), [uniqueSorted]);
+  const languages = useMemo(() => uniqueSorted('language', thai), [uniqueSorted]);
+  const years = useMemo(
+    () => uniqueSorted('year', (a, b) => Number(b) - Number(a)).map(String),
+    [uniqueSorted]
+  );
+
+  const setFilter = (key, value) =>
+    setFilters((prev) => {
+      const next = { ...prev };
+      if (value) next[key] = value;
+      else delete next[key];
+      return next;
+    });
+
+  const resetAll = () => {
+    setFilters({});
+    setQueryText('');
+  };
+
+  const applySuggestion = (item) => {
+    if (item.key === 'title') setQueryText(item.value);
+    else {
+      setFilter(item.key, item.value);
       setQueryText('');
     }
     setShowSuggestions(false);
+    setHighlight(-1);
   };
+
+  const onSearchKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      if (suggestionsOpen) setShowSuggestions(false);
+      else setQueryText('');
+      return;
+    }
+    if (!suggestionsOpen) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlight((i) => (i + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlight((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+    } else if (e.key === 'Enter' && highlight >= 0) {
+      e.preventDefault();
+      applySuggestion(suggestions[highlight]);
+    }
+  };
+
+  const shown = results.slice(0, visibleCount);
+  const authored = filters.person ? results.filter((b) => b.author === filters.person) : [];
+  const translated = filters.person ? results.filter((b) => b.translator === filters.person) : [];
+
+  const filterSelects = [
+    ['category', categories],
+    ['type', types],
+    ['language', languages],
+    ['year', years],
+    ['publisher', publishers],
+  ];
 
   return (
     <div className="container">
       <section className={styles.hero}>
-        <div className={styles.heroContent}>
-          <h1 className={styles.heroTitle}>คลังหนังสืออิสลาม</h1>
-          <p className={styles.heroSub}>รวบรวมตำราคลาสสิกไว้ในที่เดียว ค้นหาง่าย ดาวน์โหลดได้ทันที</p>
-        </div>
-        <div className={styles.heroGlow} aria-hidden />
+        <p className="eyebrow">Al-Maktabah Al-Athariyyah</p>
+        <h1 className={styles.heroTitle}>คลังหนังสืออิสลาม</h1>
+        <p className={styles.heroSub}>
+          รวบรวมตำราคลาสสิกไว้ในที่เดียว ค้นหาง่าย เปิดอ่านได้ทันที
+        </p>
       </section>
 
-      <header className={styles.bar} style={{ flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div className={styles.barText}>
-            <h1 className={styles.title}>คลังหนังสือ</h1>
-            <p className={styles.count}>
-              {loading
-                ? 'กำลังโหลด…'
-                : narrowed
-                  ? `พบ ${results.length} จาก ${visibleBooks.length} เล่ม`
-                  : `${visibleBooks.length} เล่ม`}
-            </p>
-          </div>
+      <header className={styles.bar}>
+        <p className={styles.count} aria-live="polite">
+          {loading
+            ? 'กำลังโหลดรายการ…'
+            : narrowed
+              ? `พบ ${results.length.toLocaleString('th-TH')} จาก ${visibleBooks.length.toLocaleString('th-TH')} เล่ม`
+              : `${visibleBooks.length.toLocaleString('th-TH')} เล่มในคลัง`}
+          {!loading && !fullyLoaded && !loadError && (
+            <span className={styles.stillLoading}> · กำลังโหลดเพิ่ม…</span>
+          )}
+        </p>
 
-          <div className={styles.barTools}>
-            <div className={styles.searchWrap} style={{ position: 'relative' }}>
-              <Search size={15} className={styles.searchIcon} />
-              <input
-                className={styles.search}
-                type="text"
-                placeholder="ค้นหาชื่อเรื่อง ผู้แต่ง สำนักพิมพ์…"
-                value={queryText}
-                onChange={(e) => {
-                  setQueryText(e.target.value);
-                  setShowSuggestions(true);
+        <div className={styles.barTools}>
+          <div className={styles.searchWrap}>
+            <Search size={15} className={styles.searchIcon} />
+            <input
+              ref={searchRef}
+              className={styles.search}
+              type="search"
+              role="combobox"
+              aria-expanded={suggestionsOpen}
+              aria-controls="search-suggestions"
+              aria-label="ค้นหาหนังสือ"
+              autoComplete="off"
+              placeholder="ค้นหาชื่อเรื่อง ผู้แต่ง สำนักพิมพ์…"
+              value={queryText}
+              onChange={(e) => {
+                setQueryText(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              onKeyDown={onSearchKeyDown}
+              // A click on a suggestion fires after blur; give it room to land.
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            />
+            {queryText ? (
+              <button
+                className={styles.searchClear}
+                onClick={() => {
+                  setQueryText('');
+                  searchRef.current?.focus();
                 }}
-                onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 250)}
-              />
-              {queryText && (
-                <button
-                  className={styles.searchClear}
-                  onClick={() => setQueryText('')}
-                  aria-label="ล้างคำค้นหา"
-                >
-                  <X size={14} />
-                </button>
-              )}
-              
-              {showSuggestions && queryText.trim() && hasSuggestions && (
-                <div className={styles.suggestions}>
-                  {suggestions.title.length > 0 && (
-                    <div className={styles.suggestionGroup}>
-                      <div className={styles.suggestionLabel}>ชื่อเรื่อง</div>
-                      {suggestions.title.map(t => (
-                        <button key={t} className={styles.suggestionItem} onClick={() => handleSuggestionClick('title', t)}>
-                          <Book size={14} className={styles.suggestionIcon} />
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {suggestions.author.length > 0 && (
-                    <div className={styles.suggestionGroup}>
-                      <div className={styles.suggestionLabel}>ผู้แต่ง</div>
-                      {suggestions.author.map(a => (
-                        <button key={a} className={styles.suggestionItem} onClick={() => handleSuggestionClick('author', a)}>
-                          <User size={14} className={styles.suggestionIcon} />
-                          {a}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {suggestions.translator.length > 0 && (
-                    <div className={styles.suggestionGroup}>
-                      <div className={styles.suggestionLabel}>ผู้แปล</div>
-                      {suggestions.translator.map(t => (
-                        <button key={t} className={styles.suggestionItem} onClick={() => handleSuggestionClick('translator', t)}>
-                          <Languages size={14} className={styles.suggestionIcon} />
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {suggestions.publisher.length > 0 && (
-                    <div className={styles.suggestionGroup}>
-                      <div className={styles.suggestionLabel}>สำนักพิมพ์</div>
-                      {suggestions.publisher.map(p => (
-                        <button key={p} className={styles.suggestionItem} onClick={() => handleSuggestionClick('publisher', p)}>
-                          <Building size={14} className={styles.suggestionIcon} />
-                          {p}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {suggestions.type.length > 0 && (
-                    <div className={styles.suggestionGroup}>
-                      <div className={styles.suggestionLabel}>ประเภท</div>
-                      {suggestions.type.map(t => (
-                        <button key={t} className={styles.suggestionItem} onClick={() => handleSuggestionClick('type', t)}>
-                          <Bookmark size={14} className={styles.suggestionIcon} />
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                aria-label="ล้างคำค้นหา"
+              >
+                <X size={14} />
+              </button>
+            ) : (
+              <kbd className={styles.kbd} aria-hidden>/</kbd>
+            )}
 
-            <button
-              className={`btn ${showFilters ? 'btn-solid' : ''}`}
-              onClick={() => setShowFilters((v) => !v)}
-              style={{ padding: '0.6rem 1rem' }}
-            >
-              <Filter size={15} />
-              ตัวกรอง
-              {activeCount > 0 && <span className={styles.pip}>{activeCount}</span>}
-            </button>
+            {suggestionsOpen && (
+              <div className={styles.suggestions} id="search-suggestions" role="listbox">
+                {SUGGESTION_GROUPS.map((group) => {
+                  const items = suggestions.filter((s) => s.key === group.key);
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={group.key} className={styles.suggestionGroup}>
+                      <div className={styles.suggestionTitle}>{group.label}</div>
+                      {items.map((item) => {
+                        const index = suggestions.indexOf(item);
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={`${group.key}-${item.value}`}
+                            role="option"
+                            aria-selected={index === highlight}
+                            className={`${styles.suggestionItem} ${index === highlight ? styles.suggestionOn : ''}`}
+                            onMouseEnter={() => setHighlight(index)}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => applySuggestion(item)}
+                          >
+                            <Icon size={14} className={styles.suggestionIcon} />
+                            <span className={styles.suggestionText}>{item.value}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          <button
+            className={`btn ${showFilters ? 'btn-solid' : ''}`}
+            onClick={() => setShowFilters((v) => !v)}
+            aria-expanded={showFilters}
+          >
+            <Filter size={15} />
+            ตัวกรอง
+            {activeCount > 0 && <span className={styles.pip}>{activeCount}</span>}
+          </button>
         </div>
-        
-        {showFilters && (
-          <div className={styles.filterBottomRow}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>หมวดหมู่</label>
-              <select className={styles.filterSelect} value={filters.category || ''} onChange={(e) => setFilter('category', e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ประเภท</label>
-              <select className={styles.filterSelect} value={filters.type || ''} onChange={(e) => setFilter('type', e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {types.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ภาษา</label>
-              <select className={styles.filterSelect} value={filters.language || ''} onChange={(e) => setFilter('language', e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {languages.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ปีพิมพ์</label>
-              <select className={styles.filterSelect} value={filters.year || ''} onChange={(e) => setFilter('year', e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {years.map(c => <option key={c} value={c}>{String(c)}</option>)}
-              </select>
-            </div>
-            
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สำนักพิมพ์</label>
-              <select className={styles.filterSelect} value={filters.publisher || ''} onChange={(e) => setFilter('publisher', e.target.value)}>
-                <option value="">ทั้งหมด</option>
-                {publishers.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            
-            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-              <button className="btn" onClick={resetAll}>ล้างตัวกรองทั้งหมด</button>
-            </div>
-          </div>
-        )}
       </header>
 
-      {/* ---------------- Quick Category Chips ---------------- */}
-      <div className={styles.chips}>
-        <button className={`chip ${!filters.category ? 'chip-on' : ''}`} onClick={() => setFilter('category', '')}>ทั้งหมด</button>
-        {categories.map(cat => (
-          <button key={cat} className={`chip ${filters.category === cat ? 'chip-on' : ''}`} onClick={() => setFilter('category', cat)}>{cat}</button>
-        ))}
-      </div>
+      {/* Whatever is narrowing the shelf stays visible and removable. */}
+      {activeCount > 0 && (
+        <div className={styles.activeRow}>
+          {activeFilters.map(([key, value]) => (
+            <button
+              key={key}
+              className={styles.activePill}
+              onClick={() => setFilter(key, '')}
+              title={`เอา${FILTER_LABELS[key] || key}ออก`}
+            >
+              <span className={styles.activeKey}>{FILTER_LABELS[key] || key}</span>
+              {value}
+              <X size={13} />
+            </button>
+          ))}
+          <button className={styles.activeClear} onClick={resetAll}>
+            ล้างทั้งหมด
+          </button>
+        </div>
+      )}
+
+      {showFilters && (
+        <div className={styles.filterBottomRow}>
+          {filterSelects.map(([key, options]) => (
+            <div key={key} className={styles.filterField}>
+              <label className={styles.filterLabel} htmlFor={`filter-${key}`}>
+                {FILTER_LABELS[key]}
+              </label>
+              <select
+                id={`filter-${key}`}
+                className={styles.filterSelect}
+                value={filters[key] || ''}
+                onChange={(e) => setFilter(key, e.target.value)}
+              >
+                <option value="">ทั้งหมด</option>
+                {options.map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {categories.length > 0 && (
+        <div className={styles.chips}>
+          <button
+            className={`chip ${!filters.category ? 'chip-on' : ''}`}
+            onClick={() => setFilter('category', '')}
+          >
+            ทั้งหมด
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              className={`chip ${filters.category === cat ? 'chip-on' : ''}`}
+              onClick={() => setFilter('category', filters.category === cat ? '' : cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className={styles.layout}>
-        <AuthorSidebar 
-          authors={authors} 
-          translators={translators} 
-          selectedPerson={filters.person || ''} 
-          onSelect={(name) => setFilter('person', name)} 
+        <AuthorSidebar
+          authors={authors}
+          translators={translators}
+          selectedPerson={filters.person || ''}
+          onSelect={(name) => setFilter('person', name)}
         />
-        {/* ---------------- Shelf ---------------- */}
+
         <div className={styles.shelf}>
           {loading ? (
             <section className={styles.grid} aria-hidden>
@@ -317,6 +523,14 @@ export default function Home() {
                 </div>
               ))}
             </section>
+          ) : loadError ? (
+            <div className={styles.emptyBlock}>
+              <p className={styles.emptyLead}>โหลดคลังหนังสือไม่สำเร็จ</p>
+              <p className={styles.emptyBody}>
+                การเชื่อมต่ออาจขัดข้องชั่วคราว ลองโหลดใหม่อีกครั้ง
+              </p>
+              <button className="btn btn-solid" onClick={load}>ลองใหม่</button>
+            </div>
           ) : results.length === 0 ? (
             <div className={styles.emptyBlock}>
               <p className={styles.emptyLead}>
@@ -324,80 +538,54 @@ export default function Home() {
               </p>
               <p className={styles.emptyBody}>
                 {visibleBooks.length === 0
-                  ? (isAdmin ? 'เริ่มต้นด้วยการเพิ่มเล่มแรก หรือนำเข้าทั้งหมดจาก Telegram ในครั้งเดียว' : 'โปรดติดตามหนังสือเล่มใหม่เร็วๆ นี้')
-                  : 'ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองบางตัวออก'}
+                  ? isAdmin
+                    ? 'เริ่มต้นด้วยการเพิ่มเล่มแรก หรืออัปโหลดทีละหลายเล่มจากแผงควบคุม'
+                    : 'โปรดติดตามหนังสือเล่มใหม่เร็วๆ นี้'
+                  : 'ลองเปลี่ยนคำค้นหา หรือเอาตัวกรองบางตัวออก'}
               </p>
               {visibleBooks.length === 0 ? (
-                isAdmin ? <Link href="/admin/new" className="btn btn-solid">เพิ่มหนังสือ</Link> : null
+                isAdmin ? <Link href="/admin" className="btn btn-solid">ไปที่แผงควบคุม</Link> : null
               ) : (
                 <button className="btn" onClick={resetAll}>ล้างทั้งหมด</button>
               )}
             </div>
+          ) : filters.person ? (
+            <div className={styles.personSections}>
+              {authored.length > 0 && (
+                <div>
+                  <h2 className={styles.sectionHead}>ผลงานเขียน</h2>
+                  <section className={`${styles.grid} stagger`}>
+                    {authored.map((book) => <BookCard key={book.id} book={book} />)}
+                  </section>
+                </div>
+              )}
+              {translated.length > 0 && (
+                <div>
+                  <h2 className={styles.sectionHead}>ผลงานแปล</h2>
+                  <section className={`${styles.grid} stagger`}>
+                    {translated.map((book) => <BookCard key={book.id} book={book} />)}
+                  </section>
+                </div>
+              )}
+            </div>
           ) : (
             <>
-              {filters.person ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                  {(() => {
-                    const authored = results.filter(b => b.author === filters.person);
-                    return authored.length > 0 && (
-                      <div>
-                        <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', color: 'var(--fg)' }}>
-                          ผลงานเขียน
-                        </h3>
-                        <section className={`${styles.grid} stagger`}>
-                          {authored.map(book => (
-                            <Link key={book.id} href={`/book/${getLangPath(book.language)}/${book.id}`} className={`${styles.item} hover-card`}>
-                              <div className={styles.coverWrap}>
-                                <BookCover src={book.coverUrl} title={book.title} author={book.author} />
-                              </div>
-                              <div className={styles.meta}>
-                                <h3 className={styles.bookTitle}>{book.title}</h3>
-                                <p className={styles.author}><User size={12} className={styles.authorIcon} /> {book.author}</p>
-                              </div>
-                            </Link>
-                          ))}
-                        </section>
-                      </div>
-                    );
-                  })()}
-                  {(() => {
-                    const translated = results.filter(b => b.translator === filters.person);
-                    return translated.length > 0 && (
-                      <div>
-                        <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', color: 'var(--fg)' }}>
-                          ผลงานแปล
-                        </h3>
-                        <section className={`${styles.grid} stagger`}>
-                          {translated.map(book => (
-                            <Link key={book.id} href={`/book/${getLangPath(book.language)}/${book.id}`} className={`${styles.item} hover-card`}>
-                              <div className={styles.coverWrap}>
-                                <BookCover src={book.coverUrl} title={book.title} author={book.author} />
-                              </div>
-                              <div className={styles.meta}>
-                                <h3 className={styles.bookTitle}>{book.title}</h3>
-                                <p className={styles.author}><User size={12} className={styles.authorIcon} /> {book.author}</p>
-                              </div>
-                            </Link>
-                          ))}
-                        </section>
-                      </div>
-                    );
-                  })()}
+              <section className={`${styles.grid} stagger`}>
+                {shown.map((book) => <BookCard key={book.id} book={book} />)}
+              </section>
+
+              {results.length > shown.length && (
+                <div className={styles.moreRow}>
+                  <button
+                    className="btn"
+                    onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+                  >
+                    ดูเพิ่มอีก {Math.min(PAGE_SIZE, results.length - shown.length)} เล่ม
+                  </button>
+                  <span className={styles.moreCount}>
+                    แสดง {shown.length} จาก {results.length}
+                  </span>
                 </div>
-              ) : (
-                <section className={`${styles.grid} stagger`}>
-                  {results.map((book) => (
-                    <Link key={book.id} href={`/book/${getLangPath(book.language)}/${book.id}`} className={`${styles.item} hover-card`}>
-                      <div className={styles.coverWrap}>
-                        <BookCover src={book.coverUrl} title={book.title} author={book.author} />
-                      </div>
-                      <div className={styles.meta}>
-                        <h3 className={styles.bookTitle}>{book.title}</h3>
-                        <p className={styles.author}><User size={12} className={styles.authorIcon} /> {book.author}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </section>
               )}
             </>
           )}
