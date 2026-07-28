@@ -167,9 +167,13 @@
   font-size: var(--t-small);
   color: var(--fg-3);
 }
-.footerNote { color: var(--fg-3); }
+.footerLinks { display: flex; gap: 1.25rem; flex-wrap: wrap; }
 
-@media (max-width: 800px) {
+/* 900px, not 800px: the bar now carries a third link ("แหล่งหนังสืออื่นๆ"), and
+   between 800 and 900 the wordmark, three Thai labels and the tools no longer
+   fit — body has overflow-x hidden, so that surfaced as clipped, overlapping
+   type rather than a scrollbar. The drawer takes over sooner instead. */
+@media (max-width: 900px) {
   .inner { gap: 1rem; }
   .nav { display: none; }
   .signIn { display: none; }
@@ -177,4 +181,10 @@
   .drawer { display: block; }
   .tools { margin-left: auto; }
   .wordmarkSub { display: none; }
+}
+
+/* Between the two, tighten the nav before hiding it. */
+@media (min-width: 901px) and (max-width: 1040px) {
+  .inner { gap: 1.25rem; }
+  .navLink { padding: 0.45rem 0.7rem; }
 }

@@ -1,10 +1,16 @@
+'use client';
+
 import { useState, useMemo } from 'react';
 import { Plus, Trash2, Search, X } from 'lucide-react';
+import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import styles from '@/app/admin/settings/page.module.css';
 
 export default function SearchableListEditor({ title, description, placeholder, items, onChange }) {
   const [query, setQuery] = useState('');
   const [newItem, setNewItem] = useState('');
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
 
   // Filter items based on search query
   const filteredItems = useMemo(() => {
@@ -18,7 +24,7 @@ export default function SearchableListEditor({ title, description, placeholder, 
     const val = newItem.trim();
     if (!val) return;
     if (items.includes(val)) {
-      alert('มีรายชื่อนี้อยู่แล้ว');
+      toast.info(`“${val}” มีอยู่ในรายการแล้ว`);
       return;
     }
     onChange([...items, val]);
@@ -26,8 +32,14 @@ export default function SearchableListEditor({ title, description, placeholder, 
     setQuery(val); // show the newly added item
   };
 
-  const handleRemove = (itemToRemove) => {
-    if (!window.confirm(`ยืนยันการลบ "${itemToRemove}" ?`)) return;
+  const handleRemove = async (itemToRemove) => {
+    const agreed = await confirm({
+      title: `ลบ “${itemToRemove}”?`,
+      message: `เอาออกจากรายการ${title} — หนังสือที่ใช้ชื่อนี้อยู่จะไม่ถูกแก้`,
+      confirmLabel: 'ลบรายการนี้',
+      tone: 'danger',
+    });
+    if (!agreed) return;
     onChange(items.filter(i => i !== itemToRemove));
   };
 
@@ -35,7 +47,7 @@ export default function SearchableListEditor({ title, description, placeholder, 
     const val = newVal.trim();
     if (!val || val === oldItem) return;
     if (items.includes(val)) {
-      alert('มีรายชื่อนี้อยู่แล้ว');
+      toast.info(`“${val}” มีอยู่ในรายการแล้ว`);
       return;
     }
     onChange(items.map(i => i === oldItem ? val : i));

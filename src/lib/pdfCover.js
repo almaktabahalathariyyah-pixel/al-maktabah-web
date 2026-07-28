@@ -92,12 +92,38 @@ export async function renderFirstPage(file) {
 }
 
 /**
- * Renders the cover and stores it, returning the URL to save on the book.
- * Resolves to '' when anything along the way fails.
+ * Renders the cover and stores it.
+ *
+ * Returns { url, error } rather than a bare string. The old version collapsed
+ * every failure — unrenderable PDF, expired token, Telegram not configured —
+ * into '' and a console.warn, so a run of 362 books could finish reporting
+ * "อัปโหลดสำเร็จ" with not one cover saved and nothing on screen saying why.
+ * The caller now has something to show.
+ *
+ * `driveToken` is preferred when present: it keeps covers in the same Drive as
+ * the books and needs no server-side configuration at all. The Telegram route
+ * stays as the fallback so existing covers and setups keep working.
  */
-export async function makeCover(file, idToken) {
+export async function makeCover(file, { idToken, driveToken } = {}) {
   const blob = await renderFirstPage(file);
-  if (!blob) return '';
+  if (!blob) return { url: '', error: 'อ่านหน้าแรกของ PDF ไม่ได้' };
+
+  if (driveToken) {
+    try {
+      const { uploadImageToDrive } = await import('./googleDrive');
+      const { url } = await uploadImageToDrive({
+        token: driveToken,
+        blob,
+        name: `cover-${file.name.replace(/\.pdf$/i, '')}.jpg`,
+      });
+      return { url, error: '' };
+    } catch (err) {
+      // Fall through to the server route rather than giving up on the cover.
+      console.warn('Drive cover upload failed, trying server route:', err?.message || err);
+    }
+  }
+
+  if (!idToken) return { url: '', error: 'ไม่มีสิทธิ์อัปโหลดรูปปก' };
 
   try {
     const form = new FormData();
@@ -109,10 +135,12 @@ export async function makeCover(file, idToken) {
       body: form,
     });
 
-    const data = await res.json();
-    return data?.success ? data.url : '';
+    const data = await res.json().catch(() => null);
+    if (data?.success) return { url: data.url, error: '' };
+
+    return { url: '', error: data?.error || `เก็บรูปปกไม่สำเร็จ (${res.status})` };
   } catch (err) {
     console.warn('Could not upload cover for', file.name, err?.message || err);
-    return '';
+    return { url: '', error: 'เชื่อมต่อเพื่ออัปโหลดรูปปกไม่สำเร็จ' };
   }
 }

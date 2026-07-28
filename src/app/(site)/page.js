@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, X, User, Book, Languages, Building, Bookmark } from 'lucide-react';
+import { Search, Filter, X, User, Book, ArrowLeftRight, Building, Tag } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { useAuth } from '@/context/AuthContext';
 import { collection, getDocs, query, orderBy, where, limit, startAfter } from 'firebase/firestore';
@@ -13,7 +13,8 @@ import styles from './page.module.css';
 
 /** Filters that live in the URL, so a shelf can be linked to and bookmarked. */
 const URL_FILTERS = ['category', 'type', 'language', 'year', 'publisher', 'person'];
-const PAGE_SIZE = 36;
+/** Roughly three rows of covers on a laptop — enough to browse, not a wall. */
+const PAGE_SIZE = 20;
 /** Books fetched per Firestore round trip while the shelf fills in. */
 const FETCH_CHUNK = 150;
 
@@ -26,12 +27,19 @@ const FILTER_LABELS = {
   person: 'บุคคล',
 };
 
+/**
+ * Each group needs a mark that means only this.
+ *
+ * Translator was `Languages`, which is now the language filter's own glyph, and
+ * type was `Bookmark`, which everywhere else means "saved to my shelf" — both
+ * pointed the reader at the wrong idea.
+ */
 const SUGGESTION_GROUPS = [
   { key: 'title', label: 'ชื่อเรื่อง', icon: Book },
   { key: 'author', label: 'ผู้แต่ง', icon: User },
-  { key: 'translator', label: 'ผู้แปล', icon: Languages },
+  { key: 'translator', label: 'ผู้แปล', icon: ArrowLeftRight },
   { key: 'publisher', label: 'สำนักพิมพ์', icon: Building },
-  { key: 'type', label: 'ประเภท', icon: Bookmark },
+  { key: 'type', label: 'ประเภท', icon: Tag },
 ];
 
 /** Reads the opening state out of the address bar (client-only). */
@@ -269,6 +277,29 @@ export default function Home() {
   );
 
   const thai = (a, b) => String(a).localeCompare(String(b), 'th');
+
+  /**
+   * The chip row runs on language, not category.
+   *
+   * Categories are a long tail — dozens of them, most holding one or two books,
+   * so the row wrapped into a wall of pills nobody read. Language is the first
+   * question a reader actually has, and there are only ever a handful. Counts
+   * come along because "is there anything in Thai?" deserves an answer before
+   * the click, and they double as a hint that the shelf is still filling in.
+   */
+  const languageChips = useMemo(() => {
+    const counts = new Map();
+    for (const book of visibleBooks) {
+      const value = String(book.language ?? '').trim();
+      if (!value) continue;
+      counts.set(value, (counts.get(value) || 0) + 1);
+    }
+    return Array.from(counts, ([value, count]) => ({ value, count }))
+      // Biggest shelf first; ties fall back to Thai collation so the order is
+      // stable rather than dependent on which book loaded first.
+      .sort((a, b) => b.count - a.count || thai(a.value, b.value));
+  }, [visibleBooks]);
+
   const categories = useMemo(() => uniqueSorted('category', thai), [uniqueSorted]);
   const authors = useMemo(() => uniqueSorted('author', thai), [uniqueSorted]);
   const translators = useMemo(() => uniqueSorted('translator', thai), [uniqueSorted]);
@@ -484,21 +515,25 @@ export default function Home() {
         </div>
       )}
 
-      {categories.length > 0 && (
-        <div className={styles.chips}>
+      {languageChips.length > 0 && (
+        <div className={styles.chips} role="group" aria-label="กรองตามภาษา">
           <button
-            className={`chip ${!filters.category ? 'chip-on' : ''}`}
-            onClick={() => setFilter('category', '')}
+            className={`chip ${!filters.language ? 'chip-on' : ''}`}
+            onClick={() => setFilter('language', '')}
           >
-            ทั้งหมด
+            ทุกภาษา
+            <span className={styles.chipCount}>
+              {visibleBooks.length.toLocaleString('th-TH')}
+            </span>
           </button>
-          {categories.map((cat) => (
+          {languageChips.map(({ value, count }) => (
             <button
-              key={cat}
-              className={`chip ${filters.category === cat ? 'chip-on' : ''}`}
-              onClick={() => setFilter('category', filters.category === cat ? '' : cat)}
+              key={value}
+              className={`chip ${filters.language === value ? 'chip-on' : ''}`}
+              onClick={() => setFilter('language', filters.language === value ? '' : value)}
             >
-              {cat}
+              {value}
+              <span className={styles.chipCount}>{count.toLocaleString('th-TH')}</span>
             </button>
           ))}
         </div>

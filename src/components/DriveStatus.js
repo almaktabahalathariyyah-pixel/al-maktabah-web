@@ -19,8 +19,11 @@ const NEARLY_FULL = 90;
  * much room is left, and a way to switch accounts when one fills up.
  *
  * `onToken` reports the live token upward so the parent can upload with it.
+ * `onAccount` reports the signed-in address, which the uploader stores on each
+ * book — with the library spread over several Gmail accounts, "which inbox is
+ * this file in?" is otherwise unanswerable after the fact.
  */
-export default function DriveStatus({ active = true, onToken }) {
+export default function DriveStatus({ active = true, onToken, onAccount }) {
   const { toast } = useToast();
   const [token, setToken] = useState(null);
   const [account, setAccount] = useState(null);
@@ -34,13 +37,19 @@ export default function DriveStatus({ active = true, onToken }) {
     [onToken]
   );
 
-  const refreshAccount = useCallback(async (value) => {
-    if (!value) {
-      setAccount(null);
-      return;
-    }
-    setAccount(await fetchDriveAccount(value));
-  }, []);
+  const refreshAccount = useCallback(
+    async (value) => {
+      if (!value) {
+        setAccount(null);
+        onAccount?.('');
+        return;
+      }
+      const fetched = await fetchDriveAccount(value);
+      setAccount(fetched);
+      onAccount?.(fetched?.email || '');
+    },
+    [onAccount]
+  );
 
   // Pick up a token saved by an earlier session.
   useEffect(() => {
@@ -68,6 +77,7 @@ export default function DriveStatus({ active = true, onToken }) {
     clearSavedToken();
     publish(null);
     setAccount(null);
+    onAccount?.('');
   };
 
   if (!token) {

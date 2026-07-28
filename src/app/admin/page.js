@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import Link from 'next/link';
-import { Search, Plus, Download, Edit2, Trash2, Settings, LayoutGrid, List, UploadCloud, Filter } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, UploadCloud, Filter, Mail } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
 import Select from 'react-select';
@@ -25,19 +26,15 @@ import BulkUploadPanel from '@/components/BulkUploadPanel';
 import styles from './page.module.css';
 import { useAdmin } from '@/context/AdminContext';
 
-// A template literal, not '\\n' inside a quoted string — the old version
-// printed a literal backslash-n in the browser dialog.
 const GOOGLE_PROMPT = `ยังไม่ได้เชื่อมต่อ Google Drive (หรือสิทธิ์หมดอายุแล้ว)
-หากดำเนินการต่อ ไฟล์จะถูกลบเฉพาะในเว็บไซต์ ส่วนไฟล์ในไดรฟ์จะยังอยู่
-
-กด OK  — เชื่อมต่อ Google Drive ก่อนลบ
-กด Cancel — ลบเฉพาะในเว็บไซต์`;
+ถ้าลบเฉพาะในเว็บ ไฟล์ในไดรฟ์จะยังอยู่และยังกินพื้นที่อยู่`;
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  
+  const { confirm, ask } = useConfirm();
+
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(true);
   const [predefinedCategories, setPredefinedCategories] = useState([]);
@@ -66,6 +63,7 @@ export default function AdminPage() {
   const [languageFilter, setLanguageFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState(''); // 'all', 'public', 'restricted'
+  const [ownerFilter, setOwnerFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   // Set by the links on the stats page: 'nofile' | 'telegram' | ''
   const [healthFilter, setHealthFilter] = useState('');
@@ -162,19 +160,33 @@ export default function AdminPage() {
 
   /**
    * Ensures we hold a Drive token before a delete, asking for one if needed.
-   * Returns the token, or null when the owner chose to delete site-side only.
+   *
+   * Returns { proceed, token }. The old yes/no prompt had no way to back out:
+   * dismissing it fell through to "delete site-side only", so a mis-click
+   * still orphaned the file in Drive. Backing out is now its own answer.
    */
   const ensureDriveToken = async () => {
     const saved = readSavedToken();
-    if (saved) return saved.token;
+    if (saved) return { proceed: true, token: saved.token };
 
-    if (!confirm(GOOGLE_PROMPT)) return null;
+    const answer = await ask({
+      title: 'ยังไม่ได้เชื่อมต่อ Google Drive',
+      message: GOOGLE_PROMPT,
+      actions: [
+        { key: 'connect', label: 'เชื่อมต่อไดรฟ์ก่อนลบ' },
+        { key: 'site-only', label: 'ลบเฉพาะในเว็บ', tone: 'danger' },
+      ],
+    });
+
+    if (answer === null) return { proceed: false, token: null };
+    if (answer === 'site-only') return { proceed: true, token: null };
+
     try {
       const fresh = await connectDrive();
-      return fresh.token;
+      return { proceed: true, token: fresh.token };
     } catch (err) {
       toast.error(err.message);
-      return null;
+      return { proceed: false, token: null };
     }
   };
 
@@ -204,9 +216,18 @@ export default function AdminPage() {
 
   const handleBulkDelete = async () => {
     if (selectedBooks.size === 0) return;
-    if (!confirm(`ยืนยันลบหนังสือ ${selectedBooks.size} เล่ม? การลบนี้ย้อนกลับไม่ได้`)) return;
 
-    const token = await ensureDriveToken();
+    const agreed = await confirm({
+      title: `ลบหนังสือ ${selectedBooks.size} เล่ม?`,
+      message: 'การลบนี้ย้อนกลับไม่ได้',
+      confirmLabel: 'ลบทั้งหมด',
+      tone: 'danger',
+    });
+    if (!agreed) return;
+
+    const { proceed, token } = await ensureDriveToken();
+    if (!proceed) return;
+
     const targets = books.filter((b) => selectedBooks.has(b.id));
 
     try {
@@ -227,9 +248,21 @@ export default function AdminPage() {
 
   const handleSingleDelete = async (id) => {
     const book = books.find((b) => b.id === id);
-    if (!confirm(`ยืนยันลบ "${book?.title || 'เล่มนี้'}"? การลบนี้ย้อนกลับไม่ได้`)) return;
 
-    const token = book?.driveUrl ? await ensureDriveToken() : null;
+    const agreed = await confirm({
+      title: 'ลบหนังสือเล่มนี้?',
+      message: `“${book?.title || 'เล่มนี้'}” — การลบนี้ย้อนกลับไม่ได้`,
+      confirmLabel: 'ลบเล่มนี้',
+      tone: 'danger',
+    });
+    if (!agreed) return;
+
+    let token = null;
+    if (book?.driveUrl) {
+      const drive = await ensureDriveToken();
+      if (!drive.proceed) return;
+      token = drive.token;
+    }
 
     try {
       await removeDriveCopies([book], token);
@@ -325,6 +358,7 @@ export default function AdminPage() {
   const languages = Array.from(new Set([...predefinedLanguages, ...books.map(b => b.language).filter(Boolean)])).sort();
   const types = Array.from(new Set([...predefinedTypes, ...books.map(b => b.type).filter(Boolean)])).sort();
   const years = Array.from(new Set(books.map(b => b.year).filter(Boolean))).sort((a, b) => b - a);
+  const owners = Array.from(new Set(books.map(b => b.driveOwner).filter(Boolean))).sort();
 
   const filteredBooks = books.filter(book => {
     const matchesSearch = book.title?.toLowerCase().includes(searchQuery.toLowerCase()) || book.author?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -336,6 +370,10 @@ export default function AdminPage() {
     const matchesType = typeFilter ? book.type === typeFilter : true;
     const matchesYear = yearFilter ? String(book.year) === yearFilter : true;
     const matchesStatus = statusFilter === 'restricted' ? book.restricted : statusFilter === 'public' ? !book.restricted : true;
+    // '__none__' finds the books uploaded before the account was recorded.
+    const matchesOwner = ownerFilter
+      ? ownerFilter === '__none__' ? !book.driveOwner : book.driveOwner === ownerFilter
+      : true;
 
     const hasAnyFile = book.driveUrl || book.telegramFileId || book.telegramUrl;
     const matchesHealth =
@@ -344,7 +382,7 @@ export default function AdminPage() {
       : healthFilter === 'unmirrored' ? book.driveUrl && !book.telegramFileId && canMirror(bookSizeBytes(book))
       : true;
 
-    return matchesSearch && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus && matchesHealth;
+    return matchesSearch && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus && matchesOwner && matchesHealth;
   });
 
   const totalBooks = books.length;
@@ -549,11 +587,31 @@ export default function AdminPage() {
               />
             </div>
             
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>บัญชี Google ที่เก็บไฟล์</label>
+              <Select
+                styles={selectStyles}
+                options={[
+                  { value: '', label: 'ทั้งหมด' },
+                  ...owners.map(o => ({ value: o, label: o })),
+                  { value: '__none__', label: 'ยังไม่ได้บันทึกบัญชี' },
+                ]}
+                value={{
+                  value: ownerFilter,
+                  label: ownerFilter === '__none__' ? 'ยังไม่ได้บันทึกบัญชี' : ownerFilter || 'ทั้งหมด',
+                }}
+                onChange={(selected) => setOwnerFilter(selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={true}
+                classNamePrefix="react-select"
+              />
+            </div>
+
             <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
               <button className="btn" onClick={() => {
-                setCategoryFilter(''); setAuthorFilter(''); setTranslatorFilter(''); 
-                setPublisherFilter(''); setTypeFilter(''); setLanguageFilter(''); 
-                setYearFilter(''); setStatusFilter(''); setSearchQuery('');
+                setCategoryFilter(''); setAuthorFilter(''); setTranslatorFilter('');
+                setPublisherFilter(''); setTypeFilter(''); setLanguageFilter('');
+                setYearFilter(''); setStatusFilter(''); setOwnerFilter(''); setSearchQuery('');
               }}>ล้างตัวกรองทั้งหมด</button>
             </div>
           </div>
@@ -604,7 +662,17 @@ export default function AdminPage() {
             </div>
             <div className={styles.who}>
               <span className={styles.name}>{book.title}</span>
-              <span className={styles.smallMeta}>{book.author || 'ไม่ระบุผู้แต่ง'}</span>
+              <span className={styles.smallMeta}>
+                {book.author || 'ไม่ระบุผู้แต่ง'}
+                {book.driveOwner && (
+                  <>
+                    {' · '}
+                    <span className={styles.owner} title={`ไฟล์อยู่ในบัญชี ${book.driveOwner}`}>
+                      <Mail size={11} /> {book.driveOwner}
+                    </span>
+                  </>
+                )}
+              </span>
             </div>
             <span className={styles.when}>{book.category}</span>
             <span className={book.restricted ? styles.flagOn : styles.flag}>

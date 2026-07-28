@@ -5,6 +5,7 @@ import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import DriveStatus from '@/components/DriveStatus';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { useAuth } from '@/context/AuthContext';
 import { getNextBookId } from '@/lib/sequentialId';
 import { uploadPdfToDrive } from '@/lib/googleDrive';
@@ -34,6 +35,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   const { user } = useAuth();
 
   const [catalog, setCatalog] = useState(null);
@@ -46,6 +48,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
   const [delayMs, setDelayMs] = useState(DEFAULT_DELAY_MS);
 
   const [googleToken, setGoogleToken] = useState(null);
+  const [driveOwner, setDriveOwner] = useState('');
   const [running, setRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -62,6 +65,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
   };
 
   const handleToken = useCallback((value) => setGoogleToken(value), []);
+  const handleAccount = useCallback((value) => setDriveOwner(value), []);
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden';
@@ -158,13 +162,18 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
   // ----------------------------------------------------------------- upload --
 
   const run = async () => {
+    // Reachable now: the button used to be `disabled` without a token, so a
+    // click did nothing at all and never said why.
     if (!googleToken) {
-      toast.error('เชื่อมต่อ Google Drive ก่อนเริ่มอัปโหลด');
+      toast.error('กรุณาเชื่อมต่อ Google Drive ก่อน แล้วจึงเริ่มอัปโหลด');
       return;
     }
 
     const queue = items.filter((it) => it.status === 'pending' || it.status === 'error');
-    if (queue.length === 0) return;
+    if (queue.length === 0) {
+      toast.info('ยังไม่มีไฟล์ในคิว — เลือกไฟล์ PDF ก่อน');
+      return;
+    }
 
     setRunning(true);
     paused.current = false;
@@ -173,6 +182,10 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
 
     let ok = 0;
     let failed = 0;
+    // Covers fail independently of the book itself, so they get their own
+    // tally — a silent cover failure is what left the shelf blank.
+    let coversFailed = 0;
+    let firstCoverError = '';
 
     for (const item of queue) {
       if (cancelled.current) break;
@@ -201,7 +214,16 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         if (autoCover) {
           patch(item.id, { status: 'covering' });
           const idToken = await user.getIdToken();
-          coverUrl = await makeCover(item.file, idToken);
+          const cover = await makeCover(item.file, { idToken, driveToken: googleToken });
+          coverUrl = cover.url;
+
+          if (!cover.url) {
+            coversFailed += 1;
+            if (!firstCoverError) firstCoverError = cover.error;
+            // The book still saves — a missing cover is cosmetic — but the row
+            // says so instead of reporting an unqualified success.
+            patch(item.id, { coverError: cover.error });
+          }
         }
 
         patch(item.id, { status: 'saving' });
@@ -209,6 +231,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         const payload = bookFromRow(item.row, {
           file: item.file,
           driveUrl: url,
+          driveOwner,
           coverUrl,
           restricted,
         });
@@ -232,13 +255,27 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
 
     setRunning(false);
     if (cancelled.current) return;
+
     if (failed === 0) toast.success(`อัปโหลดสำเร็จ ${ok} เล่ม`);
     else toast.error(`สำเร็จ ${ok} เล่ม · ไม่สำเร็จ ${failed} เล่ม (กด "เริ่ม" อีกครั้งเพื่อลองใหม่)`);
+
+    if (coversFailed > 0) {
+      toast.error(
+        `ทำรูปปกไม่สำเร็จ ${coversFailed} เล่ม — ${firstCoverError || 'ไม่ทราบสาเหตุ'} · เล่มเหล่านี้จะแสดงปกตัวอักษรแทน`
+      );
+    }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
     if (running) {
-      if (!confirm('กำลังอัปโหลดอยู่ ปิดตอนนี้จะหยุดหลังไฟล์ปัจจุบันเสร็จ ต้องการปิดหรือไม่?')) return;
+      const agreed = await confirm({
+        title: 'ปิดหน้าต่างระหว่างอัปโหลด?',
+        message: 'ระบบจะหยุดหลังไฟล์ที่กำลังอัปโหลดอยู่เสร็จ เล่มที่เหลือในคิวจะไม่ถูกอัป',
+        confirmLabel: 'หยุดแล้วปิด',
+        tone: 'danger',
+      });
+      if (!agreed) return;
+
       cancelled.current = true;
       paused.current = false;
       setIsPaused(false);
@@ -267,7 +304,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         </div>
 
         <div className={styles.content}>
-          <DriveStatus active={isOpen} onToken={handleToken} />
+          <DriveStatus active={isOpen} onToken={handleToken} onAccount={handleAccount} />
 
           {/* ---------- 1. catalogue ---------- */}
           <section className={styles.step}>
@@ -417,6 +454,9 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
                         </div>
                       )}
                       {it.status === 'error' && <p className={styles.err}>{it.error}</p>}
+                      {it.coverError && it.status === 'done' && (
+                        <p className={styles.warn}>ไม่มีรูปปก — {it.coverError}</p>
+                      )}
                     </div>
 
                     {['uploading', 'covering', 'saving'].includes(it.status) ? (
@@ -437,6 +477,11 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
 
         <div className={styles.footer}>
           <div className={styles.footerCount}>
+            {!googleToken && (
+              <span className={styles.warn} id="drive-required">
+                กรุณาเชื่อมต่อไดรฟ์ก่อน
+              </span>
+            )}
             {counts.done > 0 && <span className={styles.ok}>เสร็จ {counts.done}</span>}
             {counts.error > 0 && <span className={styles.warn}>ไม่สำเร็จ {counts.error}</span>}
           </div>
@@ -448,11 +493,14 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
               {isPaused ? <><Play size={16} /> ทำต่อ</> : <><Pause size={16} /> หยุดชั่วคราว</>}
             </button>
           ) : (
+            // Deliberately NOT disabled when Drive is unconnected — a dead
+            // button is why "why is nothing happening?" was the whole bug.
+            // It stays clickable and run() explains what is missing.
             <button
               type="button"
               className="btn btn-solid"
               onClick={run}
-              disabled={!googleToken || queued === 0}
+              aria-describedby={!googleToken ? 'drive-required' : undefined}
             >
               <Play size={16} /> เริ่มอัปโหลด {queued} เล่ม
             </button>

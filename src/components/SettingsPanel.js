@@ -5,6 +5,7 @@ import { getDropdownSettings, saveDropdownSettings } from '@/lib/settings';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { X, Plus, Trash2, GripVertical, Save } from 'lucide-react';
 import panelStyles from './BookFormPanel.module.css';
 import styles from '@/app/admin/settings/page.module.css'; // Reuse existing setting styles
@@ -12,6 +13,7 @@ import SearchableListEditor from './SearchableListEditor';
 
 export default function SettingsPanel({ isOpen, onClose }) {
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   
   const [categories, setCategories] = useState([]);
   const [languages, setLanguages] = useState([]);
@@ -97,9 +99,13 @@ export default function SettingsPanel({ isOpen, onClose }) {
   };
 
   const handleSyncFromBooks = async () => {
-    if (!window.confirm('ระบบจะดึง หมวดหมู่, ประเภท และภาษา จากหนังสือทั้งหมดมาเพิ่มในหน้านี้ (ข้อมูลเดิมจะไม่หายไป) ต้องการดำเนินการต่อหรือไม่?')) {
-      return;
-    }
+    const agreed = await confirm({
+      title: 'ดึงข้อมูลจากหนังสือทั้งหมด?',
+      message:
+        'ระบบจะรวบรวมหมวดหมู่ ประเภท และภาษา จากหนังสือทุกเล่มมาเพิ่มในหน้านี้\nข้อมูลเดิมจะไม่หายไป',
+      confirmLabel: 'ดึงข้อมูล',
+    });
+    if (!agreed) return;
     setSyncing(true);
     try {
       const { collection, getDocs } = await import('firebase/firestore');
@@ -142,8 +148,14 @@ export default function SettingsPanel({ isOpen, onClose }) {
   const addCategoryGroup = () => {
     setCategories([...categories, { label: 'กลุ่มหมวดหมู่ใหม่', options: [] }]);
   };
-  const removeCategoryGroup = (groupIndex) => {
-    if (!window.confirm('ยืนยันการลบกลุ่มหมวดหมู่นี้?')) return;
+  const removeCategoryGroup = async (groupIndex) => {
+    const agreed = await confirm({
+      title: 'ลบกลุ่มหมวดหมู่นี้?',
+      message: `“${categories[groupIndex]?.label || 'กลุ่มนี้'}” และหมวดหมู่ย่อยทั้งหมดในกลุ่มจะถูกเอาออกจากรายการ`,
+      confirmLabel: 'ลบกลุ่มนี้',
+      tone: 'danger',
+    });
+    if (!agreed) return;
     const newCats = [...categories];
     newCats.splice(groupIndex, 1);
     setCategories(newCats);

@@ -1,0 +1,73 @@
+/* Sits above the slide-over panels (1001) and the reader (9999), just under
+   the toasts (10050) so a message raised by the choice is still readable. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fadeIn 0.16s var(--ease);
+  overflow-y: auto;
+}
+
+.panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 1.6rem;
+  animation: slideInUp 0.2s var(--ease) both;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 1rem;
+  border-radius: var(--r-pill);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+.iconDanger { background: var(--hot-dim); color: var(--hot); }
+
+.title {
+  font-family: var(--display);
+  font-size: 1.12rem;
+  font-weight: 600;
+  line-height: var(--lh-heading);
+  color: var(--fg);
+  margin-bottom: 0.5rem;
+}
+
+.message {
+  font-size: var(--t-small);
+  line-height: var(--lh-body);
+  color: var(--fg-2);
+  /* Copy written as several lines in source should read that way here. */
+  white-space: pre-line;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.6rem;
+}
+
+.danger { background: var(--hot); border-color: var(--hot); color: #fff; }
+.danger:hover { background: var(--hot); border-color: var(--hot); filter: brightness(1.08); }
+
+/* Stacked full-width buttons are easier to hit, and long Thai labels stop
+   squeezing each other into two ragged lines. */
+@media (max-width: 480px) {
+  .actions { flex-direction: column-reverse; }
+  .actions > :global(.btn) { width: 100%; }
+}

@@ -5,6 +5,7 @@ import { collection, getDocs, doc, writeBatch, query, orderBy } from 'firebase/f
 import { Save, Search, ArrowDownToLine, Undo2, Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { getDropdownSettings } from '@/lib/settings';
 import styles from './page.module.css';
 
@@ -38,6 +39,7 @@ const BATCH_LIMIT = 400;
 
 export default function SheetPage() {
   const { toast } = useToast();
+  const { confirm } = useConfirm();
 
   const [rows, setRows] = useState([]);
   const [edits, setEdits] = useState({}); // { [bookId]: { field: value } }
@@ -146,9 +148,15 @@ export default function SheetPage() {
     if (touched > 0) toast.success(`เติม "${value || '(ว่าง)'}" ลง ${touched} แถว`);
   };
 
-  const revert = () => {
+  const revert = async () => {
     if (changedCount === 0) return;
-    if (!confirm(`ยกเลิกการแก้ไข ${changedCount} เล่ม?`)) return;
+    const agreed = await confirm({
+      title: `ยกเลิกการแก้ไข ${changedCount} เล่ม?`,
+      message: 'ค่าที่แก้ไว้แต่ยังไม่บันทึกจะหายทั้งหมด',
+      confirmLabel: 'ทิ้งการแก้ไข',
+      tone: 'danger',
+    });
+    if (!agreed) return;
     setEdits({});
   };
 

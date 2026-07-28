@@ -9,7 +9,9 @@ import {
   UserCheck,
   BarChart3,
   Table2,
-  Settings,
+  FolderTree,
+  Compass,
+  Contact,
   SlidersHorizontal,
   Menu,
   X,
@@ -25,6 +27,7 @@ import styles from './AdminShell.module.css';
 const ADMIN_NAV = [
   { label: 'คลังหนังสือ', href: '/admin', icon: LayoutGrid },
   { label: 'แก้ไขแบบตาราง', href: '/admin/sheet', icon: Table2 },
+  { label: 'แหล่งหนังสืออื่นๆ', href: '/admin/sources', icon: Compass },
   { label: 'สถิติและสุขภาพคลัง', href: '/admin/stats', icon: BarChart3 },
   { label: 'อนุมัติสมาชิก', href: '/admin/approvals', icon: UserCheck },
 ];
@@ -114,14 +117,16 @@ export default function AdminShell({ children }) {
         <div className={styles.navDivider} />
         
         <div className={styles.settingsNav}>
+          {/* Contact, not UserCheck: UserCheck is the approvals queue above, and
+              two nav rows sharing a glyph is two rows nobody can tell apart. */}
           <Link href="/admin/names" className={styles.navLink} title={!isSidebarOpen ? 'จัดการรายชื่อ' : undefined} onClick={closeOnMobile}>
-            <UserCheck size={18} className={styles.navIcon} /> <span className={styles.navText}>จัดการรายชื่อ</span>
+            <Contact size={18} className={styles.navIcon} /> <span className={styles.navText}>จัดการรายชื่อ</span>
           </Link>
           <button onClick={openFields} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าฟิลด์' : undefined}>
             <SlidersHorizontal size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าฟิลด์</span>
           </button>
           <button onClick={openSettings} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าหมวดหมู่' : undefined}>
-            <Settings size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าหมวดหมู่</span>
+            <FolderTree size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าหมวดหมู่</span>
           </button>
         </div>
 

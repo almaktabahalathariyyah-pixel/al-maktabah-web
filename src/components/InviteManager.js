@@ -12,6 +12,7 @@ import {
 import { Link2, Copy, Check, Trash2, Plus, Power } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import styles from './InviteManager.module.css';
 
 /** Unambiguous alphabet: no O/0, no I/l/1 — these codes get read aloud. */
@@ -34,6 +35,7 @@ const NEVER = 'ไม่หมดอายุ';
  */
 export default function InviteManager() {
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -98,7 +100,13 @@ export default function InviteManager() {
   };
 
   const remove = async (code) => {
-    if (!confirm(`ลบลิงก์ ${code}? ผู้ที่ยังไม่ได้ใช้จะเข้าไม่ได้อีก`)) return;
+    const agreed = await confirm({
+      title: 'ลบลิงก์เชิญนี้?',
+      message: `รหัส ${code} — ผู้ที่ได้รับลิงก์ไปแล้วแต่ยังไม่ได้ใช้จะเข้าไม่ได้อีก`,
+      confirmLabel: 'ลบลิงก์',
+      tone: 'danger',
+    });
+    if (!agreed) return;
     try {
       await deleteDoc(doc(db, 'invites', code));
       setInvites((prev) => prev.filter((i) => i.code !== code));

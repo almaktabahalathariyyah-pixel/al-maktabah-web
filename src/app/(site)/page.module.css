@@ -208,15 +208,41 @@
 .activeClear:hover { color: var(--fg); }
 
 /* ---------------- Chips ---------------- */
+/* Languages are a short list, so the row wraps rather than scrolling — a
+   hidden-scrollbar strip gave no hint that anything sat off the right edge. */
 .chips {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  overflow-x: auto;
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
-  scrollbar-width: none; /* Hide scrollbar for cleaner look */
 }
-.chips::-webkit-scrollbar { display: none; }
+
+/* The tally rides inside the chip, dimmed, so it reads as an annotation on the
+   label rather than as part of it. */
+.chipCount {
+  margin-left: 0.45rem;
+  padding-left: 0.45rem;
+  border-left: 1px solid currentColor;
+  font-size: var(--t-micro);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+}
+
+@media (max-width: 560px) {
+  /* Back to a single swipeable line on a phone: wrapping eight chips eats
+     most of the first screen before a single cover shows. */
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Bleed to the edges so the row visibly continues past the gutter. */
+    margin-inline: calc(-1 * clamp(1.15rem, 4vw, 2.5rem));
+    padding-inline: clamp(1.15rem, 4vw, 2.5rem);
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips > :global(.chip) { flex: none; }
+}
 
 /* ---------------- Layout ---------------- */
 .layout {

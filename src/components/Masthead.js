@@ -10,6 +10,7 @@ import styles from './Masthead.module.css';
 
 const NAV = [
   { label: 'หน้าหลัก', href: '/' },
+  { label: 'แหล่งหนังสืออื่นๆ', href: '/sources' },
   { label: 'เกี่ยวกับ', href: '/about' },
 ];
 
@@ -181,18 +182,14 @@ export default function Masthead({ children }) {
 
       <div className={styles.body}>{children}</div>
 
+      {/* Where the bytes happen to live is our problem, not the reader's — the
+          footer points at the library instead. */}
       <footer className={styles.footer}>
         <div className={`container ${styles.footerInner}`}>
           <span>Al-Maktabah Al-Athariyyah</span>
-          <span className={styles.footerNote}>
-            จัดเก็บไฟล์ผ่านระบบ{' '}
-            {process.env.NEXT_PUBLIC_TELEGRAM_CHANNEL_URL ? (
-              <a href={process.env.NEXT_PUBLIC_TELEGRAM_CHANNEL_URL} target="_blank" rel="noopener noreferrer" className="tlink">
-                Telegram
-              </a>
-            ) : (
-              'Telegram'
-            )}
+          <span className={styles.footerLinks}>
+            <Link href="/about" className="tlink">เกี่ยวกับคลัง</Link>
+            <Link href="/sources" className="tlink">แหล่งหนังสืออื่นๆ</Link>
           </span>
         </div>
       </footer>

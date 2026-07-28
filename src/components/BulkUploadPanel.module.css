@@ -272,6 +272,23 @@
   .footer { padding: 1rem 1.25rem; }
 }
 
+/* The footer holds a status line plus two buttons, one of them labelled
+   "เริ่มอัปโหลด N เล่ม". Held on one row that overflows a phone, so the
+   status line takes its own row and the buttons split what is left. */
+@media (max-width: 560px) {
+  .footer {
+    flex-wrap: wrap;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+  .footerCount {
+    margin-right: 0;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+  }
+  .footer > :global(.btn) { flex: 1 1 auto; min-width: 0; }
+}
+
 /* A book that reached Drive but not its Telegram backup: worth saying, not
    worth marking the whole upload as failed. */
 .softErr {

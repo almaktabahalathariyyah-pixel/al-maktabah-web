@@ -1,10 +1,20 @@
+/* Above every overlay in the app: slide-over panels sit at 1001, the admin
+   modal at 200, the reader at 9999. A toast that loses to any of them is a
+   notification the reader never sees — which is how "เชื่อมต่อ Drive ก่อน"
+   used to vanish behind the upload panel that raised it.
+
+   Anchored to the TOP, not the bottom. The bottom edge is where every floating
+   bar in this app already lives — the admin bulk-action bar, the settings save
+   bar, the reader controls — so a bottom-right toast overlapped one of them at
+   most widths. The top-right corner is free on every page. */
 .container {
   position: fixed;
-  bottom: 1.5rem;
+  top: calc(1rem + env(safe-area-inset-top, 0px));
   right: 1.5rem;
-  z-index: 100;
+  z-index: 10050;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 0.5rem;
   pointer-events: none;
 }
@@ -78,4 +88,27 @@
     opacity: 1;
     transform: translateX(0) scale(1);
   }
+}
+
+/* On a phone a 350px card pinned to one corner overflows a 375px viewport
+   once the gutter is counted; stretch it across the sheet instead. */
+@media (max-width: 560px) {
+  .container {
+    left: 0.85rem;
+    right: 0.85rem;
+    top: calc(0.85rem + env(safe-area-inset-top, 0px));
+    align-items: stretch;
+  }
+  .toast { max-width: none; animation-name: dropIn; }
+  .message { line-height: 1.55; }
+}
+
+/* Sliding in from the right reads wrong on a full-width card. */
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-70%) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
 }

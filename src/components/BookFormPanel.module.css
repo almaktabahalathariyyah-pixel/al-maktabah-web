@@ -186,6 +186,11 @@
 .dropzone:hover { border-color: var(--accent); background: var(--surface-2); }
 .dragging { border-color: var(--accent); background: var(--accent-dim); }
 
+/* Shown-but-not-ready: reads as "waiting on something" rather than broken.
+   Still clickable, because the click is what explains what is missing. */
+.dropzoneOff { opacity: 0.55; }
+.dropzoneOff:hover { border-color: var(--hot); background: var(--hot-dim); }
+
 .dropIcon { color: var(--fg-3); flex: none; }
 .dropLead {
   margin: 0.85rem 0 0.3rem;
@@ -378,6 +383,15 @@
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+}
+
+@media (max-width: 560px) {
+  /* Two buttons at 2rem side padding leave too little for "กำลังบันทึก..." */
+  .footer {
+    padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.75rem;
+  }
+  .footer > :global(.btn) { flex: 1 1 auto; min-width: 0; }
 }
 
 @media (max-width: 768px) {

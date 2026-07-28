@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { getDropdownSettings, saveDropdownSettings } from '@/lib/settings';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { Save } from 'lucide-react';
 import SearchableListEditor from '@/components/SearchableListEditor';
 import styles from '../settings/page.module.css'; // We can reuse settings styles for layout
@@ -13,6 +14,7 @@ export default function NamesPage() {
   const { isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   
   const [authors, setAuthors] = useState([]);
   const [translators, setTranslators] = useState([]);
@@ -75,9 +77,13 @@ export default function NamesPage() {
   };
 
   const handleSyncFromBooks = async () => {
-    if (!window.confirm('ระบบจะดึงรายชื่อผู้แต่ง ผู้แปล และสำนักพิมพ์ จากหนังสือทั้งหมดมาเพิ่มในหน้านี้ (รายชื่อเดิมจะไม่หายไป) ต้องการดำเนินการต่อหรือไม่?')) {
-      return;
-    }
+    const agreed = await confirm({
+      title: 'ดึงรายชื่อจากหนังสือทั้งหมด?',
+      message:
+        'ระบบจะรวบรวมผู้แต่ง ผู้แปล และสำนักพิมพ์ จากหนังสือทุกเล่มมาเพิ่มในหน้านี้\nรายชื่อเดิมจะไม่หายไป',
+      confirmLabel: 'ดึงรายชื่อ',
+    });
+    if (!agreed) return;
     setSyncing(true);
     try {
       const { collection, getDocs } = await import('firebase/firestore');

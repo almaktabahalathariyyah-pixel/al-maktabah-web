@@ -7,21 +7,23 @@ import { loadBookFields } from '@/lib/bookFields';
 import BookCover from '@/components/BookCover';
 import DriveStatus from '@/components/DriveStatus';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import { useAuth } from '@/context/AuthContext';
 import CreatableSelect from 'react-select/creatable';
 import { selectStyles } from '@/lib/selectStyles';
 import { getNextBookId } from '@/lib/sequentialId';
 import { getDropdownSettings } from '@/lib/settings';
-import { uploadPdfToDrive } from '@/lib/googleDrive';
+import { uploadPdfToDrive, uploadImageToDrive } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror, bookSizeBytes } from '@/lib/mirror';
 import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy } from 'lucide-react';
 import styles from './BookFormPanel.module.css';
 
 /** Fields the form owns directly; everything else comes from the schema. */
-const RESERVED = ['coverUrl', 'telegramUrl', 'telegramFileId', 'driveUrl', 'restricted', 'createdAt'];
+const RESERVED = ['coverUrl', 'telegramUrl', 'telegramFileId', 'driveUrl', 'driveOwner', 'restricted', 'createdAt'];
 
 export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved }) {
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   const { user } = useAuth();
 
   const [fields, setFields] = useState(null);
@@ -32,6 +34,10 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   const [telegramUrl, setTelegramUrl] = useState('');
   const [telegramFileId, setTelegramFileId] = useState('');
   const [driveUrl, setDriveUrl] = useState('');
+  // The Google account the file sits in: what was recorded when the book was
+  // saved, and what is connected right now. They can differ.
+  const [driveOwner, setDriveOwner] = useState('');
+  const [connectedOwner, setConnectedOwner] = useState('');
 
   const [options, setOptions] = useState({});
   const [loading, setLoading] = useState(false);
@@ -53,6 +59,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   const [sizeBytes, setSizeBytes] = useState(0);
 
   const handleToken = useCallback((value) => setGoogleToken(value), []);
+  const handleAccount = useCallback((value) => setConnectedOwner(value), []);
 
   // The freshly picked file knows its own size; a saved book carries it.
   const fileBytes = pdfFile?.size || sizeBytes;
@@ -148,6 +155,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
             setTelegramUrl(data.telegramUrl || '');
             setTelegramFileId(data.telegramFileId || '');
             setDriveUrl(data.driveUrl || '');
+            setDriveOwner(data.driveOwner || '');
             setRestricted(data.restricted || false);
             setSizeBytes(bookSizeBytes(data));
 
@@ -166,6 +174,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           setTelegramUrl('');
           setTelegramFileId('');
           setDriveUrl('');
+          setDriveOwner('');
           setRestricted(false);
           setPdfFile(null);
           setUploadStatus('idle');
@@ -234,9 +243,16 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
       });
 
       setDriveUrl(url);
+      // Stamp the account that actually received the file, not whichever one
+      // happens to be connected when the form is next opened.
+      if (connectedOwner) setDriveOwner(connectedOwner);
       setSizeBytes(pdfFile.size);
       setUploadStatus('success');
-      toast.success('อัปโหลดขึ้น Google Drive สำเร็จ');
+      toast.success(
+        connectedOwner
+          ? `อัปโหลดขึ้น Google Drive (${connectedOwner}) สำเร็จ`
+          : 'อัปโหลดขึ้น Google Drive สำเร็จ'
+      );
     } catch (err) {
       console.error(err);
       setUploadStatus('error');
@@ -286,14 +302,26 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     reader.onload = (ev) => setCoverUrl(ev.target.result);
     reader.readAsDataURL(file);
 
-    // 2. Upload in the background. Covers are small and go through the server,
-    //    so the Telegram token stays on the server where it belongs.
+    // 2. Store it. Drive first when it is connected — that keeps the cover in
+    //    the same account as the book and needs no server configuration; the
+    //    server route stays as the fallback.
     setUploadingImage(true);
     setNote('');
-    const formData = new FormData();
-    formData.append('image', file);
 
     try {
+      if (googleToken) {
+        const { url } = await uploadImageToDrive({
+          token: googleToken,
+          blob: file,
+          name: `cover-${(values.title || file.name).trim()}.jpg`,
+        });
+        setCoverUrl(url);
+        toast.success('อัปโหลดรูปปกสำเร็จ');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('image', file);
       const idToken = await user.getIdToken();
 
       const res = await fetch('/api/admin/upload-cover', {
@@ -301,17 +329,20 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         headers: { Authorization: `Bearer ${idToken}` },
         body: formData,
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (data.success) {
+      if (data?.success) {
         setCoverUrl(data.url);
         toast.success('อัปโหลดรูปปกสำเร็จ');
       } else {
-        setNote(data.error || 'อัปโหลดรูปปกไม่สำเร็จ — ลองวางลิงก์เองด้านล่าง');
+        const reason = data?.error || `อัปโหลดรูปปกไม่สำเร็จ (${res.status})`;
+        setNote(`${reason} — เชื่อมต่อไดรฟ์ หรือวางลิงก์รูปปกเองด้านล่าง`);
+        toast.error(reason);
       }
     } catch (err) {
       console.error('Upload cover error:', err);
-      setNote('อัปโหลดไม่สำเร็จ — ลองวางลิงก์รูปปกด้านล่างแทน');
+      setNote(`${err.message} — ลองวางลิงก์รูปปกด้านล่างแทน`);
+      toast.error(err.message || 'อัปโหลดรูปปกไม่สำเร็จ');
     } finally {
       setUploadingImage(false);
       try { inputEl.value = ''; } catch { /* ignore */ }
@@ -324,12 +355,28 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
       setNote('กรุณากรอกชื่อหนังสือ');
       return;
     }
+    // The base64 preview must never reach Firestore, but dropping it silently
+    // meant saving before the background upload landed threw the cover away
+    // with no hint that it had happened.
+    if (uploadingImage) {
+      setNote('รูปปกยังอัปโหลดไม่เสร็จ — รอสักครู่แล้วกดบันทึกอีกครั้ง');
+      toast.info('รูปปกยังอัปโหลดไม่เสร็จ กรุณารอสักครู่');
+      return;
+    }
+    if (coverUrl.startsWith('data:')) {
+      const keepGoing = await confirm({
+        title: 'บันทึกโดยไม่มีรูปปก?',
+        message: 'รูปที่เลือกไว้ยังเก็บไม่สำเร็จ ถ้าบันทึกตอนนี้เล่มนี้จะแสดงปกตัวอักษรแทน',
+        confirmLabel: 'บันทึกไปก่อน',
+      });
+      if (!keepGoing) return;
+    }
+
     setSaving(true);
     setNote('');
     try {
-      // A base64 preview must never reach Firestore — it is a temporary image.
       const finalCoverUrl = coverUrl.startsWith('data:') ? '' : coverUrl;
-      const payload = { ...values, coverUrl: finalCoverUrl, telegramUrl, telegramFileId, driveUrl, restricted };
+      const payload = { ...values, coverUrl: finalCoverUrl, telegramUrl, telegramFileId, driveUrl, driveOwner, restricted };
 
       // Numeric bytes, not only the "12.34 MB" string, so the mirror limit and
       // the storage projection never have to parse prose.
@@ -434,7 +481,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                 <fieldset className={styles.block} style={{ margin: 0 }}>
                   <legend className={styles.blockTitle}>ไฟล์ PDF</legend>
 
-                  <DriveStatus active={isOpen} onToken={handleToken} />
+                  <DriveStatus active={isOpen} onToken={handleToken} onAccount={handleAccount} />
 
                   {restricted && (
                     <p className={styles.warnNote}>
@@ -445,28 +492,43 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                     </p>
                   )}
 
-                  {googleToken && (
-                    <div
-                      className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`}
-                      onDragOver={onDragOver}
-                      onDragLeave={onDragLeave}
-                      onDrop={onDrop}
-                      onClick={() => document.getElementById('pdf-upload')?.click()}
-                    >
-                      <input
-                        id="pdf-upload"
-                        type="file"
-                        accept="application/pdf"
-                        onChange={onFileChange}
-                        style={{ display: 'none' }}
-                      />
-                      <UploadCloud size={30} className={styles.dropIcon} />
-                      <div className={styles.dropLead}>ลากไฟล์ PDF มาวางที่นี่</div>
-                      <div className={styles.dropHint}>
-                        อัปขึ้น Google Drive ตรงจากเครื่องคุณ ไม่ผ่านเซิร์ฟเวอร์ จึงไม่จำกัดขนาดไฟล์
-                      </div>
+                  {/* The dropzone used to simply not render without a token,
+                      which read as a missing feature rather than a missing
+                      connection. It is shown either way now, and says which. */}
+                  <div
+                    className={`${styles.dropzone} ${isDragging ? styles.dragging : ''} ${!googleToken ? styles.dropzoneOff : ''}`}
+                    onDragOver={googleToken ? onDragOver : (e) => e.preventDefault()}
+                    onDragLeave={onDragLeave}
+                    onDrop={googleToken ? onDrop : (e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      toast.error('กรุณาเชื่อมต่อ Google Drive ก่อนอัปโหลดไฟล์');
+                    }}
+                    onClick={() => {
+                      if (!googleToken) {
+                        toast.error('กรุณาเชื่อมต่อ Google Drive ก่อนอัปโหลดไฟล์');
+                        return;
+                      }
+                      document.getElementById('pdf-upload')?.click();
+                    }}
+                  >
+                    <input
+                      id="pdf-upload"
+                      type="file"
+                      accept="application/pdf"
+                      onChange={onFileChange}
+                      style={{ display: 'none' }}
+                    />
+                    <UploadCloud size={30} className={styles.dropIcon} />
+                    <div className={styles.dropLead}>
+                      {googleToken ? 'ลากไฟล์ PDF มาวางที่นี่' : 'กรุณาเชื่อมต่อไดรฟ์ก่อน'}
                     </div>
-                  )}
+                    <div className={styles.dropHint}>
+                      {googleToken
+                        ? 'อัปขึ้น Google Drive ตรงจากเครื่องคุณ ไม่ผ่านเซิร์ฟเวอร์ จึงไม่จำกัดขนาดไฟล์'
+                        : 'กด “เชื่อมต่อเลย” ด้านบน แล้วช่องนี้จะพร้อมรับไฟล์'}
+                    </div>
+                  </div>
 
                   {pdfFile && (
                     <div className={styles.uploadCard}>
@@ -522,6 +584,25 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                     />
                     <span className={styles.fieldHint}>
                       ระบบกรอกให้เองหลังอัปโหลด วางเองได้ถ้าไฟล์อยู่ใน Drive อยู่แล้ว
+                    </span>
+                  </label>
+
+                  {/* Which inbox to search when this file needs chasing down. */}
+                  <label className={styles.field}>
+                    <span className={styles.label}>บัญชี Google ที่เก็บไฟล์นี้</span>
+                    <input
+                      type="text"
+                      className={styles.input}
+                      placeholder={connectedOwner || 'name@gmail.com'}
+                      value={driveOwner}
+                      onChange={(e) => setDriveOwner(e.target.value)}
+                    />
+                    <span className={styles.fieldHint}>
+                      {driveOwner && connectedOwner && driveOwner !== connectedOwner
+                        ? `⚠ ตอนนี้เชื่อมต่ออยู่กับ ${connectedOwner} — ไฟล์เล่มนี้อยู่ในบัญชี ${driveOwner} การลบไฟล์จะไม่สำเร็จจนกว่าจะสลับบัญชี`
+                        : driveOwner
+                          ? 'ค้นหาไฟล์เล่มนี้ได้ในเมลของบัญชีนี้'
+                          : 'ระบบบันทึกให้เองหลังอัปโหลด เล่มเก่าที่ยังว่างสามารถกรอกเองได้'}
                     </span>
                   </label>
 

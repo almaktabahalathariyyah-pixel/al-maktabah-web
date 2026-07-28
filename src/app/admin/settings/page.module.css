@@ -160,21 +160,40 @@
   color: var(--accent-light);
 }
 
+/* Same bounding as the book list's bulk bar — unbounded centring overflowed
+   both edges on a phone. */
 .actionBar {
   position: fixed;
-  bottom: 2rem;
+  bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
+  max-width: calc(100vw - 2rem);
   background: var(--surface-3);
   padding: 1rem 1.5rem;
   border-radius: var(--r-pill);
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-2);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem 2rem;
   z-index: 100;
   animation: slideInUp 0.3s var(--ease);
+}
+
+@media (max-width: 700px) {
+  .actionBar {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    max-width: none;
+    border-radius: var(--r-lg);
+    padding: 0.9rem 1rem;
+    gap: 0.75rem;
+    justify-content: space-between;
+  }
 }
 
 @media (max-width: 600px) {

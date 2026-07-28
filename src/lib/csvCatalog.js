@@ -117,6 +117,7 @@ export function matchRow(catalog, fileName) {
 export function bookFromRow(row, {
   file,
   driveUrl,
+  driveOwner = '',
   telegramFileId = '',
   coverUrl = '',
   restricted = false,
@@ -137,6 +138,9 @@ export function bookFromRow(row, {
     description: row?.description?.trim() || '',
     restricted,
     driveUrl,
+    // Which Google account holds the file. Once the library spans several
+    // Drives this is the only way back to the right inbox.
+    driveOwner,
     telegramFileId,
     telegramUrl: '',
     coverUrl,

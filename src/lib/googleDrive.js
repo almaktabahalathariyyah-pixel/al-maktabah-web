@@ -210,6 +210,54 @@ export async function uploadPdfToDrive({ token, file, name, onProgress }) {
   return { id: result.id, url: `https://drive.google.com/file/d/${result.id}/view` };
 }
 
+/**
+ * Uploads a cover image to Drive and opens it to anyone with the link.
+ *
+ * Covers used to have only one home — the Telegram channel — which made a
+ * cosmetic feature depend on a bot token and a chat id being configured. When
+ * either was missing every cover failed with a 500 that nothing surfaced, so
+ * the whole library rendered as typographic fallbacks with no explanation.
+ * Drive is already connected (nothing uploads without it), so it is the
+ * cheaper place to put them.
+ *
+ * Resolves to { id, url } where `url` points at our own proxy.
+ */
+export async function uploadImageToDrive({ token, blob, name }) {
+  const metadata = { name: name || 'cover.jpg', mimeType: blob.type || 'image/jpeg' };
+
+  const body = new FormData();
+  body.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  body.append('file', blob);
+
+  // multipart rather than resumable: a cover is ~100KB, so the extra round
+  // trip to open a resumable session costs more than the upload itself.
+  const res = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+    { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body }
+  );
+
+  if (res.status === 401 || res.status === 403) {
+    throw new Error('สิทธิ์ Google Drive หมดอายุ กรุณาเชื่อมต่อใหม่');
+  }
+  if (!res.ok) throw new Error(`อัปโหลดรูปปกขึ้น Drive ไม่สำเร็จ (${res.status})`);
+
+  const result = await res.json();
+  if (!result?.id) throw new Error('Google Drive ไม่ได้ส่งรหัสไฟล์รูปปกกลับมา');
+
+  const permRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${result.id}/permissions`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'reader', type: 'anyone' }),
+    }
+  );
+  // Without the public grant the proxy gets a 404 and the cover never appears.
+  if (!permRes.ok) throw new Error('อัปโหลดรูปปกแล้ว แต่ตั้งค่าให้เปิดสาธารณะไม่สำเร็จ');
+
+  return { id: result.id, url: `/api/drive-image/${result.id}` };
+}
+
 /** Pulls the file id out of either Drive link shape. */
 export function driveIdFrom(url) {
   if (!url) return null;
