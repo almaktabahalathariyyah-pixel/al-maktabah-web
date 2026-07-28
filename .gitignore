@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated book catalogue — data, not code. Regenerate with:
+#   node scripts/extract-catalog.mjs "<folder>"
+book-catalog.csv
+book-catalog.json
+book-catalog.backup.csv
+book-catalog-enriched.csv
+catalog-needs-category.txt

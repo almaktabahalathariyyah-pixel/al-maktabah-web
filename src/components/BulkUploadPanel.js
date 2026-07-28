@@ -1,247 +1,271 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import DriveStatus from '@/components/DriveStatus';
 import { useToast } from '@/context/ToastContext';
-import CreatableSelect from 'react-select/creatable';
-import { selectStyles } from '@/lib/selectStyles';
+import { useAuth } from '@/context/AuthContext';
 import { getNextBookId } from '@/lib/sequentialId';
-import { getDropdownSettings } from '@/lib/settings';
 import { uploadPdfToDrive } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror } from '@/lib/mirror';
-import { useAuth } from '@/context/AuthContext';
-import { X, UploadCloud, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import styles from './BookFormPanel.module.css';
+import { loadCatalog, matchRow, bookFromRow } from '@/lib/csvCatalog';
+import {
+  X, UploadCloud, CheckCircle, AlertCircle, Loader2, FileSpreadsheet,
+  FolderOpen, Play, Pause, SkipForward,
+} from 'lucide-react';
+import styles from './BulkUploadPanel.module.css';
+
+/** Telegram throttles a channel at roughly 20 messages a minute. */
+const DEFAULT_DELAY_MS = 3000;
+
+const STATUS_LABEL = {
+  pending: 'รอคิว',
+  uploading: 'กำลังอัป',
+  mirroring: 'กำลังสำรอง',
+  saving: 'กำลังบันทึก',
+  done: 'เสร็จแล้ว',
+  error: 'ไม่สำเร็จ',
+  skipped: 'มีอยู่แล้ว',
+};
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [mirrorBackup, setMirrorBackup] = useState(true);
 
-  const [options, setOptions] = useState({});
+  const [catalog, setCatalog] = useState(null);
+  const [catalogName, setCatalogName] = useState('');
+  const [items, setItems] = useState([]);
+  const [existing, setExisting] = useState(new Set());
 
-  // Defaults applied to every book in the batch
-  const [defaultCategory, setDefaultCategory] = useState('');
-  const [defaultAuthor, setDefaultAuthor] = useState('');
-  const [defaultLanguage, setDefaultLanguage] = useState('');
   const [restricted, setRestricted] = useState(false);
+  const [mirrorBackup, setMirrorBackup] = useState(true);
+  const [delayMs, setDelayMs] = useState(DEFAULT_DELAY_MS);
 
-  const [files, setFiles] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [googleToken, setGoogleToken] = useState(null);
+  const [running, setRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Set when the panel closes mid-run so the loop can stop cleanly instead of
-  // writing books for a batch the owner already walked away from.
+  // The loop reads refs between files, so Pause and Close take effect at a safe
+  // point rather than tearing down mid-upload. `isPaused` is the same flag as
+  // state, because the button label has to re-render and a ref cannot do that.
+  const paused = useRef(false);
   const cancelled = useRef(false);
+
+  const togglePause = () => {
+    paused.current = !paused.current;
+    setIsPaused(paused.current);
+  };
 
   const handleToken = useCallback((value) => setGoogleToken(value), []);
 
-  // Lock body scroll
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
-  // Load dropdown options
+  // Which books are already in the library, so a second run does not duplicate
+  // everything. Books added by this panel carry the filename they came from.
   useEffect(() => {
     if (!isOpen) return;
-    let isMounted = true;
     cancelled.current = false;
+    paused.current = false;
 
-    const fetchData = async () => {
-      try {
-        const [settings, snap] = await Promise.all([
-          getDropdownSettings(),
-          getDocs(collection(db, 'books')),
-        ]);
-        if (!isMounted) return;
-
-        const { categories: predefinedCategories, languages: predefinedLanguages } = settings;
-
-        const opts = { author: new Set(), category: new Set(), language: new Set() };
-        snap.forEach((dSnap) => {
-          const d = dSnap.data();
-          Object.keys(opts).forEach((k) => {
-            if (d[k] !== undefined && d[k] !== null && d[k] !== '') opts[k].add(String(d[k]));
-          });
+    let alive = true;
+    getDocs(collection(db, 'books'))
+      .then((snap) => {
+        if (!alive) return;
+        const seen = new Set();
+        snap.forEach((d) => {
+          const data = d.data();
+          if (data.sourceFile) seen.add(String(data.sourceFile).toLowerCase());
         });
+        setExisting(seen);
+      })
+      .catch((err) => console.error('Could not read existing books:', err));
 
-        const formattedOpts = {};
-        Object.keys(opts).forEach((k) => {
-          formattedOpts[k] = Array.from(opts[k]).sort().map((v) => ({ value: v, label: v }));
-        });
-
-        const dynamicCats = formattedOpts.category.filter(
-          (c) => !predefinedCategories.some((g) => g.options?.some((o) => o.value === c.value))
-        );
-        formattedOpts.category = [...predefinedCategories];
-        if (dynamicCats.length > 0) {
-          formattedOpts.category.push({ label: 'หมวดหมู่อื่นๆ', options: dynamicCats });
-        }
-
-        const dynamicLangs = formattedOpts.language.filter(
-          (l) => !predefinedLanguages.some((p) => p.value === l.value)
-        );
-        formattedOpts.language = [...predefinedLanguages, ...dynamicLangs];
-
-        setOptions(formattedOpts);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-      }
-    };
-
-    fetchData();
-    return () => { isMounted = false; };
+    return () => { alive = false; };
   }, [isOpen]);
 
-  // Dropzone
-  const onDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
-  const onDragLeave = (e) => { e.preventDefault(); setIsDragging(false); };
-  const onDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files) handleFilesSelection(Array.from(e.dataTransfer.files));
+  // ------------------------------------------------------------- catalogue --
+
+  const readCatalog = async (file) => {
+    try {
+      const text = await file.text();
+      const loaded = loadCatalog(text);
+
+      if (loaded.rows.length === 0) {
+        toast.error('อ่านไฟล์ CSV ไม่ได้ หรือไม่มีข้อมูล');
+        return;
+      }
+      if (loaded.missing.length) {
+        toast.error(`CSV ขาดคอลัมน์: ${loaded.missing.join(', ')}`);
+        return;
+      }
+
+      setCatalog(loaded);
+      setCatalogName(file.name);
+      toast.success(`อ่านแคตตาล็อกแล้ว ${loaded.rows.length} รายการ`);
+      setItems((prev) => prev.map((it) => ({ ...it, row: matchRow(loaded, it.file.name) })));
+    } catch (err) {
+      console.error(err);
+      toast.error('อ่านไฟล์ CSV ไม่สำเร็จ');
+    }
   };
-  const onFileChange = (e) => {
-    if (e.target.files) handleFilesSelection(Array.from(e.target.files));
+
+  // ----------------------------------------------------------------- files --
+
+  const addFiles = (picked) => {
+    const pdfs = picked.filter((f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+    const rejected = picked.length - pdfs.length;
+    if (rejected > 0) toast.info(`ข้ามไฟล์ที่ไม่ใช่ PDF ${rejected} ไฟล์`);
+
+    setItems((prev) => {
+      const known = new Set(prev.map((it) => it.file.name.toLowerCase()));
+      const added = pdfs
+        .filter((f) => !known.has(f.name.toLowerCase()))
+        .map((f) => ({
+          id: `${f.name}-${f.size}-${Math.random().toString(36).slice(2, 8)}`,
+          file: f,
+          row: matchRow(catalog, f.name),
+          status: existing.has(f.name.toLowerCase()) ? 'skipped' : 'pending',
+          progress: 0,
+          error: '',
+          mirrored: false,
+        }));
+      return [...prev, ...added];
+    });
+  };
+
+  const onFilePick = (e) => {
+    addFiles(Array.from(e.target.files || []));
     e.target.value = '';
   };
 
-  const handleFilesSelection = (selectedFiles) => {
-    const validFiles = selectedFiles.filter((f) => f.type === 'application/pdf');
-    if (validFiles.length < selectedFiles.length) {
-      toast.error('ไฟล์บางอันไม่ใช่ PDF จึงถูกคัดออก');
-    }
-
-    setFiles((prev) => [
-      ...prev,
-      ...validFiles.map((file) => ({
-        id: `${file.name}-${file.size}-${Math.random().toString(36).slice(2, 8)}`,
-        file,
-        title: file.name.replace(/\.[^/.]+$/, ''),
-        status: 'pending', // pending | uploading | success | error
-        progress: 0,
-        error: '',
-      })),
-    ]);
-  };
-
-  const removeFile = (id) => {
-    if (uploading) return;
-    setFiles((prev) => prev.filter((f) => f.id !== id));
+  const onDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    addFiles(Array.from(e.dataTransfer.files || []));
   };
 
   const patch = (id, changes) =>
-    setFiles((prev) => prev.map((item) => (item.id === id ? { ...item, ...changes } : item)));
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...changes } : it)));
 
-  const startUpload = async () => {
-    if (files.length === 0) return;
+  // ----------------------------------------------------------------- upload --
+
+  const run = async () => {
     if (!googleToken) {
-      toast.error('กรุณาเชื่อมต่อ Google Drive ก่อนเริ่มอัปโหลด');
+      toast.error('เชื่อมต่อ Google Drive ก่อนเริ่มอัปโหลด');
       return;
     }
 
-    setUploading(true);
+    const queue = items.filter((it) => it.status === 'pending' || it.status === 'error');
+    if (queue.length === 0) return;
+
+    setRunning(true);
+    paused.current = false;
+    setIsPaused(false);
     cancelled.current = false;
 
-    // Snapshot the queue up front. Reading files[i].status inside the loop only
-    // ever saw the stale closure, so a retry re-uploaded everything.
-    const queue = files.filter((f) => f.status !== 'success');
-    let done = 0;
+    let ok = 0;
     let failed = 0;
 
-    // Sequential on purpose: a dozen parallel PDF uploads starve the tab.
-    for (const f of queue) {
+    for (const item of queue) {
       if (cancelled.current) break;
-      patch(f.id, { status: 'uploading', error: '', progress: 0 });
+
+      // Pausing waits here rather than unwinding, so nothing is half-written.
+      while (paused.current && !cancelled.current) await sleep(400);
+      if (cancelled.current) break;
 
       try {
+        patch(item.id, { status: 'uploading', progress: 0, error: '' });
+
+        const title = item.row?.title?.trim() || item.file.name.replace(/\.pdf$/i, '');
+
         const { url } = await uploadPdfToDrive({
           token: googleToken,
-          file: f.file,
-          name: f.title,
-          onProgress: (p) => patch(f.id, { progress: p }),
+          file: item.file,
+          name: title,
+          onProgress: (p) => patch(item.id, { progress: p }),
         });
 
         if (cancelled.current) break;
 
-        // A backup copy, if the file is inside Telegram's 20MB fetch ceiling.
-        // Telegram pulls it from the Drive link, so this costs one small
-        // request rather than a second upload of the whole file.
+        // Backup copy, when the file is inside Telegram's 20MB fetch ceiling.
         let telegramFileId = '';
-        if (mirrorBackup && canMirror(f.file.size)) {
-          patch(f.id, { stage: 'mirror' });
+        if (mirrorBackup && canMirror(item.file.size)) {
+          patch(item.id, { status: 'mirroring' });
           const idToken = await user.getIdToken();
           const mirrored = await mirrorToTelegram({
             idToken,
             driveUrl: url,
-            title: f.title,
-            sizeBytes: f.file.size,
+            title,
+            sizeBytes: item.file.size,
             persist: false,
           });
           if (mirrored.ok) telegramFileId = mirrored.fileId;
-          else console.warn('Mirror skipped:', mirrored.error);
+          else console.warn('Mirror skipped:', item.file.name, mirrored.error);
         }
 
-        const finalId = await getNextBookId();
-        const payload = {
-          title: f.title,
-          author: defaultAuthor || '',
-          category: defaultCategory || 'ทั่วไป',
-          language: defaultLanguage || 'ภาษาไทย',
-          restricted,
+        patch(item.id, { status: 'saving' });
+
+        const payload = bookFromRow(item.row, {
+          file: item.file,
           driveUrl: url,
           telegramFileId,
-          telegramUrl: '',
-          coverUrl: '',
-          createdAt: new Date(),
-          downloadCount: 0,
-          format: 'PDF',
-          sizeBytes: f.file.size,
-          size: `${(f.file.size / (1024 * 1024)).toFixed(2)} MB`,
-        };
+          restricted,
+        });
 
-        await setDoc(doc(db, 'books', finalId), payload);
-        onSaved?.({ id: finalId, ...payload });
+        const id = await getNextBookId();
+        await setDoc(doc(db, 'books', id), payload);
+        onSaved?.({ id, ...payload });
 
-        patch(f.id, { status: 'success', progress: 100, stage: '', mirrored: Boolean(telegramFileId) });
-        done += 1;
-      } catch (fileErr) {
-        console.error(fileErr);
-        patch(f.id, { status: 'error', error: fileErr.message });
+        patch(item.id, { status: 'done', progress: 100, mirrored: Boolean(telegramFileId) });
+        setExisting((prev) => new Set(prev).add(item.file.name.toLowerCase()));
+        ok += 1;
+
+        // Spacing the requests keeps Telegram from rate-limiting the channel.
+        if (delayMs > 0) await sleep(delayMs);
+      } catch (err) {
+        console.error(err);
+        patch(item.id, { status: 'error', error: err.message });
         failed += 1;
       }
     }
 
-    setUploading(false);
-
+    setRunning(false);
     if (cancelled.current) return;
-    if (failed === 0) toast.success(`อัปโหลดสำเร็จทั้งหมด ${done} เล่ม`);
-    else toast.error(`สำเร็จ ${done} เล่ม · ไม่สำเร็จ ${failed} เล่ม`);
+    if (failed === 0) toast.success(`อัปโหลดสำเร็จ ${ok} เล่ม`);
+    else toast.error(`สำเร็จ ${ok} เล่ม · ไม่สำเร็จ ${failed} เล่ม (กด "เริ่ม" อีกครั้งเพื่อลองใหม่)`);
   };
 
   const handleClose = () => {
-    if (uploading) {
-      if (!confirm('การอัปโหลดกำลังทำงานอยู่ หากปิดตอนนี้ไฟล์ที่เหลือจะถูกยกเลิก แน่ใจหรือไม่?')) return;
+    if (running) {
+      if (!confirm('กำลังอัปโหลดอยู่ ปิดตอนนี้จะหยุดหลังไฟล์ปัจจุบันเสร็จ ต้องการปิดหรือไม่?')) return;
       cancelled.current = true;
+      paused.current = false;
+      setIsPaused(false);
     }
-    setFiles([]);
-    setUploading(false);
+    setItems([]);
+    setRunning(false);
     onClose();
   };
 
   if (!isOpen) return null;
 
-  const pending = files.filter((f) => f.status !== 'success').length;
+  const counts = items.reduce((acc, it) => ({ ...acc, [it.status]: (acc[it.status] || 0) + 1 }), {});
+  const queued = (counts.pending || 0) + (counts.error || 0);
+  const matched = items.filter((it) => it.row).length;
+  const tooBig = items.filter((it) => !canMirror(it.file.size)).length;
 
   return (
     <>
       <div className={styles.backdrop} onClick={handleClose} />
-      <div className={styles.panel} style={{ maxWidth: '820px', width: '92vw' }}>
+      <div className={styles.panel}>
         <div className={styles.header}>
           <h2 className={styles.title}>อัปโหลดหลายเล่ม</h2>
           <button className={styles.closeBtn} onClick={handleClose} aria-label="ปิด">
@@ -252,151 +276,165 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         <div className={styles.content}>
           <DriveStatus active={isOpen} onToken={handleToken} />
 
-          <div className={styles.filesGrid}>
-            {/* Defaults */}
-            <fieldset className={styles.block} style={{ marginBottom: 0 }}>
-              <legend className={styles.blockTitle}>ตั้งค่าเริ่มต้นสำหรับทุกเล่ม</legend>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <label className={styles.field}>
-                  <span className={styles.label}>หมวดหมู่</span>
-                  <CreatableSelect
-                    isClearable
-                    styles={selectStyles}
-                    options={options.category || []}
-                    value={defaultCategory ? { value: defaultCategory, label: defaultCategory } : null}
-                    onChange={(s) => setDefaultCategory(s ? s.value : '')}
-                    placeholder="ค้นหาหรือเพิ่มใหม่..."
-                    classNamePrefix="react-select"
-                  />
-                </label>
-                <label className={styles.field}>
-                  <span className={styles.label}>ผู้แต่ง</span>
-                  <CreatableSelect
-                    isClearable
-                    styles={selectStyles}
-                    options={options.author || []}
-                    value={defaultAuthor ? { value: defaultAuthor, label: defaultAuthor } : null}
-                    onChange={(s) => setDefaultAuthor(s ? s.value : '')}
-                    placeholder="เว้นว่างได้..."
-                    classNamePrefix="react-select"
-                  />
-                </label>
-                <label className={styles.field}>
-                  <span className={styles.label}>ภาษา</span>
-                  <CreatableSelect
-                    isClearable
-                    styles={selectStyles}
-                    options={options.language || []}
-                    value={defaultLanguage ? { value: defaultLanguage, label: defaultLanguage } : null}
-                    onChange={(s) => setDefaultLanguage(s ? s.value : '')}
-                    placeholder="ภาษาไทย..."
-                    classNamePrefix="react-select"
-                  />
-                </label>
-                <label className={styles.toggle} style={{ marginTop: '0.25rem' }}>
-                  <input type="checkbox" checked={restricted} onChange={(e) => setRestricted(e.target.checked)} />
-                  <span>
-                    <strong>สงวนสิทธิ์</strong>
-                    <em>เปิดให้เฉพาะสมาชิกที่ได้รับอนุมัติ</em>
-                  </span>
-                </label>
+          {/* ---------- 1. catalogue ---------- */}
+          <section className={styles.step}>
+            <h3 className={styles.stepTitle}>
+              <span className={styles.stepNum}>1</span> แนบแคตตาล็อก (CSV)
+            </h3>
+            <p className={styles.stepHint}>
+              ไฟล์จาก <code>book-catalog.csv</code> — ระบบจับคู่ตามชื่อไฟล์แล้วกรอกชื่อเรื่อง
+              ผู้แต่ง หมวดหมู่ ประเภท จำนวนหน้า ให้อัตโนมัติ ไม่แนบก็อัปได้ แต่จะได้แค่ชื่อไฟล์
+            </p>
 
-                <label className={styles.toggle}>
-                  <input
-                    type="checkbox"
-                    checked={mirrorBackup}
-                    onChange={(e) => setMirrorBackup(e.target.checked)}
-                  />
-                  <span>
-                    <strong>สำรองไปที่ Telegram ด้วย</strong>
-                    <em>เฉพาะไฟล์ไม่เกิน 20MB · ใช้เปิดแทนเมื่อ Drive มีปัญหา</em>
-                  </span>
+            <label className={styles.fileBtn}>
+              <FileSpreadsheet size={16} />
+              {catalogName || 'เลือกไฟล์ CSV'}
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                hidden
+                onChange={(e) => e.target.files?.[0] && readCatalog(e.target.files[0])}
+              />
+            </label>
+
+            {catalog && (
+              <p className={styles.ok}>
+                <CheckCircle size={14} /> อ่านได้ {catalog.rows.length} รายการ
+              </p>
+            )}
+          </section>
+
+          {/* ---------- 2. files ---------- */}
+          <section className={styles.step}>
+            <h3 className={styles.stepTitle}>
+              <span className={styles.stepNum}>2</span> เลือกไฟล์ PDF
+            </h3>
+
+            <div
+              className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={onDrop}
+            >
+              <UploadCloud size={28} className={styles.dropIcon} />
+              <div className={styles.dropLead}>ลากไฟล์ทั้งหมดมาวางที่นี่</div>
+              <div className={styles.dropActions}>
+                <label className={styles.fileBtn}>
+                  <FolderOpen size={16} /> เลือกทั้งโฟลเดอร์
+                  <input type="file" webkitdirectory="" directory="" multiple hidden onChange={onFilePick} />
+                </label>
+                <label className={styles.fileBtn}>
+                  เลือกทีละไฟล์
+                  <input type="file" accept="application/pdf" multiple hidden onChange={onFilePick} />
                 </label>
               </div>
-            </fieldset>
+            </div>
 
-            {/* Dropzone */}
-            <fieldset className={styles.block} style={{ marginBottom: 0 }}>
-              <legend className={styles.blockTitle}>เลือกไฟล์ PDF</legend>
-              <div
-                className={`${styles.dropzone} ${isDragging ? styles.dragging : ''}`}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-                onDrop={onDrop}
-                onClick={() => document.getElementById('bulkPdfInput')?.click()}
+            {items.length > 0 && (
+              <div className={styles.summary}>
+                <span><strong>{items.length}</strong> ไฟล์</span>
+                <span>จับคู่ CSV ได้ <strong>{matched}</strong></span>
+                {counts.skipped > 0 && <span>มีอยู่แล้ว <strong>{counts.skipped}</strong></span>}
+                {tooBig > 0 && <span className={styles.warn}>เกิน 20MB (ไม่มีสำเนาสำรอง) <strong>{tooBig}</strong></span>}
+              </div>
+            )}
+          </section>
+
+          {/* ---------- 3. options ---------- */}
+          <section className={styles.step}>
+            <h3 className={styles.stepTitle}>
+              <span className={styles.stepNum}>3</span> ตัวเลือก
+            </h3>
+
+            <label className={styles.toggle}>
+              <input type="checkbox" checked={mirrorBackup} onChange={(e) => setMirrorBackup(e.target.checked)} />
+              <span>
+                <strong>สำรองไปที่ Telegram</strong>
+                <em>เฉพาะไฟล์ไม่เกิน 20MB · ใช้เปิดแทนเมื่อ Drive ติดโควตา</em>
+              </span>
+            </label>
+
+            <label className={styles.toggle}>
+              <input type="checkbox" checked={restricted} onChange={(e) => setRestricted(e.target.checked)} />
+              <span>
+                <strong>ตั้งเป็นสงวนสิทธิ์ทั้งหมด</strong>
+                <em>เปิดให้เฉพาะสมาชิกที่ได้รับอนุมัติ</em>
+              </span>
+            </label>
+
+            <label className={styles.field}>
+              <span className={styles.label}>หน่วงเวลาระหว่างเล่ม</span>
+              <select
+                className={styles.select}
+                value={delayMs}
+                onChange={(e) => setDelayMs(Number(e.target.value))}
               >
-                <input
-                  type="file"
-                  id="bulkPdfInput"
-                  accept="application/pdf"
-                  multiple
-                  style={{ display: 'none' }}
-                  onChange={onFileChange}
-                />
-                <UploadCloud size={30} className={styles.dropIcon} />
-                <div className={styles.dropLead}>ลากไฟล์ PDF หลายไฟล์มาวางที่นี่</div>
-                <div className={styles.dropHint}>
-                  ชื่อไฟล์จะกลายเป็นชื่อหนังสือ · อัปขึ้น Google Drive ทีละเล่มตามลำดับ
-                </div>
-              </div>
-            </fieldset>
-          </div>
+                <option value={0}>ไม่หน่วง (เสี่ยงโดนจำกัด)</option>
+                <option value={1500}>1.5 วินาที</option>
+                <option value={3000}>3 วินาที (แนะนำ)</option>
+                <option value={6000}>6 วินาที (ปลอดภัยสุด)</option>
+              </select>
+              <span className={styles.fieldHint}>
+                Telegram จำกัดราวๆ 20 ข้อความต่อนาทีต่อแชนแนล การหน่วงช่วยไม่ให้โดนตัด
+              </span>
+            </label>
+          </section>
 
-          {/* Queue */}
-          {files.length > 0 && (
+          {/* ---------- queue ---------- */}
+          {items.length > 0 && (
             <div className={styles.queue}>
               <div className={styles.queueHead}>
-                <h3 className={styles.queueTitle}>รายการไฟล์ ({files.length} เล่ม)</h3>
-                {!uploading && (
-                  <button type="button" className={styles.queueClear} onClick={() => setFiles([])}>
-                    ล้างทั้งหมด
-                  </button>
+                <h3 className={styles.queueTitle}>รายการ ({items.length})</h3>
+                {!running && (
+                  <button className={styles.queueClear} onClick={() => setItems([])}>ล้างรายการ</button>
                 )}
               </div>
+
               <ul className={styles.queueList}>
-                {files.map((f) => (
-                  <li key={f.id} className={styles.queueRow}>
-                    <div className={styles.queueBody}>
-                      <div className={styles.uploadHead}>
-                        <span className={styles.uploadName}>{f.title}</span>
-                        <span className={styles.uploadSize}>
-                          {(f.file.size / (1024 * 1024)).toFixed(2)} MB
+                {items.map((it) => (
+                  <li key={it.id} className={styles.row}>
+                    <div className={styles.rowBody}>
+                      <div className={styles.rowTop}>
+                        <span className={styles.rowTitle}>
+                          {it.row?.title?.trim() || it.file.name}
+                        </span>
+                        <span className={`${styles.badge} ${styles[it.status]}`}>
+                          {STATUS_LABEL[it.status]}
                         </span>
                       </div>
 
-                      {f.status === 'uploading' && (
-                        <>
-                          <div className={styles.progressRow}>
-                            <span>{f.stage === 'mirror' ? 'กำลังสำรองไปที่ Telegram' : 'Google Drive'}</span>
-                            <span>{f.progress}%</span>
-                          </div>
-                          <div className={styles.progressTrack}>
-                            <div className={styles.progressFill} style={{ width: `${f.progress}%` }} />
-                          </div>
-                        </>
+                      <div className={styles.rowMeta}>
+                        {it.row ? (
+                          <>
+                            {it.row.category && <span className={styles.tag}>{it.row.category}</span>}
+                            {it.row.type && <span className={styles.tag}>{it.row.type}</span>}
+                            {it.row.language && <span className={styles.tag}>{it.row.language}</span>}
+                            {it.row.author && <span className={styles.dim}>{it.row.author}</span>}
+                            {it.row.pages && <span className={styles.dim}>{it.row.pages} หน้า</span>}
+                          </>
+                        ) : (
+                          <span className={styles.nomatch}>ไม่พบใน CSV — จะใช้ชื่อไฟล์เป็นชื่อเรื่อง</span>
+                        )}
+                        <span className={styles.dim}>{(it.file.size / 1024 / 1024).toFixed(1)} MB</span>
+                      </div>
+
+                      {(it.status === 'uploading' || it.status === 'mirroring') && (
+                        <div className={styles.progressTrack}>
+                          <div className={styles.progressFill} style={{ width: `${it.progress}%` }} />
+                        </div>
                       )}
-                      {f.status === 'success' && (
-                        <p className={styles.uploadOk}>
-                          <CheckCircle size={14} />
-                          {f.mirrored ? 'อัปโหลด + สำรองแล้ว' : 'อัปโหลดสำเร็จ'}
-                        </p>
-                      )}
-                      {f.status === 'error' && (
-                        <p className={styles.uploadFail}><AlertCircle size={14} /> {f.error}</p>
-                      )}
+                      {it.status === 'error' && <p className={styles.err}>{it.error}</p>}
                     </div>
 
-                    {f.status === 'pending' && !uploading && (
-                      <button
-                        type="button"
-                        onClick={() => removeFile(f.id)}
-                        className={styles.queueRemove}
-                        aria-label={`เอา ${f.title} ออก`}
-                      >
-                        <X size={17} />
-                      </button>
-                    )}
-                    {f.status === 'uploading' && <Loader2 size={17} className={styles.spin} />}
+                    {it.status === 'uploading' || it.status === 'mirroring' || it.status === 'saving' ? (
+                      <Loader2 size={16} className={styles.spin} />
+                    ) : it.status === 'done' ? (
+                      <CheckCircle size={16} className={styles.iconOk} />
+                    ) : it.status === 'error' ? (
+                      <AlertCircle size={16} className={styles.iconBad} />
+                    ) : it.status === 'skipped' ? (
+                      <SkipForward size={16} className={styles.iconDim} />
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -405,17 +443,27 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         </div>
 
         <div className={styles.footer}>
-          <button type="button" className="btn" onClick={handleClose}>
-            {uploading ? 'หยุดและปิด' : 'ปิด'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-solid"
-            onClick={startUpload}
-            disabled={uploading || !googleToken || pending === 0}
-          >
-            {uploading ? 'กำลังอัปโหลด…' : `เริ่มอัปโหลด ${pending} เล่ม`}
-          </button>
+          <div className={styles.footerCount}>
+            {counts.done > 0 && <span className={styles.ok}>เสร็จ {counts.done}</span>}
+            {counts.error > 0 && <span className={styles.warn}>ไม่สำเร็จ {counts.error}</span>}
+          </div>
+
+          <button type="button" className="btn" onClick={handleClose}>ปิด</button>
+
+          {running ? (
+            <button type="button" className="btn" onClick={togglePause}>
+              {isPaused ? <><Play size={16} /> ทำต่อ</> : <><Pause size={16} /> หยุดชั่วคราว</>}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-solid"
+              onClick={run}
+              disabled={!googleToken || queued === 0}
+            >
+              <Play size={16} /> เริ่มอัปโหลด {queued} เล่ม
+            </button>
+          )}
         </div>
       </div>
     </>
