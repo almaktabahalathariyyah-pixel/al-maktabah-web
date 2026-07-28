@@ -196,7 +196,11 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         if (cancelled.current) break;
 
         // Backup copy, when the file is inside Telegram's 20MB fetch ceiling.
+        // A failure here is not fatal — the book still uploads to Drive — but
+        // it must be visible. Swallowing it into console.warn meant the owner
+        // watched 5 books "succeed" with no backup and no idea why.
         let telegramFileId = '';
+        let mirrorError = '';
         if (mirrorBackup && canMirror(item.file.size)) {
           patch(item.id, { status: 'mirroring' });
           const idToken = await user.getIdToken();
@@ -208,7 +212,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
             persist: false,
           });
           if (mirrored.ok) telegramFileId = mirrored.fileId;
-          else console.warn('Mirror skipped:', item.file.name, mirrored.error);
+          else mirrorError = mirrored.error;
         }
 
         patch(item.id, { status: 'saving' });
@@ -224,7 +228,12 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         await setDoc(doc(db, 'books', id), payload);
         onSaved?.({ id, ...payload });
 
-        patch(item.id, { status: 'done', progress: 100, mirrored: Boolean(telegramFileId) });
+        patch(item.id, {
+          status: 'done',
+          progress: 100,
+          mirrored: Boolean(telegramFileId),
+          mirrorError,
+        });
         setExisting((prev) => new Set(prev).add(item.file.name.toLowerCase()));
         ok += 1;
 
@@ -424,6 +433,11 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
                         </div>
                       )}
                       {it.status === 'error' && <p className={styles.err}>{it.error}</p>}
+                      {it.status === 'done' && it.mirrorError && (
+                        <p className={styles.softErr}>
+                          ขึ้น Drive แล้ว แต่สำรองไปที่ Telegram ไม่สำเร็จ — {it.mirrorError}
+                        </p>
+                      )}
                     </div>
 
                     {it.status === 'uploading' || it.status === 'mirroring' || it.status === 'saving' ? (

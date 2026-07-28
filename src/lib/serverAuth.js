@@ -15,6 +15,24 @@
 
 const IDENTITY_URL = 'https://identitytoolkit.googleapis.com/v1/accounts:lookup';
 
+/** REST path for one Firestore document. */
+export function firestoreDocUrl(projectId, path) {
+  return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}`;
+}
+
+/**
+ * Reads one document AS the signed-in reader.
+ *
+ * Every server-side Firestore read must go through here. Passing only the API
+ * key makes the request anonymous, which the security rules correctly refuse —
+ * the key identifies the project, never the person.
+ */
+export function fetchDocAsUser(projectId, path, token) {
+  return fetch(firestoreDocUrl(projectId, path), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 /** Reads a Firestore REST value wrapper regardless of its declared type. */
 function readValue(field) {
   if (!field) return undefined;
@@ -50,8 +68,13 @@ export async function resolveReader(token) {
 
   const uid = authData.users[0].localId;
 
+  // The ID token has to travel with this read, not just be verified above.
+  // A Firestore REST call carrying only ?key= is anonymous, so the moment the
+  // security rules went live, `allow get: if isSelf(uid)` denied it and every
+  // reader was told their account did not exist.
   const userRes = await fetch(
-    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/users/${uid}?key=${apiKey}`
+    firestoreDocUrl(projectId, `users/${uid}`),
+    { headers: { Authorization: `Bearer ${token}` } }
   );
   if (!userRes.ok) {
     return { error: 'ไม่พบข้อมูลบัญชีผู้ใช้', status: 403 };

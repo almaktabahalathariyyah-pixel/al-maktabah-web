@@ -272,3 +272,12 @@
   .content { padding: 1.25rem; }
   .footer { padding: 1rem 1.25rem; }
 }
+
+/* A book that reached Drive but not its Telegram backup: worth saying, not
+   worth marking the whole upload as failed. */
+.softErr {
+  margin-top: 0.35rem;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--fg-3);
+}

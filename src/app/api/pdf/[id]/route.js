@@ -1,4 +1,4 @@
-import { resolveReader, tokenFrom } from '@/lib/serverAuth';
+import { resolveReader, tokenFrom, fetchDocAsUser } from '@/lib/serverAuth';
 import { probeDrive, driveDownloadUrl, drivePreviewUrl, BLOCK_REASONS } from '@/lib/driveHealth';
 import { unavailableHtml } from '@/lib/unavailablePage';
 
@@ -118,9 +118,8 @@ export async function GET(request, { params }) {
 
     // Fetch the book before deciding on access: a public title only needs a
     // signed-in reader; approval is what unlocks the restricted shelf.
-    const docRes = await fetch(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/books/${id}?key=${apiKey}`
-    );
+    // Read as the reader — an anonymous REST call is refused by the rules.
+    const docRes = await fetchDocAsUser(projectId, `books/${id}`, tokenFrom(request));
 
     if (!docRes.ok) {
       if (docRes.status === 404) return textError('ไม่พบหนังสือเล่มนี้', 404);
