@@ -114,7 +114,13 @@ export function matchRow(catalog, fileName) {
 }
 
 /** Builds the Firestore payload for one book from its catalogue row. */
-export function bookFromRow(row, { file, driveUrl, telegramFileId = '', restricted = false }) {
+export function bookFromRow(row, {
+  file,
+  driveUrl,
+  telegramFileId = '',
+  coverUrl = '',
+  restricted = false,
+}) {
   const pages = Number(row?.pages) || 0;
   const year = String(row?.year || '').trim();
 
@@ -133,7 +139,7 @@ export function bookFromRow(row, { file, driveUrl, telegramFileId = '', restrict
     driveUrl,
     telegramFileId,
     telegramUrl: '',
-    coverUrl: '',
+    coverUrl,
     downloadCount: 0,
     format: 'PDF',
     sizeBytes: file.size,

@@ -10,6 +10,7 @@ import { getNextBookId } from '@/lib/sequentialId';
 import { uploadPdfToDrive } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror } from '@/lib/mirror';
 import { loadCatalog, matchRow, bookFromRow } from '@/lib/csvCatalog';
+import { makeCover } from '@/lib/pdfCover';
 import {
   X, UploadCloud, CheckCircle, AlertCircle, Loader2, FileSpreadsheet,
   FolderOpen, Play, Pause, SkipForward,
@@ -23,6 +24,7 @@ const STATUS_LABEL = {
   pending: 'รอคิว',
   uploading: 'กำลังอัป',
   mirroring: 'กำลังสำรอง',
+  covering: 'ทำหน้าปก',
   saving: 'กำลังบันทึก',
   done: 'เสร็จแล้ว',
   error: 'ไม่สำเร็จ',
@@ -42,6 +44,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
 
   const [restricted, setRestricted] = useState(false);
   const [mirrorBackup, setMirrorBackup] = useState(true);
+  const [autoCover, setAutoCover] = useState(true);
   const [delayMs, setDelayMs] = useState(DEFAULT_DELAY_MS);
 
   const [googleToken, setGoogleToken] = useState(null);
@@ -215,12 +218,22 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
           else mirrorError = mirrored.error;
         }
 
+        // The first page of these books is the cover, so render it rather
+        // than leaving 362 blank frames for the owner to fill by hand.
+        let coverUrl = '';
+        if (autoCover) {
+          patch(item.id, { status: 'covering' });
+          const idToken = await user.getIdToken();
+          coverUrl = await makeCover(item.file, idToken);
+        }
+
         patch(item.id, { status: 'saving' });
 
         const payload = bookFromRow(item.row, {
           file: item.file,
           driveUrl: url,
           telegramFileId,
+          coverUrl,
           restricted,
         });
 
@@ -364,6 +377,14 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
             </label>
 
             <label className={styles.toggle}>
+              <input type="checkbox" checked={autoCover} onChange={(e) => setAutoCover(e.target.checked)} />
+              <span>
+                <strong>สร้างรูปปกจากหน้าแรกอัตโนมัติ</strong>
+                <em>เรนเดอร์หน้าแรกของ PDF เป็นรูปปก · ทำในเครื่องคุณ ไม่ส่งไฟล์ทั้งเล่มขึ้นเซิร์ฟเวอร์</em>
+              </span>
+            </label>
+
+            <label className={styles.toggle}>
               <input type="checkbox" checked={restricted} onChange={(e) => setRestricted(e.target.checked)} />
               <span>
                 <strong>ตั้งเป็นสงวนสิทธิ์ทั้งหมด</strong>
@@ -440,7 +461,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
                       )}
                     </div>
 
-                    {it.status === 'uploading' || it.status === 'mirroring' || it.status === 'saving' ? (
+                    {['uploading', 'mirroring', 'covering', 'saving'].includes(it.status) ? (
                       <Loader2 size={16} className={styles.spin} />
                     ) : it.status === 'done' ? (
                       <CheckCircle size={16} className={styles.iconOk} />
