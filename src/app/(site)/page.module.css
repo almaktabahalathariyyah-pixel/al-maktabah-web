@@ -208,14 +208,39 @@
 .activeClear:hover { color: var(--fg); }
 
 /* ---------------- Chips ---------------- */
+.chipsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.sortFilter {
+  flex-shrink: 0;
+}
+
+.sortSelect {
+  padding: 0.45rem 1rem;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: var(--t-small);
+  cursor: pointer;
+  outline: none;
+}
+.sortSelect:hover {
+  background: var(--surface-2);
+}
+
 /* Languages are a short list, so the row wraps rather than scrolling — a
    hidden-scrollbar strip gave no hint that anything sat off the right edge. */
 .chips {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
 }
 
 /* The tally rides inside the chip, dimmed, so it reads as an annotation on the

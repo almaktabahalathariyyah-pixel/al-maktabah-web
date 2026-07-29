@@ -111,6 +111,7 @@ export default function Home() {
   // bar is read once on mount, below.
   const [queryText, setQueryText] = useState('');
   const [filters, setFilters] = useState({});
+  const [sortOrder, setSortOrder] = useState('desc');
   const [urlReady, setUrlReady] = useState(false);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -242,7 +243,7 @@ export default function Home() {
 
   const results = useMemo(() => {
     const q = queryText.trim().toLowerCase();
-    return visibleBooks.filter((book) => {
+    const filtered = visibleBooks.filter((book) => {
       for (const [key, value] of Object.entries(filters)) {
         if (!value) continue;
         if (key === 'person') {
@@ -257,12 +258,17 @@ export default function Home() {
         .toLowerCase()
         .includes(q);
     });
-  }, [visibleBooks, filters, queryText]);
 
-  // A fresh query means a fresh first page.
+    if (sortOrder === 'asc') {
+      return filtered.reverse();
+    }
+    return filtered;
+  }, [visibleBooks, filters, queryText, sortOrder]);
+
+  // A fresh query or sort means a fresh first page.
   useEffect(() => {
     setPage(1);
-  }, [queryText, filters]);
+  }, [queryText, filters, sortOrder]);
 
   // --- Autocomplete ---
   const suggestions = useMemo(() => {
@@ -557,29 +563,44 @@ export default function Home() {
         </div>
       )}
 
-      {languageChips.length > 0 && (
-        <div className={styles.chips} role="group" aria-label="กรองตามภาษา">
-          <button
-            className={`chip ${!filters.language ? 'chip-on' : ''}`}
-            onClick={() => setFilter('language', '')}
-          >
-            ทุกภาษา
-            <span className={styles.chipCount}>
-              {visibleBooks.length.toLocaleString('th-TH')}
-            </span>
-          </button>
-          {languageChips.map(({ value, count }) => (
+      <div className={styles.chipsRow}>
+        {languageChips.length > 0 ? (
+          <div className={styles.chips} role="group" aria-label="กรองตามภาษา">
             <button
-              key={value}
-              className={`chip ${filters.language === value ? 'chip-on' : ''}`}
-              onClick={() => setFilter('language', filters.language === value ? '' : value)}
+              className={`chip ${!filters.language ? 'chip-on' : ''}`}
+              onClick={() => setFilter('language', '')}
             >
-              {value}
-              <span className={styles.chipCount}>{count.toLocaleString('th-TH')}</span>
+              ทุกภาษา
+              <span className={styles.chipCount}>
+                {visibleBooks.length.toLocaleString('th-TH')}
+              </span>
             </button>
-          ))}
+            {languageChips.map(({ value, count }) => (
+              <button
+                key={value}
+                className={`chip ${filters.language === value ? 'chip-on' : ''}`}
+                onClick={() => setFilter('language', filters.language === value ? '' : value)}
+              >
+                {value}
+                <span className={styles.chipCount}>{count.toLocaleString('th-TH')}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div />
+        )}
+        
+        <div className={styles.sortFilter}>
+          <select 
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className={styles.sortSelect}
+          >
+            <option value="desc">ใหม่ไปเก่า</option>
+            <option value="asc">เก่าไปใหม่</option>
+          </select>
         </div>
-      )}
+      </div>
 
       <div className={styles.layout}>
         <AuthorSidebar

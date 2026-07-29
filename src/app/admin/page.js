@@ -29,6 +29,25 @@ import { useAdmin } from '@/context/AdminContext';
 const GOOGLE_PROMPT = `ยังไม่ได้เชื่อมต่อ Google Drive (หรือสิทธิ์หมดอายุแล้ว)
 ถ้าลบเฉพาะในเว็บ ไฟล์ในไดรฟ์จะยังอยู่และยังกินพื้นที่อยู่`;
 
+function pageWindow(current, total, span = 1) {
+  const wanted = new Set([1, total]);
+  for (let p = current - span; p <= current + span; p += 1) {
+    if (p > 1 && p < total) wanted.add(p);
+  }
+
+  const sorted = [...wanted].sort((a, b) => a - b);
+  const out = [];
+  let previous = 0;
+
+  for (const p of sorted) {
+    if (p - previous === 2) out.push(previous + 1);
+    else if (p - previous > 2) out.push(`gap-${p}`);
+    out.push(p);
+    previous = p;
+  }
+  return out;
+}
+
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -65,6 +84,8 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState(''); // 'all', 'public', 'restricted'
   const [ownerFilter, setOwnerFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = Newest first, 'asc' = Oldest first
+  const [currentPage, setCurrentPage] = useState(1);
   // Set by the links on the stats page: 'nofile' | 'telegram' | ''
   const [healthFilter, setHealthFilter] = useState('');
 
@@ -385,12 +406,29 @@ export default function AdminPage() {
     return matchesSearch && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus && matchesOwner && matchesHealth;
   });
 
+  // Sort the filtered books based on sortOrder (books array is already 'desc' by default)
+  let sortedBooks = [...filteredBooks];
+  if (sortOrder === 'asc') {
+    sortedBooks.reverse();
+  }
+
+  // Pagination logic
+  const PAGE_SIZE = 20;
+  const pageCount = Math.max(1, Math.ceil(sortedBooks.length / PAGE_SIZE));
+  const current = Math.min(currentPage, pageCount);
+  const shownBooks = sortedBooks.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+
+  // Reset page to 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter, authorFilter, translatorFilter, publisherFilter, languageFilter, typeFilter, yearFilter, statusFilter, ownerFilter, healthFilter, sortOrder]);
+
   const totalBooks = books.length;
   const restrictedCount = books.filter(b => b.restricted).length;
   const publicCount = totalBooks - restrictedCount;
   
   const allSelected =
-    filteredBooks.length > 0 && filteredBooks.every((b) => selectedBooks.has(b.id));
+    shownBooks.length > 0 && shownBooks.every((b) => selectedBooks.has(b.id));
 
   return (
     <div className="container">
@@ -448,7 +486,7 @@ export default function AdminPage() {
             onClick={() => setShowFilters(!showFilters)}
             title="ตัวกรอง"
           >
-            <Filter size={18} /> <span className={styles.hideMobile}>ตัวกรอง {(categoryFilter || statusFilter) && '•'}</span>
+            <Filter size={18} /> <span className={styles.hideMobile}>ตัวกรอง {(categoryFilter || statusFilter || sortOrder !== 'desc') && '•'}</span>
           </button>
 
           <div className={styles.actionButtons}>
@@ -479,6 +517,21 @@ export default function AdminPage() {
 
         {showFilters && (
           <div className={styles.filterBottomRow}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เรียงลำดับ</label>
+              <Select
+                styles={selectStyles}
+                options={[
+                  { value: 'desc', label: 'ใหม่ไปเก่า' },
+                  { value: 'asc', label: 'เก่าไปใหม่' }
+                ]}
+                value={{ value: sortOrder, label: sortOrder === 'asc' ? 'เก่าไปใหม่' : 'ใหม่ไปเก่า' }}
+                onChange={(selected) => setSortOrder(selected ? selected.value : 'desc')}
+                isSearchable={false}
+                classNamePrefix="react-select"
+              />
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>หมวดหมู่</label>
               <Select
@@ -612,6 +665,7 @@ export default function AdminPage() {
                 setCategoryFilter(''); setAuthorFilter(''); setTranslatorFilter('');
                 setPublisherFilter(''); setTypeFilter(''); setLanguageFilter('');
                 setYearFilter(''); setStatusFilter(''); setOwnerFilter(''); setSearchQuery('');
+                setSortOrder('desc');
               }}>ล้างตัวกรองทั้งหมด</button>
             </div>
           </div>
@@ -624,7 +678,7 @@ export default function AdminPage() {
             type="checkbox" 
             className={styles.checkbox} 
             checked={allSelected} 
-            onChange={(e) => handleSelectAll(e, filteredBooks)} 
+            onChange={(e) => handleSelectAll(e, shownBooks)} 
           />
         </div>
         <div style={{ paddingLeft: '1rem', color: 'var(--fg-3)', fontSize: '0.85rem' }}>
@@ -638,19 +692,19 @@ export default function AdminPage() {
             type="checkbox" 
             className={styles.checkbox} 
             checked={allSelected} 
-            onChange={(e) => handleSelectAll(e, filteredBooks)} 
+            onChange={(e) => handleSelectAll(e, shownBooks)} 
           />
-          <span style={{ color: 'var(--fg-3)', fontSize: '0.85rem' }}>เลือกทั้งหมด</span>
+          <span style={{ color: 'var(--fg-3)', fontSize: '0.85rem' }}>เลือกทั้งหมดในหน้านี้</span>
         </div>
       )}
 
       <ul className={`${viewMode === 'card' ? styles.rowsCard : styles.rows} stagger`}>
-        {filteredBooks.length === 0 && (
+        {shownBooks.length === 0 && (
           <li style={{color: 'var(--fg-3)', padding: '2rem', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)'}}>
             {searchQuery || categoryFilter || statusFilter ? 'ไม่พบหนังสือที่ค้นหา' : 'ยังไม่มีหนังสือในระบบ'}
           </li>
         )}
-        {filteredBooks.map((book) => (
+        {shownBooks.map((book) => (
           <li key={book.id} className={`${styles.bookRow} ${selectedBooks.has(book.id) ? styles.rowSelected : ''}`}>
             <div className={styles.checkboxWrap}>
               <input 
@@ -700,6 +754,52 @@ export default function AdminPage() {
           </li>
         ))}
       </ul>
+
+      {pageCount > 1 && (
+        <div className={styles.pagination}>
+          <button 
+            className="btn" 
+            disabled={current === 1}
+            onClick={() => {
+              setCurrentPage(current - 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            ก่อนหน้า
+          </button>
+          
+          <div className={styles.pageNumbers}>
+            {pageWindow(current, pageCount).map((item, index) => 
+              typeof item === 'string' ? (
+                <span key={`gap-${index}`} className={styles.pageGap}>...</span>
+              ) : (
+                <button
+                  key={item}
+                  className={`btn ${current === item ? 'btn-solid' : ''}`}
+                  onClick={() => {
+                    setCurrentPage(item);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  style={current === item ? { background: 'var(--accent)', borderColor: 'var(--accent)' } : {}}
+                >
+                  {item}
+                </button>
+              )
+            )}
+          </div>
+
+          <button 
+            className="btn" 
+            disabled={current === pageCount}
+            onClick={() => {
+              setCurrentPage(current + 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            ถัดไป
+          </button>
+        </div>
+      )}
 
       {selectedBooks.size > 0 && (
         <div className={styles.bulkActionBar}>
