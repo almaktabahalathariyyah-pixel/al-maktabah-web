@@ -218,8 +218,12 @@
   margin-bottom: 1.5rem;
 }
 
-.sortFilter {
+.sortFilterDesktop {
+  display: block;
   flex-shrink: 0;
+}
+.sortFilterMobile {
+  display: none;
 }
 
 .sortSelect {
@@ -268,6 +272,9 @@
   }
   .chips::-webkit-scrollbar { display: none; }
   .chips > :global(.chip) { flex: none; }
+  
+  .sortFilterDesktop { display: none; }
+  .sortFilterMobile { display: flex; }
 }
 
 /* ---------------- Layout ---------------- */

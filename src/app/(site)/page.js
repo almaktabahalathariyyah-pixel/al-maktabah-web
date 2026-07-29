@@ -560,6 +560,20 @@ export default function Home() {
               </select>
             </div>
           ))}
+          <div className={`${styles.filterField} ${styles.sortFilterMobile}`}>
+            <label className={styles.filterLabel} htmlFor="filter-sort">
+              เรียงลำดับ
+            </label>
+            <select
+              id="filter-sort"
+              className={styles.filterSelect}
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+            >
+              <option value="desc">ใหม่ไปเก่า</option>
+              <option value="asc">เก่าไปใหม่</option>
+            </select>
+          </div>
         </div>
       )}
 
