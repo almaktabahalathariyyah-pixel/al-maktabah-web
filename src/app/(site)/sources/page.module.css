@@ -11,6 +11,60 @@
   margin-bottom: 1rem;
 }
 
+/* ---------------- Search ----------------
+   The border sits on the wrapper and the input is bare — the same shape the
+   shelf page uses, and it keeps globals.css's input[type="text"] rule (which
+   outranks any lone module class) from taking the padding and radius back. */
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 420px;
+  margin-bottom: 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 0.55rem 1rem;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.searchWrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.searchIcon { color: var(--fg-3); flex: none; }
+.search {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  border: 0;
+  background: none;
+  outline: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--t-small);
+  color: var(--fg);
+}
+.search::placeholder { color: var(--fg-3); }
+.searchClear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  color: var(--fg-3);
+  background: var(--surface-2);
+}
+.searchClear:hover { color: var(--fg); background: var(--surface-3); }
+
+.resultNote {
+  font-size: var(--t-small);
+  color: var(--fg-3);
+  margin-bottom: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------------- Kind chips ---------------- */
 .chips {
   display: flex;
