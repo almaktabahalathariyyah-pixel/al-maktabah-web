@@ -1,7 +1,5 @@
 import { resolveImageType, imageHeaders } from '@/lib/coverType';
 
-export const runtime = 'edge';
-
 // Drive file ids are base64url-ish and shorter than Telegram's.
 const FILE_ID = /^[A-Za-z0-9_-]{10,120}$/;
 

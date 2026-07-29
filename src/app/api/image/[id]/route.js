@@ -1,7 +1,5 @@
 import { resolveImageType, imageHeaders } from '@/lib/coverType';
 
-export const runtime = 'edge';
-
 /**
  * Public read-through proxy for cover images stored in the Telegram channel.
  *
