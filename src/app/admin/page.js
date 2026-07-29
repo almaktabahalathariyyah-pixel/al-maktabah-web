@@ -8,7 +8,7 @@ import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch } from 
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import Link from 'next/link';
-import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, UploadCloud, Filter, Mail } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, UploadCloud, Filter, Mail, FileText } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
 import dynamic from 'next/dynamic';
@@ -19,6 +19,7 @@ import {
   readSavedToken,
   connectDrive,
   deleteFromDrive,
+  fetchDriveFileName,
   DELETE_REASONS,
 } from '@/lib/googleDrive';
 import { canMirror, bookSizeBytes } from '@/lib/mirror';
@@ -102,6 +103,7 @@ export default function AdminPage() {
   const [bulkEditModalOpen, setBulkEditModalOpen] = useState(false);
   const [bulkValues, setBulkValues] = useState({ category: '', author: '', language: '', restricted: '' });
   const [submittingBulk, setSubmittingBulk] = useState(false);
+  const [storingFileNames, setStoringFileNames] = useState(false);
 
   const updateFilter = (setter, value) => {
     setter(value);
@@ -370,6 +372,53 @@ export default function AdminPage() {
     }
   };
 
+  const handleStoreFileNames = async () => {
+    const targets = books.filter((book) => book.driveUrl && !book.sourceFile);
+    if (targets.length === 0) {
+      toast.success('เก็บชื่อไฟล์ครบแล้ว');
+      return;
+    }
+
+    setStoringFileNames(true);
+    try {
+      let saved = readSavedToken();
+      if (!saved) saved = await connectDrive();
+
+      const batch = writeBatch(db);
+      const updates = [];
+      let failed = 0;
+
+      for (const book of targets) {
+        const result = await fetchDriveFileName(book.driveUrl, saved.token);
+        if (result.ok) {
+          batch.update(doc(db, 'books', book.id), { sourceFile: result.name });
+          updates.push({ id: book.id, sourceFile: result.name });
+        } else {
+          failed += 1;
+        }
+      }
+
+      if (updates.length > 0) {
+        await batch.commit();
+        const byId = new Map(updates.map((item) => [item.id, item.sourceFile]));
+        setBooks((prev) => prev.map((book) => (
+          byId.has(book.id) ? { ...book, sourceFile: byId.get(book.id) } : book
+        )));
+      }
+
+      if (failed > 0) {
+        toast.error(`เก็บชื่อไฟล์ได้ ${updates.length} เล่ม, ข้าม ${failed} เล่ม`);
+      } else {
+        toast.success(`เก็บชื่อไฟล์ ${updates.length} เล่มสำเร็จ`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'เก็บชื่อไฟล์ไม่สำเร็จ');
+    } finally {
+      setStoringFileNames(false);
+    }
+  };
+
   if (authLoading || loadingBooks) {
     return <div className="container" style={{paddingTop: '4rem'}}>กำลังตรวจสอบสิทธิ์...</div>;
   }
@@ -427,6 +476,7 @@ export default function AdminPage() {
   const totalBooks = books.length;
   const restrictedCount = books.filter(b => b.restricted).length;
   const publicCount = totalBooks - restrictedCount;
+  const missingFileNameCount = books.filter((book) => book.driveUrl && !book.sourceFile).length;
   
   const allSelected =
     shownBooks.length > 0 && shownBooks.every((b) => selectedBooks.has(b.id));
@@ -507,6 +557,15 @@ export default function AdminPage() {
               <LayoutGrid size={18} />
             </button>
           </div>
+          <button
+            onClick={handleStoreFileNames}
+            className="btn"
+            disabled={storingFileNames || missingFileNameCount === 0}
+            title={missingFileNameCount === 0 ? 'เก็บชื่อไฟล์ครบแล้ว' : `เก็บชื่อไฟล์ ${missingFileNameCount} เล่ม`}
+          >
+            <FileText size={18} />
+            <span>{storingFileNames ? 'กำลังเก็บชื่อ...' : 'เก็บชื่อไฟล์'}</span>
+          </button>
           <button onClick={() => setIsBulkUploadOpen(true)} className="btn btn-solid" style={{ background: 'var(--hot)', borderColor: 'var(--hot)' }}>
             <UploadCloud size={18} /> <span>อัปโหลดหลายเล่ม</span>
           </button>

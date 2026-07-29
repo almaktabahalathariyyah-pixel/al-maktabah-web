@@ -222,6 +222,26 @@ export function driveIdFrom(url) {
   return byQuery ? byQuery[1] : null;
 }
 
+export async function fetchDriveFileName(driveUrl, token) {
+  const id = driveIdFrom(driveUrl);
+  if (!id) return { ok: false, reason: 'invalid-link' };
+  if (!token) return { ok: false, reason: 'not-connected' };
+
+  try {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=name`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 401) return { ok: false, reason: 'expired' };
+    if (res.status === 403 || res.status === 404) return { ok: false, reason: 'other-account' };
+    if (!res.ok) return { ok: false, reason: `http-${res.status}` };
+
+    const data = await res.json();
+    return data?.name ? { ok: true, name: data.name } : { ok: false, reason: 'missing-name' };
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+}
+
 /**
  * Deletes a Drive file.
  *
