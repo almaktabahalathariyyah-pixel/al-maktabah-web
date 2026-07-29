@@ -222,21 +222,37 @@ export function driveIdFrom(url) {
   return byQuery ? byQuery[1] : null;
 }
 
-export async function fetchDriveFileName(driveUrl, token) {
+/**
+ * The file name AND the account that holds it, in one call.
+ *
+ * Asking for the name alone left `driveOwner` blank on every book uploaded
+ * before that field existed, so the "which Drive is this in" filter had
+ * nothing to offer but "ยังไม่ได้บันทึกบัญชี".
+ *
+ * `owners` is occasionally absent (shared drives report none), so the connected
+ * account is the fallback: under the drive.file scope a token can only read
+ * files this app created on that same Drive, which makes "the token that could
+ * read it" a sound answer to "whose Drive is it".
+ */
+export async function fetchDriveFileMeta(driveUrl, token, fallbackOwner = '') {
   const id = driveIdFrom(driveUrl);
   if (!id) return { ok: false, reason: 'invalid-link' };
   if (!token) return { ok: false, reason: 'not-connected' };
 
   try {
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=name`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${id}?fields=name,owners(emailAddress)`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     if (res.status === 401) return { ok: false, reason: 'expired' };
     if (res.status === 403 || res.status === 404) return { ok: false, reason: 'other-account' };
     if (!res.ok) return { ok: false, reason: `http-${res.status}` };
 
     const data = await res.json();
-    return data?.name ? { ok: true, name: data.name } : { ok: false, reason: 'missing-name' };
+    const name = data?.name || '';
+    const owner = data?.owners?.[0]?.emailAddress || fallbackOwner;
+    if (!name && !owner) return { ok: false, reason: 'missing-name' };
+    return { ok: true, name, owner };
   } catch {
     return { ok: false, reason: 'network' };
   }

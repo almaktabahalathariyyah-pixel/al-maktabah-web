@@ -1,14 +1,23 @@
+/* A directory, set as a list.
+   The card grid this replaces gave every link a box, a tinted icon puck in
+   its own brand colour and a lift on hover — seven links dressed as seven
+   products. Hairlines and a shared baseline say "list of places" without any
+   of that, and the platform is now named in words, which is both plainer and
+   readable when colour is not. */
+
+.page { max-width: 80ch; }
+
 .header {
-  padding: clamp(2.5rem, 6vw, 4.5rem) 0 clamp(1.5rem, 3vw, 2.25rem);
-  max-width: 62ch;
+  padding: clamp(2.5rem, 6vw, 4rem) 0 clamp(1.25rem, 3vw, 1.75rem);
 }
 .header .eyebrow { display: block; margin-bottom: 0.9rem; }
-.title {
+.pageTitle {
   font-family: var(--display);
-  font-size: clamp(1.9rem, 4.6vw, 3rem);
+  font-size: clamp(1.75rem, 4.2vw, 2.6rem);
   font-weight: 600;
   line-height: var(--lh-display);
   margin-bottom: 1rem;
+  max-width: 22ch;
 }
 
 /* ---------------- Kind chips ---------------- */
@@ -16,7 +25,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 .chipCount {
   margin-left: 0.4rem;
@@ -27,129 +36,108 @@
   opacity: 0.55;
 }
 
-/* ---------------- Cards ---------------- */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-  gap: 0.85rem;
-  padding-bottom: 4rem;
+/* ---------------- Rows ---------------- */
+.list {
+  list-style: none;
+  border-top: 1px solid var(--border);
+  padding-bottom: clamp(3rem, 8vw, 5rem);
 }
 
-.card {
-  display: flex;
-  align-items: flex-start;
+.row { border-bottom: 1px solid var(--border); }
+
+.link {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  align-items: start;
   gap: 0.9rem;
-  padding: 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  transition: border-color var(--dur) var(--ease),
-              transform var(--dur) var(--spring),
-              box-shadow var(--dur) var(--ease);
+  padding: 1.1rem 0.25rem;
+  transition: background-color var(--dur) var(--ease);
 }
-.card:hover {
-  border-color: var(--border-2);
-  transform: translateY(-3px);
-  box-shadow: var(--shadow);
+.link:hover { background: var(--surface); }
+
+.icon {
+  color: var(--fg-3);
+  margin-top: 0.25rem;
+  transition: color var(--dur) var(--ease);
 }
-.card:active { transform: translateY(-1px); }
+.link:hover .icon { color: var(--accent); }
 
-.cardIcon {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--r-pill);
-  background: var(--surface-3);
-  color: var(--fg-2);
-}
+.text { display: flex; flex-direction: column; min-width: 0; }
 
-/* Each platform keeps its own tint so the grid is scannable by shape and
-   colour before any label is read. Kept muted — these are wayfinding cues on
-   a dark shell, not brand badges. */
-.website  { background: rgba(62, 230, 160, 0.14); color: #3ee6a0; }
-.youtube  { background: rgba(255, 99, 92, 0.15);  color: #ff635c; }
-.telegram { background: rgba(90, 178, 255, 0.15); color: #5ab2ff; }
-.facebook { background: rgba(120, 145, 255, 0.16); color: #7891ff; }
-.drive    { background: rgba(255, 199, 89, 0.15); color: #ffc759; }
-.library  { background: rgba(186, 148, 255, 0.15); color: #ba94ff; }
-.other    { background: var(--surface-3); color: var(--fg-2); }
-
-.cardBody { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-
-.cardTitle {
+.title {
   font-family: var(--display);
   font-size: 1rem;
   font-weight: 500;
   line-height: 1.45;
   color: var(--fg);
+  transition: color var(--dur) var(--ease);
 }
-.card:hover .cardTitle { color: var(--accent); }
+.link:hover .title { color: var(--accent); }
 
-.cardDesc {
+.desc {
   font-size: var(--t-small);
   line-height: var(--lh-body);
-  color: var(--fg-3);
-  margin-top: 0.2rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  color: var(--fg-2);
+  margin-top: 0.15rem;
+  max-width: 62ch;
 }
 
-.cardHost {
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
   font-size: var(--t-micro);
   letter-spacing: var(--tr-label);
   color: var(--fg-3);
-  margin-top: 0.5rem;
-  /* Long hostnames must not push the card wider than its column. */
+  min-width: 0;
+}
+/* Long hostnames must not push the row wider than its column. */
+.host {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
-  opacity: 0.8;
 }
+.dot { flex: none; }
 
-.cardGo { flex: none; color: var(--fg-3); margin-top: 0.15rem; }
-.card:hover .cardGo { color: var(--accent); }
+.go {
+  flex: none;
+  color: var(--fg-3);
+  margin-top: 0.3rem;
+  transition: color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.link:hover .go { color: var(--accent); transform: translate(1px, -1px); }
 
 /* ---------------- Empty & skeleton ---------------- */
-.skeleton { height: 116px; border-radius: var(--r-lg); }
+.skeleton {
+  height: 76px;
+  border-bottom: 1px solid var(--border);
+  opacity: 0.5;
+}
 
 .empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.5rem;
-  padding: clamp(2.5rem, 6vw, 4rem) 1.5rem;
-  margin-bottom: 4rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-}
-.emptyIcon {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  margin-bottom: 0.4rem;
-  border-radius: var(--r-pill);
-  background: var(--accent-dim);
-  color: var(--accent);
+  padding: clamp(2rem, 5vw, 3rem) 0 clamp(3rem, 8vw, 5rem);
+  border-top: 1px solid var(--border);
 }
 .emptyLead {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(1.2rem, 2.8vw, 1.5rem);
+  font-size: clamp(1.15rem, 2.4vw, 1.35rem);
   line-height: var(--lh-heading);
   color: var(--fg);
+  margin-bottom: 0.4rem;
 }
 .emptyBody {
   font-size: var(--t-small);
   line-height: var(--lh-body);
-  color: var(--fg-3);
-  max-width: 46ch;
-  margin-bottom: 1.1rem;
+  color: var(--fg-2);
+  max-width: 52ch;
+  margin-bottom: 1rem;
 }
+.emptyLink {
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--fg-2);
+  transition: color var(--dur) var(--ease);
+}
+.emptyLink:hover { color: var(--accent); }

@@ -17,9 +17,11 @@ import { selectStyles } from '@/lib/selectStyles';
 import {
   loadGoogleScript,
   readSavedToken,
+  clearSavedToken,
   connectDrive,
   deleteFromDrive,
-  fetchDriveFileName,
+  fetchDriveAccount,
+  fetchDriveFileMeta,
   DELETE_REASONS,
 } from '@/lib/googleDrive';
 import { canMirror, bookSizeBytes } from '@/lib/mirror';
@@ -104,6 +106,7 @@ export default function AdminPage() {
   const [bulkValues, setBulkValues] = useState({ category: '', author: '', language: '', restricted: '' });
   const [submittingBulk, setSubmittingBulk] = useState(false);
   const [storingFileNames, setStoringFileNames] = useState(false);
+  const [fileNameProgress, setFileNameProgress] = useState({ done: 0, total: 0 });
 
   const updateFilter = (setter, value) => {
     setter(value);
@@ -372,50 +375,106 @@ export default function AdminPage() {
     }
   };
 
+  /**
+   * Backfills `sourceFile` AND `driveOwner` from Drive.
+   *
+   * The owner half is the point: nothing ever wrote `driveOwner` for books
+   * uploaded before that field existed, which is why the "บัญชี Google ที่เก็บไฟล์"
+   * filter only ever listed "ยังไม่ได้บันทึกบัญชี". A book counts as done only
+   * once BOTH are stored, and when everything is already stored the button
+   * re-reads the whole shelf instead of sitting dead — that is the only way to
+   * repair a name or an account that changed on the Drive side.
+   *
+   * Files in a second Google account answer 404 under the connected token, so
+   * they are reported as skipped rather than failed: switch account, run again.
+   */
   const handleStoreFileNames = async () => {
-    const targets = books.filter((book) => book.driveUrl && !book.sourceFile);
-    if (targets.length === 0) {
-      toast.success('เก็บชื่อไฟล์ครบแล้ว');
+    const onDrive = books.filter((book) => book.driveUrl);
+    if (onDrive.length === 0) {
+      toast.info('ยังไม่มีเล่มที่เก็บไฟล์ไว้ใน Google Drive');
       return;
     }
 
+    const missing = onDrive.filter((book) => !book.sourceFile || !book.driveOwner);
+    const targets = missing.length > 0 ? missing : onDrive;
+
     setStoringFileNames(true);
+    setFileNameProgress({ done: 0, total: targets.length });
     try {
       let saved = readSavedToken();
-      if (!saved) saved = await connectDrive();
+      if (!saved) {
+        toast.info('กำลังเปิดหน้าต่างเชื่อมต่อ Google Drive');
+        saved = await connectDrive();
+      }
 
-      const batch = writeBatch(db);
+      // Drive omits `owners` on shared drives; the connected account stands in.
+      const account = await fetchDriveAccount(saved.token);
+
       const updates = [];
-      let failed = 0;
+      let skipped = 0;
+      let otherAccount = 0;
+      let expired = false;
 
-      for (const book of targets) {
-        const result = await fetchDriveFileName(book.driveUrl, saved.token);
-        if (result.ok) {
-          batch.update(doc(db, 'books', book.id), { sourceFile: result.name });
-          updates.push({ id: book.id, sourceFile: result.name });
-        } else {
-          failed += 1;
-        }
+      // Five at a time: 365 books one-after-another is a minute of staring at
+      // a spinner, and Drive is happy to answer this many metadata reads.
+      const BATCH = 5;
+      for (let i = 0; i < targets.length && !expired; i += BATCH) {
+        const slice = targets.slice(i, i + BATCH);
+        const results = await Promise.all(
+          slice.map((book) => fetchDriveFileMeta(book.driveUrl, saved.token, account?.email || ''))
+        );
+
+        results.forEach((result, index) => {
+          const book = slice[index];
+          if (!result.ok) {
+            if (result.reason === 'expired') expired = true;
+            else if (result.reason === 'other-account') otherAccount += 1;
+            else skipped += 1;
+            return;
+          }
+          const patch = {};
+          if (result.name && result.name !== book.sourceFile) patch.sourceFile = result.name;
+          if (result.owner && result.owner !== book.driveOwner) patch.driveOwner = result.owner;
+          if (Object.keys(patch).length > 0) updates.push({ id: book.id, patch });
+        });
+
+        setFileNameProgress((prev) => ({ ...prev, done: Math.min(prev.total, i + slice.length) }));
+      }
+
+      // A write batch caps at 500 operations, and this shelf can exceed that.
+      for (let i = 0; i < updates.length; i += 400) {
+        const batch = writeBatch(db);
+        updates.slice(i, i + 400).forEach((item) => batch.update(doc(db, 'books', item.id), item.patch));
+        await batch.commit();
       }
 
       if (updates.length > 0) {
-        await batch.commit();
-        const byId = new Map(updates.map((item) => [item.id, item.sourceFile]));
+        const byId = new Map(updates.map((item) => [item.id, item.patch]));
         setBooks((prev) => prev.map((book) => (
-          byId.has(book.id) ? { ...book, sourceFile: byId.get(book.id) } : book
+          byId.has(book.id) ? { ...book, ...byId.get(book.id) } : book
         )));
       }
 
-      if (failed > 0) {
-        toast.error(`เก็บชื่อไฟล์ได้ ${updates.length} เล่ม, ข้าม ${failed} เล่ม`);
+      if (expired) {
+        clearSavedToken();
+        toast.error('สิทธิ์ Google Drive หมดอายุ — กดปุ่มนี้อีกครั้งเพื่อเชื่อมต่อใหม่');
+      } else if (otherAccount > 0) {
+        toast.info(
+          `บันทึกแล้ว ${updates.length} เล่ม · ข้าม ${otherAccount} เล่มที่อยู่ในบัญชี Google อื่น — สลับบัญชีแล้วกดอีกครั้ง`
+        );
+      } else if (skipped > 0) {
+        toast.error(`บันทึกแล้ว ${updates.length} เล่ม, อ่านไม่ได้ ${skipped} เล่ม`);
+      } else if (updates.length === 0) {
+        toast.success('ข้อมูลชื่อไฟล์และบัญชีครบถ้วนแล้ว');
       } else {
-        toast.success(`เก็บชื่อไฟล์ ${updates.length} เล่มสำเร็จ`);
+        toast.success(`บันทึกชื่อไฟล์และบัญชี ${updates.length} เล่มสำเร็จ`);
       }
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'เก็บชื่อไฟล์ไม่สำเร็จ');
     } finally {
       setStoringFileNames(false);
+      setFileNameProgress({ done: 0, total: 0 });
     }
   };
 
@@ -476,7 +535,16 @@ export default function AdminPage() {
   const totalBooks = books.length;
   const restrictedCount = books.filter(b => b.restricted).length;
   const publicCount = totalBooks - restrictedCount;
-  const missingFileNameCount = books.filter((book) => book.driveUrl && !book.sourceFile).length;
+  const driveBookCount = books.filter((book) => book.driveUrl).length;
+  const missingMetaCount = books.filter(
+    (book) => book.driveUrl && (!book.sourceFile || !book.driveOwner)
+  ).length;
+  const fileNameButtonLabel = storingFileNames
+    ? `กำลังอ่าน ${fileNameProgress.done}/${fileNameProgress.total}`
+    : `เก็บชื่อไฟล์และบัญชี${missingMetaCount > 0 ? ` (${missingMetaCount})` : ''}`;
+  const fileNameButtonHint = missingMetaCount > 0
+    ? `ยังขาดชื่อไฟล์หรือบัญชี Google อยู่ ${missingMetaCount} เล่ม — กดเพื่อดึงจากไดรฟ์`
+    : 'ข้อมูลครบแล้ว — กดเพื่อตรวจซ้ำทั้งคลัง';
   
   const allSelected =
     shownBooks.length > 0 && shownBooks.every((b) => selectedBooks.has(b.id));
@@ -521,58 +589,60 @@ export default function AdminPage() {
 
       <div className={styles.filterBar}>
         <div className={styles.filterTopRow}>
-          <div className={styles.searchWrap}>
-            <input 
-              type="text" 
-              placeholder="ค้นหาชื่อ หรือผู้แต่ง..."
-              value={searchQuery}
-              onChange={(e) => updateFilter(setSearchQuery, e.target.value)}
-              className={styles.searchInput}
-            />
-            <Search className={styles.searchIcon} size={18} />
+          <div className={styles.searchTools}>
+            <div className={styles.searchWrap}>
+              <input 
+                type="text" 
+                placeholder="ค้นหาชื่อ หรือผู้แต่ง..."
+                value={searchQuery}
+                onChange={(e) => updateFilter(setSearchQuery, e.target.value)}
+                className={styles.searchInput}
+              />
+              <Search className={styles.searchIcon} size={18} />
+            </div>
+            
+            <button 
+              className={`btn ${showFilters ? 'btn-solid' : ''}`} 
+              onClick={() => setShowFilters(!showFilters)}
+              title="ตัวกรอง"
+            >
+              <Filter size={18} /> <span className={styles.hideMobile}>ตัวกรอง {(categoryFilter || statusFilter || sortOrder !== 'desc') && '•'}</span>
+            </button>
           </div>
           
-          <button 
-            className={`btn ${showFilters ? 'btn-solid' : ''}`} 
-            onClick={() => setShowFilters(!showFilters)}
-            title="ตัวกรอง"
-          >
-            <Filter size={18} /> <span className={styles.hideMobile}>ตัวกรอง {(categoryFilter || statusFilter || sortOrder !== 'desc') && '•'}</span>
-          </button>
-
           <div className={styles.actionButtons}>
-          <div className={styles.viewToggle}>
-            <button 
-              className={`${styles.viewBtn} ${viewMode === 'table' ? styles.viewBtnActive : ''}`}
-              onClick={() => setViewMode('table')}
-              title="มุมมองตาราง"
+            <div className={styles.viewToggle}>
+              <button 
+                className={`${styles.viewBtn} ${viewMode === 'table' ? styles.viewBtnActive : ''}`}
+                onClick={() => setViewMode('table')}
+                title="มุมมองตาราง"
+              >
+                <List size={18} />
+              </button>
+              <button 
+                className={`${styles.viewBtn} ${viewMode === 'card' ? styles.viewBtnActive : ''}`}
+                onClick={() => setViewMode('card')}
+                title="มุมมองการ์ด"
+              >
+                <LayoutGrid size={18} />
+              </button>
+            </div>
+            <button
+              onClick={handleStoreFileNames}
+              className={`btn ${styles.fileNameBtn}`}
+              disabled={storingFileNames || driveBookCount === 0}
+              title={fileNameButtonHint}
             >
-              <List size={18} />
+              <FileText size={18} />
+              <span>{fileNameButtonLabel}</span>
             </button>
-            <button 
-              className={`${styles.viewBtn} ${viewMode === 'card' ? styles.viewBtnActive : ''}`}
-              onClick={() => setViewMode('card')}
-              title="มุมมองการ์ด"
-            >
-              <LayoutGrid size={18} />
+            <button onClick={() => setIsBulkUploadOpen(true)} className={`btn btn-solid ${styles.hotBtn}`}>
+              <UploadCloud size={18} /> <span>อัปโหลดหลายเล่ม</span>
+            </button>
+            <button onClick={handleOpenNewBook} className="btn btn-solid">
+              <Plus size={18} /> <span>เพิ่มหนังสือ</span>
             </button>
           </div>
-          <button
-            onClick={handleStoreFileNames}
-            className="btn"
-            disabled={storingFileNames || missingFileNameCount === 0}
-            title={missingFileNameCount === 0 ? 'เก็บชื่อไฟล์ครบแล้ว' : `เก็บชื่อไฟล์ ${missingFileNameCount} เล่ม`}
-          >
-            <FileText size={18} />
-            <span>{storingFileNames ? 'กำลังเก็บชื่อ...' : 'เก็บชื่อไฟล์'}</span>
-          </button>
-          <button onClick={() => setIsBulkUploadOpen(true)} className="btn btn-solid" style={{ background: 'var(--hot)', borderColor: 'var(--hot)' }}>
-            <UploadCloud size={18} /> <span>อัปโหลดหลายเล่ม</span>
-          </button>
-          <button onClick={handleOpenNewBook} className="btn btn-solid">
-            <Plus size={18} /> <span>เพิ่มหนังสือ</span>
-          </button>
-        </div>
         </div>
 
         {showFilters && (
