@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -11,7 +11,8 @@ import Link from 'next/link';
 import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, UploadCloud, Filter, Mail } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings } from '@/lib/settings';
-import Select from 'react-select';
+import dynamic from 'next/dynamic';
+const Select = dynamic(() => import('react-select'), { ssr: false });
 import { selectStyles } from '@/lib/selectStyles';
 import {
   loadGoogleScript,

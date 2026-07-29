@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { facetValues } from '@/lib/bookFields';
-import Select from 'react-select';
+import dynamic from 'next/dynamic';
+const Select = dynamic(() => import('react-select'), { ssr: false });
 import { selectStyles } from '@/lib/selectStyles';
 import styles from './FilterRail.module.css';
 
