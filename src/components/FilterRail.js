@@ -77,6 +77,7 @@ function FilterGroup({ field, books, value, onChange }) {
         <div className={styles.options}>
           {useSelect ? (
             <Select
+              instanceId={`filter-${field.key}`}
               isClearable
               styles={selectStyles}
               options={selectOptions}
