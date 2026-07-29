@@ -1,3 +1,5 @@
+import { resolveImageType, imageHeaders } from '@/lib/coverType';
+
 export const runtime = 'edge';
 
 // Drive file ids are base64url-ish and shorter than Telegram's.
@@ -37,21 +39,22 @@ export async function GET(request, { params }) {
 
     if (!upstream.ok) return fail(404, 'download-failed');
 
-    const contentType = upstream.headers.get('content-type') || '';
-    // A private or deleted file answers with Drive's HTML sign-in page rather
-    // than an error status, so the type is the only reliable tell.
-    if (!contentType.startsWith('image/')) return fail(415, 'not-shared');
+    const upstreamType = upstream.headers.get('content-type') || '';
+
+    // A private or deleted file answers 200 with Drive's HTML sign-in page, so
+    // markup has to be caught here — but only markup. Rejecting everything that
+    // was not already image/* is the mistake that broke the Telegram proxy,
+    // since these CDNs commonly answer application/octet-stream.
+    if (/^text\/|html|json/i.test(upstreamType)) return fail(415, 'not-shared');
 
     const length = Number(upstream.headers.get('content-length') || 0);
     if (length > MAX_BYTES) return fail(413, 'too-large');
 
-    return new Response(upstream.body, {
-      headers: {
-        'Content-Type': contentType,
-        // File ids are immutable, so this can sit in the CDN forever.
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-    });
+    // Covers are uploaded from here as JPEG, so that is the sane assumption
+    // when Drive declines to say.
+    const contentType = resolveImageType('cover.jpg', upstreamType);
+
+    return new Response(upstream.body, { headers: imageHeaders(contentType) });
   } catch (error) {
     console.error('Drive Image Proxy Error:', error);
     return fail(500, 'proxy-threw');

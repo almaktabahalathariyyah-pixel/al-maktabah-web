@@ -1,3 +1,5 @@
+import { resolveImageType, imageHeaders } from '@/lib/coverType';
+
 export const runtime = 'edge';
 
 /**
@@ -52,16 +54,15 @@ export async function GET(request, { params }) {
     );
     if (!imgRes.ok) return fail(404, 'download-failed');
 
-    const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
-    if (!contentType.startsWith('image/')) return fail(415, 'not-an-image');
+    // Telegram serves application/octet-stream here, so the file_path decides
+    // — gating on the header rejected every cover we had ever stored.
+    const contentType = resolveImageType(
+      fileData.result.file_path,
+      imgRes.headers.get('content-type')
+    );
+    if (!contentType) return fail(415, 'not-an-image');
 
-    return new Response(imgRes.body, {
-      headers: {
-        'Content-Type': contentType,
-        // File ids are immutable, so this can sit in the CDN forever.
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-    });
+    return new Response(imgRes.body, { headers: imageHeaders(contentType) });
   } catch (error) {
     console.error('Image Proxy Error:', error);
     return fail(500, 'proxy-threw');
