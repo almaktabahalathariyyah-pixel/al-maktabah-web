@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X, LogOut } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
@@ -59,8 +60,13 @@ export default function Masthead({ children }) {
       <header className={styles.masthead}>
         <div className={`container ${styles.inner}`}>
           <Link href="/" className={styles.wordmark}>
-            <span className={styles.wordmarkMain}>Al-Maktabah</span>
-            <span className={styles.wordmarkSub}>Al-Athariyyah</span>
+            {/* alt is empty on purpose: the name sits right beside it, and a
+                screen reader announcing the library twice helps nobody. */}
+            <Image src="/mark.png" alt="" width={36} height={36} className={styles.mark} priority />
+            <span className={styles.wordmarkText}>
+              <span className={styles.wordmarkMain}>Al-Maktabah</span>
+              <span className={styles.wordmarkSub}>Al-Athariyyah</span>
+            </span>
           </Link>
 
           <nav className={styles.nav}>

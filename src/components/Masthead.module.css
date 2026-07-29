@@ -17,7 +17,16 @@
 }
 
 /* ---------- Wordmark ---------- */
-.wordmark { display: flex; align-items: baseline; gap: 0.5rem; flex: none; }
+/* The mark is centred against the whole block while the two words keep their
+   shared baseline, which is why the type sits in a box of its own. */
+.wordmark { display: flex; align-items: center; gap: 0.6rem; flex: none; }
+.wordmarkText { display: flex; align-items: baseline; gap: 0.5rem; }
+.mark {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  object-fit: contain;
+}
 .wordmarkMain {
   font-family: var(--display);
   font-size: 1.22rem;
