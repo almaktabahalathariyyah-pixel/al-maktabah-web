@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { firstPerson } from '@/lib/people';
 import styles from './BookCover.module.css';
 
 /**
@@ -48,7 +49,9 @@ export default function BookCover({ src, title, author, className = '' }) {
         <div className={`${styles.fallback} ${styles[getVariant(title)]}`}>
           <span className={styles.fallbackTitle}>{title}</span>
           <span className={styles.fallbackRule} />
-          <span className={styles.fallbackAuthor}>{author}</span>
+          {/* One name only: this is the strip of text on a generated cover,
+              and a list of three would not fit however it wrapped. */}
+          <span className={styles.fallbackAuthor}>{firstPerson(author)}</span>
         </div>
       )}
     </div>

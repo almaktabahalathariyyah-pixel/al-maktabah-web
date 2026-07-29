@@ -15,6 +15,7 @@ import { getNextBookId } from '@/lib/sequentialId';
 import { getDropdownSettings } from '@/lib/settings';
 import { uploadPdfToDrive } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror, bookSizeBytes } from '@/lib/mirror';
+import { asList } from '@/lib/people';
 import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy } from 'lucide-react';
 import styles from './BookFormPanel.module.css';
 
@@ -110,9 +111,9 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         snap.forEach(dSnap => {
           const d = dSnap.data();
           Object.keys(opts).forEach(k => {
-            if (d[k] !== undefined && d[k] !== null && d[k] !== '') {
-              opts[k].add(String(d[k]));
-            }
+            // A book with two authors contributes both to the dropdown.
+            // String(d[k]) on an array would have offered "A,B" as one name.
+            asList(d[k]).forEach((value) => opts[k].add(value));
           });
         });
 
@@ -377,6 +378,11 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         if (field.type === 'number' && payload[field.key] !== undefined) {
           payload[field.key] = Number(payload[field.key]) || 0;
         }
+        // Multi fields always land as an array, including the empty case, so
+        // a book cannot flip between a string and a list across two saves.
+        if (field.type === 'multi') {
+          payload[field.key] = asList(payload[field.key]);
+        }
       }
 
       let finalId = bookId;
@@ -418,6 +424,22 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           <option value="false">ไม่ใช่</option>
           <option value="true">ใช่</option>
         </select>
+      ) : field.type === 'multi' ? (
+        /* Several people on one book. Stored as an array, and read back
+           through asList so a book still holding a single string opens with
+           that name already in place. */
+        <CreatableSelect
+          isMulti
+          isClearable
+          styles={selectStyles}
+          options={options[field.key] || []}
+          value={asList(values[field.key]).map((v) => ({ value: v, label: v }))}
+          onChange={(selected) => set(field.key, (selected || []).map((s) => s.value))}
+          placeholder="ค้นหาหรือเพิ่มใหม่ เลือกได้หลายคน..."
+          formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
+          noOptionsMessage={() => 'พิมพ์เพื่อเพิ่มชื่อใหม่'}
+          classNamePrefix="react-select"
+        />
       ) : field.type === 'select' ? (
         <CreatableSelect
           isClearable

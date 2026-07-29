@@ -9,6 +9,8 @@
  * in a spreadsheet rather than 362 times in a form.
  */
 
+import { splitPeople } from './people';
+
 /** Columns the uploader understands. Anything else in the file is ignored. */
 export const CATALOG_COLUMNS = [
   'file',
@@ -127,8 +129,11 @@ export function bookFromRow(row, {
 
   return {
     title: row?.title?.trim() || file.name.replace(/\.pdf$/i, ''),
-    author: row?.author?.trim() || '',
-    translator: row?.translator?.trim() || '',
+    // Lists, matching what the form writes. Several names go in one cell
+    // separated by a semicolon: "อบู ฟาฏิมะฮ์; อะบู อิยาฎ". A plain comma is
+    // NOT a separator — several names already in this catalogue contain one.
+    author: splitPeople(row?.author),
+    translator: splitPeople(row?.translator),
     category: row?.category?.trim() || '',
     type: row?.type?.trim() || '',
     publisher: row?.publisher?.trim() || '',

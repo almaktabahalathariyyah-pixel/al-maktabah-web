@@ -12,6 +12,7 @@ import { collection, getDocs, query, orderBy, where, limit, startAfter } from 'f
 import { db } from '@/lib/firebase';
 import { getLangPath } from '@/lib/langPath';
 import AuthorSidebar from '@/components/AuthorSidebar';
+import { asList, joinPeople, hasPerson } from '@/lib/people';
 import styles from './page.module.css';
 
 /** Filters that live in the URL, so a shelf can be linked to and bookmarked. */
@@ -96,9 +97,9 @@ function BookCard({ book }) {
       </div>
       <div className={styles.meta}>
         <h3 className={styles.bookTitle}>{book.title}</h3>
-        {book.author && (
+        {joinPeople(book.author) && (
           <p className={styles.author}>
-            <User size={12} className={styles.authorIcon} /> {book.author}
+            <User size={12} className={styles.authorIcon} /> {joinPeople(book.author)}
           </p>
         )}
       </div>
@@ -247,14 +248,15 @@ export default function Home() {
       for (const [key, value] of Object.entries(filters)) {
         if (!value) continue;
         if (key === 'person') {
-          if (book.author !== value && book.translator !== value) return false;
+          // Credited anywhere on the book, not only as the first name.
+          if (!hasPerson(book.author, value) && !hasPerson(book.translator, value)) return false;
           continue;
         }
         // String conversion matters for year, which may be stored as a number.
         if (String(book[key] ?? '').trim() !== value) return false;
       }
       if (!q) return true;
-      return `${book.title ?? ''} ${book.author ?? ''} ${book.translator ?? ''} ${book.publisher ?? ''}`
+      return `${book.title ?? ''} ${joinPeople(book.author, ' ')} ${joinPeople(book.translator, ' ')} ${book.publisher ?? ''}`
         .toLowerCase()
         .includes(q);
     });
@@ -281,12 +283,15 @@ export default function Home() {
 
     for (const book of visibleBooks) {
       for (const key of Object.keys(buckets)) {
-        const value = book[key];
-        if (!value || seen[key].has(value)) continue;
-        if (buckets[key].length >= caps[key]) continue;
-        if (String(value).toLowerCase().includes(q)) {
-          seen[key].add(value);
-          buckets[key].push(value);
+        // Each credited person is its own suggestion — searching for the
+        // second author of a book has to offer that author, not "A,B".
+        for (const value of asList(book[key])) {
+          if (seen[key].has(value)) continue;
+          if (buckets[key].length >= caps[key]) break;
+          if (String(value).toLowerCase().includes(q)) {
+            seen[key].add(value);
+            buckets[key].push(value);
+          }
         }
       }
     }
@@ -309,7 +314,9 @@ export default function Home() {
 
   const uniqueSorted = useCallback(
     (key, sorter) =>
-      Array.from(new Set(visibleBooks.map((b) => b[key]).filter(Boolean))).sort(sorter),
+      // flatMap through asList: a two-author book puts both names in the rail,
+      // and a single-string field still yields exactly one.
+      Array.from(new Set(visibleBooks.flatMap((b) => asList(b[key])))).sort(sorter),
     [visibleBooks]
   );
 
@@ -396,8 +403,10 @@ export default function Home() {
   const current = Math.min(page, pageCount);
   const shown = results.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  const authored = filters.person ? results.filter((b) => b.author === filters.person) : [];
-  const translated = filters.person ? results.filter((b) => b.translator === filters.person) : [];
+  // A person can be one of two authors here and the sole translator there, so
+  // a book can legitimately appear in both sections.
+  const authored = filters.person ? results.filter((b) => hasPerson(b.author, filters.person)) : [];
+  const translated = filters.person ? results.filter((b) => hasPerson(b.translator, filters.person)) : [];
 
   const goToPage = (next) => {
     setPage(next);

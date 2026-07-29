@@ -73,7 +73,8 @@ export default function ImportPage() {
         const id = await getNextBookId();
         await setDoc(doc(db, 'books', id), {
           title: msg.file_name ? msg.file_name.replace(/\.pdf$/i, '') : 'ไม่ทราบชื่อ',
-          author: '',
+          // An empty LIST, matching every other write to this field.
+          author: [],
           category: 'อื่นๆ',
           publisher: '',
           year: '',

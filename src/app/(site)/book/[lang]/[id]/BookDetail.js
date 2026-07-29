@@ -22,6 +22,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { getLangPath } from '@/lib/langPath';
 import { recordAccess } from '@/lib/stats';
+import { asList, joinPeople } from '@/lib/people';
 import styles from './page.module.css';
 
 export default function BookDetail({ lang, id }) {
@@ -239,7 +240,7 @@ export default function BookDetail({ lang, id }) {
   const specs = [
     ['สำนักพิมพ์', book.publisher],
     ['ปีที่พิมพ์', book.year],
-    ['ผู้แปล', book.translator],
+    ['ผู้แปล', joinPeople(book.translator)],
     ['จำนวนหน้า', book.pages ? `${book.pages} หน้า` : ''],
     ['ภาษา', book.language],
     ['ประเภท', book.type],
@@ -319,10 +320,20 @@ export default function BookDetail({ lang, id }) {
           <header className={styles.header}>
             {book.category && <p className="eyebrow">{book.category}</p>}
             <h1 className={styles.title}>{book.title}</h1>
-            {book.author && (
+            {asList(book.author).length > 0 && (
+              /* Each author is its own link into the shelf's person filter —
+                 with two names on a book, one combined link would be a lie
+                 about which shelf it opens. */
               <p className={styles.author}>
                 <User size={14} className={styles.authorIcon} />
-                {book.author}
+                {asList(book.author).map((name, index) => (
+                  <span key={name}>
+                    {index > 0 && <span className={styles.authorSep}> · </span>}
+                    <Link href={`/?person=${encodeURIComponent(name)}`} className="tlink">
+                      {name}
+                    </Link>
+                  </span>
+                ))}
               </p>
             )}
           </header>

@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import { asList } from './people';
 
 /**
  * The book metadata schema, and which parts of it readers can filter by.
@@ -10,17 +11,20 @@ import { db } from './firebase';
  *
  *   key      property name on a book document
  *   label    Thai label shown in the form and the filter rail
- *   type     'text' | 'select' | 'number' | 'textarea' | 'bool'
+ *   type     'text' | 'select' | 'multi' | 'number' | 'textarea' | 'bool'
  *   form     show this field in the admin add/edit form
  *   filter   offer this field as a reader-facing filter
  *   locked   structural field the owner should not be able to remove
+ *
+ * 'multi' is 'select' that accepts several values and stores an array — a book
+ * with two authors, or a translator and a reviser.
  */
 export const DEFAULT_FIELDS = [
   { key: 'title',      label: 'ชื่อหนังสือ',   type: 'text',     form: true, filter: false, locked: true },
-  { key: 'author',     label: 'ผู้แต่ง',        type: 'select',   form: true, filter: true,  locked: true },
+  { key: 'author',     label: 'ผู้แต่ง',        type: 'multi',    form: true, filter: true,  locked: true },
   { key: 'category',   label: 'หมวดหมู่',      type: 'select',   form: true, filter: true,  locked: true },
   { key: 'type',       label: 'ประเภท',        type: 'select',   form: true, filter: true },
-  { key: 'translator', label: 'ผู้แปล',         type: 'select',   form: true, filter: true },
+  { key: 'translator', label: 'ผู้แปล',         type: 'multi',    form: true, filter: true },
   { key: 'publisher',  label: 'สำนักพิมพ์',    type: 'select',   form: true, filter: true },
   { key: 'year',       label: 'ปีพิมพ์',        type: 'select',   form: true, filter: true },
   { key: 'pages',      label: 'จำนวนหน้า',     type: 'number',   form: true, filter: false },
@@ -30,12 +34,29 @@ export const DEFAULT_FIELDS = [
 
 const CONFIG_REF = () => doc(db, 'config', 'bookFields');
 
+/**
+ * Fields the schema promotes to 'multi' even if the saved config predates it.
+ *
+ * A config document written before multi-person support says these are plain
+ * selects. Nothing would break, but the owner would have to go and flip both
+ * by hand to get the feature they asked for, so the upgrade happens on read.
+ * Setting either back to 'select' in the Fields panel sticks — the promotion
+ * only fires on the type it replaced.
+ */
+const PROMOTE_TO_MULTI = new Set(['author', 'translator']);
+
 /** One document read. Returns defaults when nothing is configured yet. */
 export async function loadBookFields() {
   try {
     const snap = await getDoc(CONFIG_REF());
     const fields = snap.exists() ? snap.data()?.fields : null;
-    if (Array.isArray(fields) && fields.length) return fields;
+    if (Array.isArray(fields) && fields.length) {
+      return fields.map((field) => (
+        PROMOTE_TO_MULTI.has(field.key) && field.type === 'select'
+          ? { ...field, type: 'multi' }
+          : field
+      ));
+    }
   } catch (error) {
     console.error('Failed to load field config, using defaults:', error);
   }
@@ -55,11 +76,11 @@ export async function saveBookFields(fields) {
 export function facetValues(books, key) {
   const seen = new Map();
   for (const book of books) {
-    const raw = book?.[key];
-    if (raw === undefined || raw === null || raw === '') continue;
-    const value = String(raw).trim();
-    if (!value || value === '-') continue;
-    seen.set(value, (seen.get(value) || 0) + 1);
+    // asList flattens the multi fields and still handles the single-value
+    // ones, so a book with two authors counts once under each.
+    for (const value of asList(book?.[key])) {
+      seen.set(value, (seen.get(value) || 0) + 1);
+    }
   }
   return [...seen.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'th'))

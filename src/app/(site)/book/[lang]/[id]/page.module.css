@@ -81,10 +81,15 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  /* Three authors do not fit one line on a phone. */
+  flex-wrap: wrap;
 }
 .authorIcon {
   opacity: 0.6;
+  flex: none;
 }
+.author a:hover { color: var(--accent); }
+.authorSep { color: var(--fg-3); }
 
 .description {
   font-family: var(--text);

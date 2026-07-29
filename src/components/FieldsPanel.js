@@ -10,6 +10,7 @@ import styles from '@/app/admin/fields/page.module.css';
 const TYPES = [
   { value: 'text', label: 'ข้อความ' },
   { value: 'select', label: 'ตัวเลือก' },
+  { value: 'multi', label: 'ตัวเลือก (หลายค่า)' },
   { value: 'number', label: 'ตัวเลข' },
   { value: 'textarea', label: 'ข้อความยาว' },
   { value: 'bool', label: 'ใช่/ไม่ใช่' },

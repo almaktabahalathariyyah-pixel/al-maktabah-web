@@ -8,6 +8,7 @@ import { doc, getDoc, collection, query, where, getDocs, documentId } from 'fire
 import { Bookmark } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { getLangPath } from '@/lib/langPath';
+import { joinPeople } from '@/lib/people';
 import styles from './page.module.css';
 
 export default function SavedPage() {
@@ -139,7 +140,7 @@ export default function SavedPage() {
               </div>
               <div className={styles.meta}>
                 <h3 className={styles.bookTitle}>{book.title}</h3>
-                <p className={styles.bookAuthor}>{book.author}</p>
+                <p className={styles.bookAuthor}>{joinPeople(book.author)}</p>
               </div>
             </Link>
           ))}

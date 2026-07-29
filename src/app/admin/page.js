@@ -25,6 +25,7 @@ import {
   DELETE_REASONS,
 } from '@/lib/googleDrive';
 import { canMirror, bookSizeBytes } from '@/lib/mirror';
+import { asList, joinPeople, hasPerson, splitPeople } from '@/lib/people';
 import BookFormPanel from '@/components/BookFormPanel';
 import BulkUploadPanel from '@/components/BulkUploadPanel';
 import styles from './page.module.css';
@@ -347,7 +348,9 @@ export default function AdminPage() {
       const batch = writeBatch(db);
       const updates = {};
       if (bulkValues.category) updates.category = bulkValues.category;
-      if (bulkValues.author) updates.author = bulkValues.author;
+      // Stored as a list like every other write to this field. Semicolons let
+      // one bulk edit set two authors at once.
+      if (bulkValues.author) updates.author = splitPeople(bulkValues.author);
       if (bulkValues.language) updates.language = bulkValues.language;
       if (bulkValues.restricted !== '') updates.restricted = bulkValues.restricted === 'true';
       
@@ -487,8 +490,9 @@ export default function AdminPage() {
   }
 
   const categories = Array.from(new Set([...predefinedCategories, ...books.map(b => b.category).filter(Boolean)])).sort();
-  const authors = Array.from(new Set([...predefinedAuthors, ...books.map(b => b.author).filter(Boolean)])).sort();
-  const translators = Array.from(new Set([...predefinedTranslators, ...books.map(b => b.translator).filter(Boolean)])).sort();
+  // flatMap, not map: a book crediting two authors offers both to the filter.
+  const authors = Array.from(new Set([...predefinedAuthors, ...books.flatMap(b => asList(b.author))])).sort();
+  const translators = Array.from(new Set([...predefinedTranslators, ...books.flatMap(b => asList(b.translator))])).sort();
   const publishers = Array.from(new Set([...predefinedPublishers, ...books.map(b => b.publisher).filter(Boolean)])).sort();
   const languages = Array.from(new Set([...predefinedLanguages, ...books.map(b => b.language).filter(Boolean)])).sort();
   const types = Array.from(new Set([...predefinedTypes, ...books.map(b => b.type).filter(Boolean)])).sort();
@@ -496,10 +500,13 @@ export default function AdminPage() {
   const owners = Array.from(new Set(books.map(b => b.driveOwner).filter(Boolean))).sort();
 
   const filteredBooks = books.filter(book => {
-    const matchesSearch = book.title?.toLowerCase().includes(searchQuery.toLowerCase()) || book.author?.toLowerCase().includes(searchQuery.toLowerCase());
+    const needle = searchQuery.toLowerCase();
+    const matchesSearch =
+      book.title?.toLowerCase().includes(needle) ||
+      joinPeople(book.author, ' ').toLowerCase().includes(needle);
     const matchesCat = categoryFilter ? book.category === categoryFilter : true;
-    const matchesAuthor = authorFilter ? book.author === authorFilter : true;
-    const matchesTranslator = translatorFilter ? book.translator === translatorFilter : true;
+    const matchesAuthor = authorFilter ? hasPerson(book.author, authorFilter) : true;
+    const matchesTranslator = translatorFilter ? hasPerson(book.translator, translatorFilter) : true;
     const matchesPublisher = publisherFilter ? book.publisher === publisherFilter : true;
     const matchesLanguage = languageFilter ? book.language === languageFilter : true;
     const matchesType = typeFilter ? book.type === typeFilter : true;
@@ -860,7 +867,7 @@ export default function AdminPage() {
             <div className={styles.who}>
               <span className={styles.name}>{book.title}</span>
               <span className={styles.smallMeta}>
-                {book.author || 'ไม่ระบุผู้แต่ง'}
+                {joinPeople(book.author) || 'ไม่ระบุผู้แต่ง'}
                 {book.driveOwner && (
                   <>
                     {' · '}
@@ -967,12 +974,12 @@ export default function AdminPage() {
             </p>
             <form onSubmit={handleBulkUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <label>
-                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>ผู้แต่งใหม่ (เปลี่ยนทั้งหมด)</div>
+                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>ผู้แต่งใหม่ (เปลี่ยนทั้งหมด) — หลายคนคั่นด้วย ;</div>
                 <input 
                   type="text" 
                   value={bulkValues.author} 
                   onChange={e => setBulkValues({...bulkValues, author: e.target.value})}
-                  placeholder="ปล่อยว่างเพื่อคงเดิม"
+                  placeholder="ปล่อยว่างเพื่อคงเดิม เช่น ชื่อที่หนึ่ง; ชื่อที่สอง"
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                 />
               </label>

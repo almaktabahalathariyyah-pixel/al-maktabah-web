@@ -8,6 +8,7 @@ import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { Save } from 'lucide-react';
 import SearchableListEditor from '@/components/SearchableListEditor';
+import { asList } from '@/lib/people';
 import styles from '../settings/page.module.css'; // We can reuse settings styles for layout
 
 export default function NamesPage() {
@@ -91,8 +92,10 @@ export default function NamesPage() {
       const booksSnap = await getDocs(collection(db, 'books'));
       const books = booksSnap.docs.map(d => d.data());
       
-      const newAuthors = Array.from(new Set([...authors, ...books.map(b => b.author).filter(Boolean)])).sort();
-      const newTranslators = Array.from(new Set([...translators, ...books.map(b => b.translator).filter(Boolean)])).sort();
+      // flatMap: a book crediting two people contributes both names, where
+      // map would have added the array itself as one unusable "name".
+      const newAuthors = Array.from(new Set([...authors, ...books.flatMap(b => asList(b.author))])).sort();
+      const newTranslators = Array.from(new Set([...translators, ...books.flatMap(b => asList(b.translator))])).sort();
       const newPublishers = Array.from(new Set([...publishers, ...books.map(b => b.publisher).filter(Boolean)])).sort();
       
       setAuthors(newAuthors);

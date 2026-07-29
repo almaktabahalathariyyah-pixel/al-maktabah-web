@@ -3,6 +3,7 @@ import { Telegraf } from 'telegraf';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, getDoc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { getNextBookId } from '@/lib/sequentialId';
+import { joinPeople } from '@/lib/people';
 
 // Replace with your actual bot token, or use environment variables
 const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -27,7 +28,7 @@ if (bot) {
           if (book.telegramFileId) {
             // Send the file directly to the user
             await ctx.replyWithDocument(book.telegramFileId, {
-              caption: `📚 ${book.title}\n✍️ ${book.author || '-'}\n\nสนับสนุนโดย Al-Maktabah`
+              caption: `📚 ${book.title}\n✍️ ${joinPeople(book.author) || '-'}\n\nสนับสนุนโดย Al-Maktabah`
             });
             
             // Optionally track download count
