@@ -10,7 +10,7 @@ import { useConfirm } from '@/context/ConfirmContext';
 import Link from 'next/link';
 import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, UploadCloud, Filter, Mail, FileText } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
-import { getDropdownSettings } from '@/lib/settings';
+import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
 import dynamic from 'next/dynamic';
 const Select = dynamic(() => import('react-select'), { ssr: false });
 import { selectStyles } from '@/lib/selectStyles';
@@ -364,7 +364,17 @@ export default function AdminPage() {
         batch.update(doc(db, 'books', id), updates);
       });
       await batch.commit();
-      
+
+      // Same rule as the single-book form: what is set here joins the lists.
+      // The two selects offer values harvested from the books as well as the
+      // saved ones, so filter first — otherwise picking a category that is
+      // already on the list would cost a read on every bulk edit.
+      await rememberDropdowns({
+        authors: (updates.author || []).filter((n) => !predefinedAuthors.includes(n)),
+        categories: predefinedCategories.includes(updates.category) ? [] : updates.category,
+        languages: predefinedLanguages.includes(updates.language) ? [] : updates.language,
+      });
+
       setBooks(books.map(b => selectedBooks.has(b.id) ? { ...b, ...updates } : b));
       setSelectedBooks(new Set());
       setBulkEditModalOpen(false);

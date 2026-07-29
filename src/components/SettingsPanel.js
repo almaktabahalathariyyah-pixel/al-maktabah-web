@@ -102,7 +102,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
     const agreed = await confirm({
       title: 'ดึงข้อมูลจากหนังสือทั้งหมด?',
       message:
-        'ระบบจะรวบรวมหมวดหมู่ ประเภท และภาษา จากหนังสือทุกเล่มมาเพิ่มในหน้านี้\nข้อมูลเดิมจะไม่หายไป',
+        'ปกติไม่ต้องใช้แล้ว — หมวดหมู่ ประเภท และภาษาที่พิมพ์ใหม่จะเข้ามาเองตอนบันทึกหนังสือ\nปุ่มนี้ไว้เก็บตกจากเล่มเก่าที่บันทึกไว้ก่อนหน้านี้\nข้อมูลเดิมจะไม่หายไป',
       confirmLabel: 'ดึงข้อมูล',
     });
     if (!agreed) return;
@@ -116,8 +116,15 @@ export default function SettingsPanel({ isOpen, onClose }) {
       const uniqueLanguages = Array.from(new Set(books.map(b => b.language).filter(Boolean)));
       const uniqueTypes = Array.from(new Set(books.map(b => b.type).filter(Boolean)));
       const uniqueCats = Array.from(new Set(books.map(b => b.category).filter(Boolean)));
-      
-      setLanguages(Array.from(new Set([...languages, ...uniqueLanguages])).sort());
+
+      // A language is a { value, label } pair. This used to push the bare
+      // string from the book, which then rendered as an empty row here — the
+      // input reads `lang.value`, and a string has none.
+      const knownLangs = new Set(languages.map(l => l?.value ?? l));
+      setLanguages([
+        ...languages,
+        ...uniqueLanguages.filter(v => !knownLangs.has(v)).map(v => ({ value: v, label: v })),
+      ]);
       setTypes(Array.from(new Set([...types, ...uniqueTypes])).sort());
       
       // For categories, we add them to a "นำเข้าอัตโนมัติ" group if they don't exist

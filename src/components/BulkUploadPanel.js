@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getNextBookId } from '@/lib/sequentialId';
 import { uploadPdfToDrive } from '@/lib/googleDrive';
 import { loadCatalog, matchRow, bookFromRow } from '@/lib/csvCatalog';
+import { rememberDropdowns } from '@/lib/settings';
 import { canMirror } from '@/lib/mirror';
 import { makeCover } from '@/lib/pdfCover';
 import { useTabLock } from '@/lib/tabLock';
@@ -195,6 +196,12 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
     // tally — a silent cover failure is what left the shelf blank.
     let coversFailed = 0;
     let firstCoverError = '';
+    // Everything the CSV brings in, announced once when the run ends rather
+    // than per book — 300 files would otherwise be 300 extra writes.
+    const seen = {
+      authors: new Set(), translators: new Set(), publishers: new Set(),
+      types: new Set(), languages: new Set(), categories: new Set(),
+    };
 
     for (const item of queue) {
       if (cancelled.current) break;
@@ -251,6 +258,12 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
 
         patch(item.id, { status: 'done', progress: 100 });
         setExisting((prev) => new Set(prev).add(item.file.name.toLowerCase()));
+        payload.author.forEach((n) => seen.authors.add(n));
+        payload.translator.forEach((n) => seen.translators.add(n));
+        if (payload.publisher) seen.publishers.add(payload.publisher);
+        if (payload.type) seen.types.add(payload.type);
+        if (payload.language) seen.languages.add(payload.language);
+        if (payload.category) seen.categories.add(payload.category);
         ok += 1;
 
         // Spacing the requests keeps Telegram from rate-limiting the channel.
@@ -263,6 +276,12 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
     }
 
     setRunning(false);
+
+    // Even a cancelled run wrote books, and their values belong in the lists.
+    await rememberDropdowns(
+      Object.fromEntries(Object.entries(seen).map(([key, values]) => [key, [...values]]))
+    );
+
     if (cancelled.current) return;
 
     if (failed === 0) toast.success(`อัปโหลดสำเร็จ ${ok} เล่ม`);

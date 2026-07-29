@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import CreatableSelect from 'react-select/creatable';
 import { selectStyles } from '@/lib/selectStyles';
 import { getNextBookId } from '@/lib/sequentialId';
-import { getDropdownSettings } from '@/lib/settings';
+import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
 import { uploadPdfToDrive } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror, bookSizeBytes } from '@/lib/mirror';
 import { asList } from '@/lib/people';
@@ -41,6 +41,10 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   const [connectedOwner, setConnectedOwner] = useState('');
 
   const [options, setOptions] = useState({});
+  // What the saved lists already hold — the dropdown offers more than this
+  // (every value harvested from the books), so only these count as "known"
+  // when deciding whether a save has something new to announce.
+  const known = useRef(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -106,6 +110,19 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           translators: predefinedTranslators,
           publishers: predefinedPublishers,
         } = settings;
+
+        known.current = {
+          authors: new Set(predefinedAuthors),
+          translators: new Set(predefinedTranslators),
+          publishers: new Set(predefinedPublishers),
+          types: new Set(predefinedTypes),
+          // A language is stored as {value,label} and a category as groups of
+          // them, so both are flattened to the plain value being compared.
+          languages: new Set(predefinedLanguages.map((l) => l?.value ?? l)),
+          categories: new Set(
+            predefinedCategories.flatMap((g) => (g?.options || []).map((o) => o?.value)).filter(Boolean)
+          ),
+        };
 
         const opts = { author: new Set(), category: new Set(), publisher: new Set(), translator: new Set(), language: new Set(), type: new Set(), year: new Set() };
         snap.forEach(dSnap => {
@@ -338,6 +355,36 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     }
   };
 
+  /**
+   * Anything typed into a dropdown joins the saved lists on save, so
+   * /admin/names and the settings panel show it without anyone pressing
+   * "ดึงจากหนังสือ". Costs a write only when the book introduces a new value.
+   */
+  const rememberNewValues = async (payload) => {
+    if (!known.current) return;
+    const seen = known.current;
+
+    // Which book field feeds which list. asList covers both shapes: the multi
+    // fields hand back an array, the plain selects a single string.
+    const fresh = {
+      authors: asList(payload.author),
+      translators: asList(payload.translator),
+      publishers: asList(payload.publisher),
+      types: asList(payload.type),
+      languages: asList(payload.language),
+      categories: asList(payload.category),
+    };
+    for (const key of Object.keys(fresh)) {
+      fresh[key] = fresh[key].filter((value) => !seen[key].has(value));
+    }
+    if (!Object.values(fresh).some((list) => list.length > 0)) return;
+
+    if (await rememberDropdowns(fresh)) {
+      // Saving the same book twice must not write the same values twice.
+      for (const key of Object.keys(fresh)) fresh[key].forEach((value) => seen[key].add(value));
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     if (!values.title?.trim()) {
@@ -396,6 +443,8 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         await setDoc(doc(db, 'books', finalId), payload);
         toast.success('เพิ่มหนังสือใหม่เรียบร้อย');
       }
+
+      await rememberNewValues(payload);
 
       if (onSaved) onSaved({ id: finalId, ...payload });
       onClose();

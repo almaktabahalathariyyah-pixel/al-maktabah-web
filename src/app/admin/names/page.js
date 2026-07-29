@@ -11,6 +11,9 @@ import SearchableListEditor from '@/components/SearchableListEditor';
 import { asList } from '@/lib/people';
 import styles from '../settings/page.module.css'; // We can reuse settings styles for layout
 
+/** Thai collation, so ก comes before ข and an English name sorts sensibly. */
+const sortNames = (list) => [...(list || [])].sort((a, b) => String(a).localeCompare(String(b), 'th'));
+
 export default function NamesPage() {
   const { isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -39,9 +42,12 @@ export default function NamesPage() {
       try {
         const settings = await getDropdownSettings();
         if (!isMounted) return;
-        setAuthors(settings.authors || []);
-        setTranslators(settings.translators || []);
-        setPublishers(settings.publishers || []);
+        // Names now arrive on their own as books are saved, appended in the
+        // order they were first used. Sorted here so a list of 300 stays
+        // findable and a name never moves once it is in place.
+        setAuthors(sortNames(settings.authors));
+        setTranslators(sortNames(settings.translators));
+        setPublishers(sortNames(settings.publishers));
       } catch (err) {
         if (isMounted) toast.error('โหลดข้อมูลการตั้งค่าไม่สำเร็จ');
       } finally {
@@ -81,7 +87,7 @@ export default function NamesPage() {
     const agreed = await confirm({
       title: 'ดึงรายชื่อจากหนังสือทั้งหมด?',
       message:
-        'ระบบจะรวบรวมผู้แต่ง ผู้แปล และสำนักพิมพ์ จากหนังสือทุกเล่มมาเพิ่มในหน้านี้\nรายชื่อเดิมจะไม่หายไป',
+        'ปกติไม่ต้องใช้แล้ว — ชื่อใหม่จะเข้ามาเองตอนบันทึกหนังสือ\nปุ่มนี้ไว้เก็บตกชื่อจากเล่มเก่าที่บันทึกไว้ก่อนหน้านี้\nรายชื่อเดิมจะไม่หายไป',
       confirmLabel: 'ดึงรายชื่อ',
     });
     if (!agreed) return;
@@ -94,9 +100,9 @@ export default function NamesPage() {
       
       // flatMap: a book crediting two people contributes both names, where
       // map would have added the array itself as one unusable "name".
-      const newAuthors = Array.from(new Set([...authors, ...books.flatMap(b => asList(b.author))])).sort();
-      const newTranslators = Array.from(new Set([...translators, ...books.flatMap(b => asList(b.translator))])).sort();
-      const newPublishers = Array.from(new Set([...publishers, ...books.map(b => b.publisher).filter(Boolean)])).sort();
+      const newAuthors = sortNames(new Set([...authors, ...books.flatMap(b => asList(b.author))]));
+      const newTranslators = sortNames(new Set([...translators, ...books.flatMap(b => asList(b.translator))]));
+      const newPublishers = sortNames(new Set([...publishers, ...books.map(b => b.publisher).filter(Boolean)]));
       
       setAuthors(newAuthors);
       setTranslators(newTranslators);
@@ -130,6 +136,8 @@ export default function NamesPage() {
           <h1 className={styles.pageTitle}>จัดการรายชื่อ</h1>
           <p className="lede" style={{ marginTop: '0.5rem' }}>
             จัดการผู้แต่ง ผู้แปล และสำนักพิมพ์สำหรับตัวเลือกในระบบ
+            <br />
+            ชื่อที่พิมพ์ใหม่ตอนเพิ่มหรือแก้ไขหนังสือจะมาขึ้นที่นี่เอง ไม่ต้องกดดึง
           </p>
         </div>
 
