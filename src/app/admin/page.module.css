@@ -66,7 +66,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex: 1 1 420px;
+  flex: 1 1 320px;
   min-width: 0;
 }
 
@@ -81,11 +81,12 @@
   animation: fadeIn 0.2s var(--ease);
 }
 
+/* No width cap: capped at 520px it stopped short of the row's end and left a
+   hole between it and the buttons that had wrapped to the line below. */
 .searchWrap {
   position: relative;
-  flex: 1 1 320px;
-  min-width: 250px;
-  max-width: 520px;
+  flex: 1 1 auto;
+  min-width: 200px;
 }
 
 .searchIcon {
@@ -97,7 +98,13 @@
   pointer-events: none;
 }
 
-.searchInput {
+/* Qualified with the element+attribute, not left as a bare class.
+   globals.css styles `input[type="text"]` — specificity (0,1,1) — which beats
+   a lone class (0,1,0) no matter what order the sheets land in. So this field
+   was silently taking the global 0.85rem left padding and the small radius:
+   the magnifier printed on top of its own placeholder, and the box was a
+   rounded rectangle sitting in a row of pills. */
+input[type='text'].searchInput {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.75rem;
   background: var(--surface);
@@ -162,9 +169,11 @@
 }
 
 /* The label swaps between a count and a progress reading, so it must not
-   re-flow the row every few books — nowrap plus a floor keeps it still. */
+   re-flow the row every few books — nowrap plus a floor keeps it still.
+   The floor stays modest: this is one of five controls sharing the line, and
+   a wider one is what pushed the rest onto a second row to begin with. */
 .fileNameBtn {
-  min-width: 15rem;
+  min-width: 10.5rem;
   white-space: nowrap;
 }
 
@@ -268,9 +277,9 @@
   border-top: 1px dashed var(--border);
   justify-content: flex-start;
 }
-.rowsCard > *:nth-child(5) { 
-  display: flex; 
-}
+/* .rowsCard > *:nth-child(5) selected the fifth CARD, not the tally inside a
+   card — the intent was always the tally, so name it. */
+.rowsCard .downloads { display: flex; }
 
 .who { display: flex; flex-direction: column; min-width: 0; }
 .name {
@@ -326,6 +335,22 @@
   white-space: nowrap;
 }
 
+/* The download tally used to carry these as an inline style, which no media
+   query could override — so the rule below that hides it under 1100px never
+   fired, five items went into a four-column grid, and the sixth (the actions)
+   was auto-placed onto a second row inside the 30px checkbox column, where it
+   spilled out of the card's left edge. Owning the display here is the fix. */
+.downloads {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-small);
+  color: var(--fg-2);
+}
+
+/* Whatever else happens, the actions belong in the row's last column. */
+.rowActions { grid-column-end: -1; }
+
 .edit { font-size: var(--t-small); color: var(--fg-2); border: none; background: none; cursor: pointer; padding: 0; }
 .edit:hover { color: var(--accent); }
 
@@ -337,9 +362,15 @@
    optional columns while the sidebar is still docked is what fixes the
    "desktop still overlaps" case; the phone layout below is unchanged. */
 @media (max-width: 1100px) {
-  .bookRow:not(:global(.rowsCard) .bookRow) { grid-template-columns: 30px minmax(0, 1fr) auto auto; row-gap: 0.5rem; }
+  .bookRow:not(:global(.rowsCard) .bookRow) {
+    /* Four tracks for exactly the four items left once the category and the
+       download tally are hidden. The last one has a floor so ดู/แก้ไข/ลบ
+       always have somewhere to sit. */
+    grid-template-columns: 30px minmax(0, 1fr) auto minmax(120px, max-content);
+    row-gap: 0.5rem;
+  }
   .bookRow:not(:global(.rowsCard) .bookRow) .when { display: none; }
-  .bookRow:not(:global(.rowsCard) .bookRow) > *:nth-child(5) { display: none; }
+  .bookRow:not(:global(.rowsCard) .bookRow) .downloads { display: none; }
 }
 @media (max-width: 600px) {
   .viewToggle { display: none; } /* Hide view toggle on mobile, force card view */
@@ -369,8 +400,8 @@
     display: inline-block; 
     margin-top: -0.25rem;
   }
-  .bookRow > *:nth-child(5) { 
-    display: flex; 
+  .bookRow .downloads {
+    display: flex;
   }
   .rowActions { 
     display: flex; 

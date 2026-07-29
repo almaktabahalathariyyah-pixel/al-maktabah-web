@@ -541,7 +541,7 @@ export default function AdminPage() {
   ).length;
   const fileNameButtonLabel = storingFileNames
     ? `กำลังอ่าน ${fileNameProgress.done}/${fileNameProgress.total}`
-    : `เก็บชื่อไฟล์และบัญชี${missingMetaCount > 0 ? ` (${missingMetaCount})` : ''}`;
+    : `เก็บชื่อไฟล์${missingMetaCount > 0 ? ` (${missingMetaCount})` : ''}`;
   const fileNameButtonHint = missingMetaCount > 0
     ? `ยังขาดชื่อไฟล์หรือบัญชี Google อยู่ ${missingMetaCount} เล่ม — กดเพื่อดึงจากไดรฟ์`
     : 'ข้อมูลครบแล้ว — กดเพื่อตรวจซ้ำทั้งคลัง';
@@ -853,7 +853,7 @@ export default function AdminPage() {
             <span className={book.restricted ? styles.flagOn : styles.flag}>
               {book.restricted ? 'สงวนสิทธิ์' : 'สาธารณะ'}
             </span>
-            <span style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span className={styles.downloads}>
               <Download size={14} /> {book.downloadCount || 0}
             </span>
             <div className={styles.rowActions}>
