@@ -27,8 +27,8 @@ import BulkUploadPanel from '@/components/BulkUploadPanel';
 import styles from './page.module.css';
 import { useAdmin } from '@/context/AdminContext';
 
-const GOOGLE_PROMPT = `เธขเธฑเธเนเธกเนเนเธ”เนเน€เธเธทเนเธญเธกเธ•เนเธญ Google Drive (เธซเธฃเธทเธญเธชเธดเธ—เธเธดเนเธซเธกเธ”เธญเธฒเธขเธธเนเธฅเนเธง)
-เธ–เนเธฒเธฅเธเน€เธเธเธฒเธฐเนเธเน€เธงเนเธ เนเธเธฅเนเนเธเนเธ”เธฃเธเนเธเธฐเธขเธฑเธเธญเธขเธนเนเนเธฅเธฐเธขเธฑเธเธเธดเธเธเธทเนเธเธ—เธตเนเธญเธขเธนเน`;
+const GOOGLE_PROMPT = `ยังไม่ได้เชื่อมต่อ Google Drive (หรือสิทธิ์หมดอายุแล้ว)
+ถ้าลบเฉพาะในเว็บ ไฟล์ในไดรฟ์จะยังอยู่และยังกินพื้นที่อยู่`;
 
 function pageWindow(current, total, span = 1) {
   const wanted = new Set([1, total]);
@@ -155,7 +155,7 @@ export default function AdminPage() {
         if (settings.types) setPredefinedTypes(settings.types);
       } catch (error) {
         console.error("Error fetching books:", error);
-        toast.error('เนเธซเธฅเธ”เธเนเธญเธกเธนเธฅเธซเธเธฑเธเธชเธทเธญเนเธกเนเธชเธณเน€เธฃเนเธ');
+        toast.error('โหลดข้อมูลหนังสือไม่สำเร็จ');
       } finally {
         setLoadingBooks(false);
       }
@@ -174,7 +174,7 @@ export default function AdminPage() {
   };
 
   // Select-all applies to what is on screen, and only clears what is on
-  // screen โ€” a selection made under a different filter is not thrown away.
+  // screen — a selection made under a different filter is not thrown away.
   const handleSelectAll = (e, currentList) => {
     const ids = currentList.map((b) => b.id);
     setSelectedBooks((prev) => {
@@ -197,11 +197,11 @@ export default function AdminPage() {
     if (saved) return { proceed: true, token: saved.token };
 
     const answer = await ask({
-      title: 'เธขเธฑเธเนเธกเนเนเธ”เนเน€เธเธทเนเธญเธกเธ•เนเธญ Google Drive',
+      title: 'ยังไม่ได้เชื่อมต่อ Google Drive',
       message: GOOGLE_PROMPT,
       actions: [
-        { key: 'connect', label: 'เน€เธเธทเนเธญเธกเธ•เนเธญเนเธ”เธฃเธเนเธเนเธญเธเธฅเธ' },
-        { key: 'site-only', label: 'เธฅเธเน€เธเธเธฒเธฐเนเธเน€เธงเนเธ', tone: 'danger' },
+        { key: 'connect', label: 'เชื่อมต่อไดรฟ์ก่อนลบ' },
+        { key: 'site-only', label: 'ลบเฉพาะในเว็บ', tone: 'danger' },
       ],
     });
 
@@ -219,7 +219,7 @@ export default function AdminPage() {
 
   /**
    * Removes the Drive copies for the given books and reports what happened.
-   * Failures used to be swallowed entirely โ€” which matters most when a file
+   * Failures used to be swallowed entirely — which matters most when a file
    * lives in a different Google account than the one currently connected.
    */
   const removeDriveCopies = async (targets, token) => {
@@ -236,7 +236,7 @@ export default function AdminPage() {
       const worst = [...failures.entries()].sort((a, b) => b[1] - a[1])[0];
       const count = [...failures.values()].reduce((a, b) => a + b, 0);
       toast.error(
-        `เธฅเธเธญเธญเธเธเธฒเธเน€เธงเนเธเนเธฅเนเธง เนเธ•เนเนเธเธฅเนเนเธ Drive ${count} เนเธเธฅเนเธฅเธเนเธกเนเธชเธณเน€เธฃเนเธ โ€” ${DELETE_REASONS[worst[0]] || worst[0]}`
+        `ลบออกจากเว็บแล้ว แต่ไฟล์ใน Drive ${count} ไฟล์ลบไม่สำเร็จ — ${DELETE_REASONS[worst[0]] || worst[0]}`
       );
     }
   };
@@ -245,9 +245,9 @@ export default function AdminPage() {
     if (selectedBooks.size === 0) return;
 
     const agreed = await confirm({
-      title: `เธฅเธเธซเธเธฑเธเธชเธทเธญ ${selectedBooks.size} เน€เธฅเนเธก?`,
-      message: 'เธเธฒเธฃเธฅเธเธเธตเนเธขเนเธญเธเธเธฅเธฑเธเนเธกเนเนเธ”เน',
-      confirmLabel: 'เธฅเธเธ—เธฑเนเธเธซเธกเธ”',
+      title: `ลบหนังสือ ${selectedBooks.size} เล่ม?`,
+      message: 'การลบนี้ย้อนกลับไม่ได้',
+      confirmLabel: 'ลบทั้งหมด',
       tone: 'danger',
     });
     if (!agreed) return;
@@ -266,10 +266,10 @@ export default function AdminPage() {
 
       setBooks((prev) => prev.filter((b) => !selectedBooks.has(b.id)));
       setSelectedBooks(new Set());
-      toast.success(`เธฅเธเธซเธเธฑเธเธชเธทเธญ ${targets.length} เน€เธฅเนเธกเธชเธณเน€เธฃเนเธ`);
+      toast.success(`ลบหนังสือ ${targets.length} เล่มสำเร็จ`);
     } catch (err) {
       console.error(err);
-      toast.error('เธฅเธเนเธกเนเธชเธณเน€เธฃเนเธ');
+      toast.error('ลบไม่สำเร็จ');
     }
   };
 
@@ -277,9 +277,9 @@ export default function AdminPage() {
     const book = books.find((b) => b.id === id);
 
     const agreed = await confirm({
-      title: 'เธฅเธเธซเธเธฑเธเธชเธทเธญเน€เธฅเนเธกเธเธตเน?',
-      message: `โ€${book?.title || 'เน€เธฅเนเธกเธเธตเน'}โ€ โ€” เธเธฒเธฃเธฅเธเธเธตเนเธขเนเธญเธเธเธฅเธฑเธเนเธกเนเนเธ”เน`,
-      confirmLabel: 'เธฅเธเน€เธฅเนเธกเธเธตเน',
+      title: 'ลบหนังสือเล่มนี้?',
+      message: `“${book?.title || 'เล่มนี้'}” — การลบนี้ย้อนกลับไม่ได้`,
+      confirmLabel: 'ลบเล่มนี้',
       tone: 'danger',
     });
     if (!agreed) return;
@@ -302,10 +302,10 @@ export default function AdminPage() {
         next.delete(id);
         return next;
       });
-      toast.success('เธฅเธเธซเธเธฑเธเธชเธทเธญเธชเธณเน€เธฃเนเธ');
+      toast.success('ลบหนังสือสำเร็จ');
     } catch (err) {
       console.error(err);
-      toast.error('เธฅเธเนเธกเนเธชเธณเน€เธฃเนเธ');
+      toast.error('ลบไม่สำเร็จ');
     }
   };
 
@@ -361,17 +361,17 @@ export default function AdminPage() {
       setSelectedBooks(new Set());
       setBulkEditModalOpen(false);
       setBulkValues({ category: '', author: '', language: '', restricted: '' });
-      toast.success('เนเธเนเนเธเธเนเธญเธกเธนเธฅเธชเธณเน€เธฃเนเธ');
+      toast.success('แก้ไขข้อมูลสำเร็จ');
     } catch (err) {
       console.error(err);
-      toast.error('เนเธเนเนเธเนเธกเนเธชเธณเน€เธฃเนเธ');
+      toast.error('แก้ไขไม่สำเร็จ');
     } finally {
       setSubmittingBulk(false);
     }
   };
 
   if (authLoading || loadingBooks) {
-    return <div className="container" style={{paddingTop: '4rem'}}>เธเธณเธฅเธฑเธเธ•เธฃเธงเธเธชเธญเธเธชเธดเธ—เธเธดเน...</div>;
+    return <div className="container" style={{paddingTop: '4rem'}}>กำลังตรวจสอบสิทธิ์...</div>;
   }
 
   if (!isAdmin) {
@@ -434,25 +434,25 @@ export default function AdminPage() {
   return (
     <div className="container">
       <header className={`${styles.header} rise`}>
-        <p className="eyebrow">เธเธนเนเธ”เธนเนเธฅเธฃเธฐเธเธ</p>
-        <h1 className={styles.title}>เธเธฑเธ”เธเธฒเธฃเธฃเธฐเธเธ</h1>
+        <p className="eyebrow">ผู้ดูแลระบบ</p>
+        <h1 className={styles.title}>จัดการระบบ</h1>
         <p className="lede">
-          เธเธฑเธ”เธเธฒเธฃเธซเธเธฑเธเธชเธทเธญเนเธเธเธฅเธฑเธ เนเธฅเธฐเธ•เธฃเธงเธเธชเธญเธเธชเธดเธ—เธเธดเน
+          จัดการหนังสือในคลัง และตรวจสอบสิทธิ์
         </p>
       </header>
 
       <div className={styles.stats}>
         <div className={styles.statCard}>
           <div className={styles.statValue}>{totalBooks}</div>
-          <div className={styles.statLabel}>เธซเธเธฑเธเธชเธทเธญเธ—เธฑเนเธเธซเธกเธ”</div>
+          <div className={styles.statLabel}>หนังสือทั้งหมด</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statValue}>{publicCount}</div>
-          <div className={styles.statLabel}>เธชเธฒเธเธฒเธฃเธ“เธฐ</div>
+          <div className={styles.statLabel}>สาธารณะ</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statValue} style={{ color: 'var(--hot)' }}>{restrictedCount}</div>
-          <div className={styles.statLabel}>เธชเธเธงเธเธชเธดเธ—เธเธดเน</div>
+          <div className={styles.statLabel}>สงวนสิทธิ์</div>
         </div>
       </div>
 
@@ -460,12 +460,12 @@ export default function AdminPage() {
         <div className={styles.healthBanner}>
           <span>
             {healthFilter === 'nofile'
-              ? 'เธเธณเธฅเธฑเธเนเธชเธ”เธเน€เธเธเธฒเธฐเน€เธฅเนเธกเธ—เธตเนเธขเธฑเธเนเธกเนเธกเธตเนเธเธฅเนเนเธเธเน€เธฅเธข'
+              ? 'กำลังแสดงเฉพาะเล่มที่ยังไม่มีไฟล์แนบเลย'
               : healthFilter === 'unmirrored'
-                ? 'เธเธณเธฅเธฑเธเนเธชเธ”เธเน€เธเธเธฒเธฐเน€เธฅเนเธกเธ—เธตเนเธขเธฑเธเนเธกเนเธกเธตเธชเธณเน€เธเธฒเธชเธณเธฃเธญเธ โ€” เน€เธเธดเธ”เน€เธฅเนเธกเธเธฑเนเธเนเธฅเนเธงเธเธ” "เธชเธณเธฃเธญเธเธ•เธญเธเธเธตเน"'
-                : 'เธเธณเธฅเธฑเธเนเธชเธ”เธเน€เธเธเธฒเธฐเน€เธฅเนเธกเธ—เธตเนเธกเธตเนเธ•เนเนเธเธฅเน Telegram (เน€เธฅเนเธกเนเธซเธเนเธเธงเนเธฒ 20MB เธเธฐเน€เธเธดเธ”เนเธกเนเนเธ”เน)'}
+                ? 'กำลังแสดงเฉพาะเล่มที่ยังไม่มีสำเนาสำรอง — เปิดเล่มนั้นแล้วกด "สำรองตอนนี้"'
+                : 'กำลังแสดงเฉพาะเล่มที่มีแต่ไฟล์ Telegram (เล่มใหญ่กว่า 20MB จะเปิดไม่ได้)'}
           </span>
-          <button className="btn" onClick={() => updateFilter(setHealthFilter, '')}>เนเธชเธ”เธเธ—เธฑเนเธเธซเธกเธ”</button>
+          <button className="btn" onClick={() => updateFilter(setHealthFilter, '')}>แสดงทั้งหมด</button>
         </div>
       )}
 
@@ -474,7 +474,7 @@ export default function AdminPage() {
           <div className={styles.searchWrap}>
             <input 
               type="text" 
-              placeholder="เธเนเธเธซเธฒเธเธทเนเธญ เธซเธฃเธทเธญเธเธนเนเนเธ•เนเธ..."
+              placeholder="ค้นหาชื่อ หรือผู้แต่ง..."
               value={searchQuery}
               onChange={(e) => updateFilter(setSearchQuery, e.target.value)}
               className={styles.searchInput}
@@ -485,9 +485,9 @@ export default function AdminPage() {
           <button 
             className={`btn ${showFilters ? 'btn-solid' : ''}`} 
             onClick={() => setShowFilters(!showFilters)}
-            title="เธ•เธฑเธงเธเธฃเธญเธ"
+            title="ตัวกรอง"
           >
-            <Filter size={18} /> <span className={styles.hideMobile}>เธ•เธฑเธงเธเธฃเธญเธ {(categoryFilter || statusFilter || sortOrder !== 'desc') && 'โ€ข'}</span>
+            <Filter size={18} /> <span className={styles.hideMobile}>ตัวกรอง {(categoryFilter || statusFilter || sortOrder !== 'desc') && '•'}</span>
           </button>
 
           <div className={styles.actionButtons}>
@@ -495,23 +495,23 @@ export default function AdminPage() {
             <button 
               className={`${styles.viewBtn} ${viewMode === 'table' ? styles.viewBtnActive : ''}`}
               onClick={() => setViewMode('table')}
-              title="เธกเธธเธกเธกเธญเธเธ•เธฒเธฃเธฒเธ"
+              title="มุมมองตาราง"
             >
               <List size={18} />
             </button>
             <button 
               className={`${styles.viewBtn} ${viewMode === 'card' ? styles.viewBtnActive : ''}`}
               onClick={() => setViewMode('card')}
-              title="เธกเธธเธกเธกเธญเธเธเธฒเธฃเนเธ”"
+              title="มุมมองการ์ด"
             >
               <LayoutGrid size={18} />
             </button>
           </div>
           <button onClick={() => setIsBulkUploadOpen(true)} className="btn btn-solid" style={{ background: 'var(--hot)', borderColor: 'var(--hot)' }}>
-            <UploadCloud size={18} /> <span>เธญเธฑเธเนเธซเธฅเธ”เธซเธฅเธฒเธขเน€เธฅเนเธก</span>
+            <UploadCloud size={18} /> <span>อัปโหลดหลายเล่ม</span>
           </button>
           <button onClick={handleOpenNewBook} className="btn btn-solid">
-            <Plus size={18} /> <span>เน€เธเธดเนเธกเธซเธเธฑเธเธชเธทเธญ</span>
+            <Plus size={18} /> <span>เพิ่มหนังสือ</span>
           </button>
         </div>
         </div>
@@ -519,13 +519,13 @@ export default function AdminPage() {
         {showFilters && (
           <div className={styles.filterBottomRow}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เน€เธฃเธตเธขเธเธฅเธณเธ”เธฑเธ</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เรียงลำดับ</label>
               <Select instanceId={"select-1"} styles={selectStyles}
                 options={[
-                  { value: 'desc', label: 'เนเธซเธกเนเนเธเน€เธเนเธฒ' },
-                  { value: 'asc', label: 'เน€เธเนเธฒเนเธเนเธซเธกเน' }
+                  { value: 'desc', label: 'ใหม่ไปเก่า' },
+                  { value: 'asc', label: 'เก่าไปใหม่' }
                 ]}
-                value={{ value: sortOrder, label: sortOrder === 'asc' ? 'เน€เธเนเธฒเนเธเนเธซเธกเน' : 'เนเธซเธกเนเนเธเน€เธเนเธฒ' }}
+                value={{ value: sortOrder, label: sortOrder === 'asc' ? 'เก่าไปใหม่' : 'ใหม่ไปเก่า' }}
                 onChange={(selected) => updateFilter(setSortOrder, selected ? selected.value : 'desc')}
                 isSearchable={false}
                 classNamePrefix="react-select"
@@ -533,119 +533,119 @@ export default function AdminPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เธซเธกเธงเธ”เธซเธกเธนเน</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>หมวดหมู่</label>
               <Select instanceId={"select-2"} styles={selectStyles}
-                options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...categories.map(c => ({ value: c, label: c }))]}
-                value={{ value: categoryFilter, label: categoryFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...categories.map(c => ({ value: c, label: c }))]}
+                value={{ value: categoryFilter, label: categoryFilter || 'ทั้งหมด' }}
                 onChange={(selected) => updateFilter(setCategoryFilter, selected ? selected.value : '')}
-                placeholder="เธ—เธฑเนเธเธซเธกเธ”"
+                placeholder="ทั้งหมด"
                 isSearchable={true}
                 classNamePrefix="react-select"
               />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เธเธฃเธฐเน€เธ เธ—</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ประเภท</label>
               <Select instanceId={"select-3"} styles={selectStyles}
-                options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...types.map(c => ({ value: c, label: c }))]}
-                value={{ value: typeFilter, label: typeFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...types.map(c => ({ value: c, label: c }))]}
+                value={{ value: typeFilter, label: typeFilter || 'ทั้งหมด' }}
                 onChange={(selected) => updateFilter(setTypeFilter, selected ? selected.value : '')}
-                placeholder="เธ—เธฑเนเธเธซเธกเธ”"
+                placeholder="ทั้งหมด"
                 isSearchable={true}
                 classNamePrefix="react-select"
               />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เธชเธ–เธฒเธเธฐ</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สถานะ</label>
               <Select instanceId={"select-4"} styles={selectStyles}
                 options={[
-                  { value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' },
-                  { value: 'public', label: 'เธชเธฒเธเธฒเธฃเธ“เธฐ' },
-                  { value: 'restricted', label: 'เธชเธเธงเธเธชเธดเธ—เธเธดเน' }
+                  { value: '', label: 'ทั้งหมด' },
+                  { value: 'public', label: 'สาธารณะ' },
+                  { value: 'restricted', label: 'สงวนสิทธิ์' }
                 ]}
-                value={{ value: statusFilter, label: statusFilter === 'public' ? 'เธชเธฒเธเธฒเธฃเธ“เธฐ' : statusFilter === 'restricted' ? 'เธชเธเธงเธเธชเธดเธ—เธเธดเน' : 'เธ—เธฑเนเธเธซเธกเธ”' }}
+                value={{ value: statusFilter, label: statusFilter === 'public' ? 'สาธารณะ' : statusFilter === 'restricted' ? 'สงวนสิทธิ์' : 'ทั้งหมด' }}
                 onChange={(selected) => updateFilter(setStatusFilter, selected ? selected.value : '')}
-                placeholder="เธ—เธฑเนเธเธซเธกเธ”"
+                placeholder="ทั้งหมด"
                 isSearchable={false}
                 classNamePrefix="react-select"
               />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เธ เธฒเธฉเธฒ</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ภาษา</label>
               <Select instanceId={"select-5"} styles={selectStyles}
-                options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...languages.map(c => ({ value: c, label: c }))]}
-                value={{ value: languageFilter, label: languageFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...languages.map(c => ({ value: c, label: c }))]}
+                value={{ value: languageFilter, label: languageFilter || 'ทั้งหมด' }}
                 onChange={(selected) => updateFilter(setLanguageFilter, selected ? selected.value : '')}
-                placeholder="เธ—เธฑเนเธเธซเธกเธ”"
+                placeholder="ทั้งหมด"
                 isSearchable={true}
                 classNamePrefix="react-select"
               />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เธเธตเธเธดเธกเธเน</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ปีพิมพ์</label>
               <Select instanceId={"select-6"} styles={selectStyles}
-                options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...years.map(c => ({ value: c, label: c }))]}
-                value={{ value: yearFilter, label: yearFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...years.map(c => ({ value: c, label: c }))]}
+                value={{ value: yearFilter, label: yearFilter || 'ทั้งหมด' }}
                 onChange={(selected) => updateFilter(setYearFilter, selected ? selected.value : '')}
-                placeholder="เธ—เธฑเนเธเธซเธกเธ”"
+                placeholder="ทั้งหมด"
                 isSearchable={true}
                 classNamePrefix="react-select"
               />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เธเธนเนเนเธ•เนเธ</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แต่ง</label>
               <Select instanceId={"select-7"} styles={selectStyles}
-                options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...authors.map(c => ({ value: c, label: c }))]}
-                value={{ value: authorFilter, label: authorFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...authors.map(c => ({ value: c, label: c }))]}
+                value={{ value: authorFilter, label: authorFilter || 'ทั้งหมด' }}
                 onChange={(selected) => updateFilter(setAuthorFilter, selected ? selected.value : '')}
-                placeholder="เธ—เธฑเนเธเธซเธกเธ”"
+                placeholder="ทั้งหมด"
                 isSearchable={true}
                 classNamePrefix="react-select"
               />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เธเธนเนเนเธเธฅ</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แปล</label>
               <Select instanceId={"select-8"} styles={selectStyles}
-                options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...translators.map(c => ({ value: c, label: c }))]}
-                value={{ value: translatorFilter, label: translatorFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...translators.map(c => ({ value: c, label: c }))]}
+                value={{ value: translatorFilter, label: translatorFilter || 'ทั้งหมด' }}
                 onChange={(selected) => updateFilter(setTranslatorFilter, selected ? selected.value : '')}
-                placeholder="เธ—เธฑเนเธเธซเธกเธ”"
+                placeholder="ทั้งหมด"
                 isSearchable={true}
                 classNamePrefix="react-select"
               />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เธชเธณเธเธฑเธเธเธดเธกเธเน</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สำนักพิมพ์</label>
               <Select instanceId={"select-9"} styles={selectStyles}
-                options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...publishers.map(c => ({ value: c, label: c }))]}
-                value={{ value: publisherFilter, label: publisherFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
+                options={[{ value: '', label: 'ทั้งหมด' }, ...publishers.map(c => ({ value: c, label: c }))]}
+                value={{ value: publisherFilter, label: publisherFilter || 'ทั้งหมด' }}
                 onChange={(selected) => updateFilter(setPublisherFilter, selected ? selected.value : '')}
-                placeholder="เธ—เธฑเนเธเธซเธกเธ”"
+                placeholder="ทั้งหมด"
                 isSearchable={true}
                 classNamePrefix="react-select"
               />
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เธเธฑเธเธเธต Google เธ—เธตเนเน€เธเนเธเนเธเธฅเน</label>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>บัญชี Google ที่เก็บไฟล์</label>
               <Select instanceId={"select-10"} styles={selectStyles}
                 options={[
-                  { value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' },
+                  { value: '', label: 'ทั้งหมด' },
                   ...owners.map(o => ({ value: o, label: o })),
-                  { value: '__none__', label: 'เธขเธฑเธเนเธกเนเนเธ”เนเธเธฑเธเธ—เธถเธเธเธฑเธเธเธต' },
+                  { value: '__none__', label: 'ยังไม่ได้บันทึกบัญชี' },
                 ]}
                 value={{
                   value: ownerFilter,
-                  label: ownerFilter === '__none__' ? 'เธขเธฑเธเนเธกเนเนเธ”เนเธเธฑเธเธ—เธถเธเธเธฑเธเธเธต' : ownerFilter || 'เธ—เธฑเนเธเธซเธกเธ”',
+                  label: ownerFilter === '__none__' ? 'ยังไม่ได้บันทึกบัญชี' : ownerFilter || 'ทั้งหมด',
                 }}
                 onChange={(selected) => updateFilter(setOwnerFilter, selected ? selected.value : '')}
-                placeholder="เธ—เธฑเนเธเธซเธกเธ”"
+                placeholder="ทั้งหมด"
                 isSearchable={true}
                 classNamePrefix="react-select"
               />
@@ -658,7 +658,7 @@ export default function AdminPage() {
                 setYearFilter(''); setStatusFilter(''); setOwnerFilter(''); setSearchQuery('');
                 setSortOrder('desc');
                 setCurrentPage(1);
-              }}>เธฅเนเธฒเธเธ•เธฑเธงเธเธฃเธญเธเธ—เธฑเนเธเธซเธกเธ”</button>
+              }}>ล้างตัวกรองทั้งหมด</button>
             </div>
           </div>
         )}
@@ -674,7 +674,7 @@ export default function AdminPage() {
           />
         </div>
         <div style={{ paddingLeft: '1rem', color: 'var(--fg-3)', fontSize: '0.85rem' }}>
-          {selectedBooks.size > 0 ? `เน€เธฅเธทเธญเธเนเธฅเนเธง ${selectedBooks.size} เน€เธฅเนเธก` : `${filteredBooks.length} เน€เธฅเนเธก`}
+          {selectedBooks.size > 0 ? `เลือกแล้ว ${selectedBooks.size} เล่ม` : `${filteredBooks.length} เล่ม`}
         </div>
       </div>
 
@@ -686,14 +686,14 @@ export default function AdminPage() {
             checked={allSelected} 
             onChange={(e) => handleSelectAll(e, shownBooks)} 
           />
-          <span style={{ color: 'var(--fg-3)', fontSize: '0.85rem' }}>เน€เธฅเธทเธญเธเธ—เธฑเนเธเธซเธกเธ”เนเธเธซเธเนเธฒเธเธตเน</span>
+          <span style={{ color: 'var(--fg-3)', fontSize: '0.85rem' }}>เลือกทั้งหมดในหน้านี้</span>
         </div>
       )}
 
       <ul className={`${viewMode === 'card' ? styles.rowsCard : styles.rows} stagger`}>
         {shownBooks.length === 0 && (
           <li style={{color: 'var(--fg-3)', padding: '2rem', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)'}}>
-            {searchQuery || categoryFilter || statusFilter ? 'เนเธกเนเธเธเธซเธเธฑเธเธชเธทเธญเธ—เธตเนเธเนเธเธซเธฒ' : 'เธขเธฑเธเนเธกเนเธกเธตเธซเธเธฑเธเธชเธทเธญเนเธเธฃเธฐเธเธ'}
+            {searchQuery || categoryFilter || statusFilter ? 'ไม่พบหนังสือที่ค้นหา' : 'ยังไม่มีหนังสือในระบบ'}
           </li>
         )}
         {shownBooks.map((book) => (
@@ -709,11 +709,11 @@ export default function AdminPage() {
             <div className={styles.who}>
               <span className={styles.name}>{book.title}</span>
               <span className={styles.smallMeta}>
-                {book.author || 'เนเธกเนเธฃเธฐเธเธธเธเธนเนเนเธ•เนเธ'}
+                {book.author || 'ไม่ระบุผู้แต่ง'}
                 {book.driveOwner && (
                   <>
-                    {' ยท '}
-                    <span className={styles.owner} title={`เนเธเธฅเนเธญเธขเธนเนเนเธเธเธฑเธเธเธต ${book.driveOwner}`}>
+                    {' · '}
+                    <span className={styles.owner} title={`ไฟล์อยู่ในบัญชี ${book.driveOwner}`}>
                       <Mail size={11} /> {book.driveOwner}
                     </span>
                   </>
@@ -722,23 +722,23 @@ export default function AdminPage() {
             </div>
             <span className={styles.when}>{book.category}</span>
             <span className={book.restricted ? styles.flagOn : styles.flag}>
-              {book.restricted ? 'เธชเธเธงเธเธชเธดเธ—เธเธดเน' : 'เธชเธฒเธเธฒเธฃเธ“เธฐ'}
+              {book.restricted ? 'สงวนสิทธิ์' : 'สาธารณะ'}
             </span>
             <span style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Download size={14} /> {book.downloadCount || 0}
             </span>
             <div className={styles.rowActions}>
               <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.view}>
-                <span className="tlink">เธ”เธน</span>
+                <span className="tlink">ดู</span>
               </Link>
               <button onClick={() => handleOpenEditBook(book.id)} className={styles.edit} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem' }}>
-                <span className="tlink">เนเธเนเนเธ</span>
+                <span className="tlink">แก้ไข</span>
               </button>
               <button 
                 onClick={() => handleSingleDelete(book.id)} 
                 className={styles.delete} 
                 style={{ background: 'none', border: 'none', color: 'var(--hot)', cursor: 'pointer', padding: '0.4rem', borderRadius: 'var(--r-sm)' }}
-                title="เธฅเธเธซเธเธฑเธเธชเธทเธญ"
+                title="ลบหนังสือ"
               >
                 <Trash2 size={16} />
               </button>
@@ -757,7 +757,7 @@ export default function AdminPage() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           >
-            เธเนเธญเธเธซเธเนเธฒ
+            ก่อนหน้า
           </button>
           
           <div className={styles.pageNumbers}>
@@ -788,20 +788,20 @@ export default function AdminPage() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           >
-            เธ–เธฑเธ”เนเธ
+            ถัดไป
           </button>
         </div>
       )}
 
       {selectedBooks.size > 0 && (
         <div className={styles.bulkActionBar}>
-          <div style={{ fontSize: 'var(--t-small)' }}>เน€เธฅเธทเธญเธเนเธฅเนเธง <strong>{selectedBooks.size}</strong> เธฃเธฒเธขเธเธฒเธฃ</div>
+          <div style={{ fontSize: 'var(--t-small)' }}>เลือกแล้ว <strong>{selectedBooks.size}</strong> รายการ</div>
           <div style={{ display: 'flex', gap: '0.8rem' }}>
             <button className="btn" onClick={() => setBulkEditModalOpen(true)}>
-              <Edit2 size={16} /> เนเธเนเนเธเธเธฃเนเธญเธกเธเธฑเธ
+              <Edit2 size={16} /> แก้ไขพร้อมกัน
             </button>
             <button className="btn" style={{ color: 'var(--hot)', borderColor: 'var(--hot)' }} onClick={handleBulkDelete}>
-              <Trash2 size={16} /> เธฅเธเธ—เธตเนเน€เธฅเธทเธญเธ
+              <Trash2 size={16} /> ลบที่เลือก
             </button>
           </div>
         </div>
@@ -810,65 +810,65 @@ export default function AdminPage() {
       {bulkEditModalOpen && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modal}>
-            <h2 style={{ marginBottom: '1rem', fontSize: 'var(--t-h2)' }}>เนเธเนเนเธ {selectedBooks.size} เน€เธฅเนเธกเธเธฃเนเธญเธกเธเธฑเธ</h2>
+            <h2 style={{ marginBottom: '1rem', fontSize: 'var(--t-h2)' }}>แก้ไข {selectedBooks.size} เล่มพร้อมกัน</h2>
             <p style={{ color: 'var(--fg-2)', fontSize: 'var(--t-small)', marginBottom: '1.5rem' }}>
-              เน€เธงเนเธเธงเนเธฒเธเนเธงเนเธซเธฒเธเนเธกเนเธ•เนเธญเธเธเธฒเธฃเน€เธเธฅเธตเนเธขเธเนเธเธฅเธเธเนเธฒเน€เธ”เธดเธก
+              เว้นว่างไว้หากไม่ต้องการเปลี่ยนแปลงค่าเดิม
             </p>
             <form onSubmit={handleBulkUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <label>
-                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>เธเธนเนเนเธ•เนเธเนเธซเธกเน (เน€เธเธฅเธตเนเธขเธเธ—เธฑเนเธเธซเธกเธ”)</div>
+                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>ผู้แต่งใหม่ (เปลี่ยนทั้งหมด)</div>
                 <input 
                   type="text" 
                   value={bulkValues.author} 
                   onChange={e => setBulkValues({...bulkValues, author: e.target.value})}
-                  placeholder="เธเธฅเนเธญเธขเธงเนเธฒเธเน€เธเธทเนเธญเธเธเน€เธ”เธดเธก"
+                  placeholder="ปล่อยว่างเพื่อคงเดิม"
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                 />
               </label>
               
               <label>
-                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>เธซเธกเธงเธ”เธซเธกเธนเนเนเธซเธกเน</div>
+                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>หมวดหมู่ใหม่</div>
                 <select 
                   value={bulkValues.category} 
                   onChange={e => setBulkValues({...bulkValues, category: e.target.value})}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                 >
-                  <option value="">เธเธฅเนเธญเธขเธงเนเธฒเธเน€เธเธทเนเธญเธเธเน€เธ”เธดเธก</option>
+                  <option value="">ปล่อยว่างเพื่อคงเดิม</option>
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </label>
 
               <label>
-                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>เธ เธฒเธฉเธฒเนเธซเธกเน</div>
+                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>ภาษาใหม่</div>
                 <select 
                   value={bulkValues.language} 
                   onChange={e => setBulkValues({...bulkValues, language: e.target.value})}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                 >
-                  <option value="">เธเธฅเนเธญเธขเธงเนเธฒเธเน€เธเธทเนเธญเธเธเน€เธ”เธดเธก</option>
-                  {/* `languages` is a flat list of strings โ€” reading .value/.label
+                  <option value="">ปล่อยว่างเพื่อคงเดิม</option>
+                  {/* `languages` is a flat list of strings — reading .value/.label
                       off it produced a dropdown of blank options. */}
                   {languages.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
               </label>
 
               <label>
-                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>เธชเธ–เธฒเธเธฐเธเธฒเธฃเน€เธเนเธฒเธ–เธถเธ</div>
+                <div style={{ fontSize: 'var(--t-small)', color: 'var(--fg-2)', marginBottom: '0.3rem' }}>สถานะการเข้าถึง</div>
                 <select 
                   value={bulkValues.restricted} 
                   onChange={e => setBulkValues({...bulkValues, restricted: e.target.value})}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                 >
-                  <option value="">เธเธฅเนเธญเธขเธงเนเธฒเธเน€เธเธทเนเธญเธเธเน€เธ”เธดเธก</option>
-                  <option value="false">เธชเธฒเธเธฒเธฃเธ“เธฐ</option>
-                  <option value="true">เธชเธเธงเธเธชเธดเธ—เธเธดเน</option>
+                  <option value="">ปล่อยว่างเพื่อคงเดิม</option>
+                  <option value="false">สาธารณะ</option>
+                  <option value="true">สงวนสิทธิ์</option>
                 </select>
               </label>
               
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="button" className="btn btn-block" onClick={() => setBulkEditModalOpen(false)}>เธขเธเน€เธฅเธดเธ</button>
+                <button type="button" className="btn btn-block" onClick={() => setBulkEditModalOpen(false)}>ยกเลิก</button>
                 <button type="submit" className="btn btn-solid btn-block" disabled={submittingBulk}>
-                  {submittingBulk ? 'เธเธณเธฅเธฑเธเธเธฑเธเธ—เธถเธ...' : 'เธเธฑเธเธ—เธถเธเธเธฒเธฃเนเธเนเนเธ'}
+                  {submittingBulk ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
                 </button>
               </div>
             </form>
