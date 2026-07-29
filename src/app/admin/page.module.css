@@ -408,27 +408,39 @@
 
 @media (max-width: 600px) {
   .hideMobile { display: none; }
-  
+
+  /* Two tidy rows — search across the top, then the actions sharing one line.
+     As a column, the lone Filter button stretched the full width around a
+     single funnel icon, which read as a mistake. */
   .filterTopRow {
-    flex-direction: column;
-    gap: 0.75rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.6rem;
   }
 
   .searchWrap {
-    min-width: 100%;
-    max-width: 100%;
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  /* The Filter button is the only direct .btn child of this row. */
+  .filterTopRow > :global(.btn) {
+    flex: 0 0 auto;
+    min-width: 44px;
+    padding: 0.65rem 0.85rem;
   }
 
   .actionButtons {
     display: flex;
+    flex: 1 1 auto;
     gap: 0.5rem;
-    width: 100%;
+    width: auto;
     margin-left: 0;
     align-items: center;
-    justify-content: flex-start;
   }
 
-  .actionButtons .btn {
+  .actionButtons > :global(.btn) {
     flex: 1;
     justify-content: center;
     padding: 0.65rem 0.75rem;

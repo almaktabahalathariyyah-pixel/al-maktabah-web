@@ -13,7 +13,7 @@ import CreatableSelect from 'react-select/creatable';
 import { selectStyles } from '@/lib/selectStyles';
 import { getNextBookId } from '@/lib/sequentialId';
 import { getDropdownSettings } from '@/lib/settings';
-import { uploadPdfToDrive, uploadImageToDrive } from '@/lib/googleDrive';
+import { uploadPdfToDrive } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror, bookSizeBytes } from '@/lib/mirror';
 import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy } from 'lucide-react';
 import styles from './BookFormPanel.module.css';
@@ -302,24 +302,12 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     reader.onload = (ev) => setCoverUrl(ev.target.result);
     reader.readAsDataURL(file);
 
-    // 2. Store it. Drive first when it is connected — that keeps the cover in
-    //    the same account as the book and needs no server configuration; the
-    //    server route stays as the fallback.
+    // 2. Store it in the Telegram channel, never in Drive — that quota belongs
+    //    to the books, and covers would eat into it for no benefit.
     setUploadingImage(true);
     setNote('');
 
     try {
-      if (googleToken) {
-        const { url } = await uploadImageToDrive({
-          token: googleToken,
-          blob: file,
-          name: `cover-${(values.title || file.name).trim()}.jpg`,
-        });
-        setCoverUrl(url);
-        toast.success('อัปโหลดรูปปกสำเร็จ');
-        return;
-      }
-
       const formData = new FormData();
       formData.append('image', file);
       const idToken = await user.getIdToken();
@@ -336,7 +324,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         toast.success('อัปโหลดรูปปกสำเร็จ');
       } else {
         const reason = data?.error || `อัปโหลดรูปปกไม่สำเร็จ (${res.status})`;
-        setNote(`${reason} — เชื่อมต่อไดรฟ์ หรือวางลิงก์รูปปกเองด้านล่าง`);
+        setNote(`${reason} — หรือวางลิงก์รูปปกเองด้านล่าง`);
         toast.error(reason);
       }
     } catch (err) {

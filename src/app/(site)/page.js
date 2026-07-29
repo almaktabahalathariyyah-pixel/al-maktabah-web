@@ -2,7 +2,10 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, X, User, Book, ArrowLeftRight, Building, Tag } from 'lucide-react';
+import {
+  Search, Filter, X, User, Book, ArrowLeftRight, Building, Tag,
+  ChevronLeft, ChevronRight,
+} from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { useAuth } from '@/context/AuthContext';
 import { collection, getDocs, query, orderBy, where, limit, startAfter } from 'firebase/firestore';
@@ -41,6 +44,34 @@ const SUGGESTION_GROUPS = [
   { key: 'publisher', label: 'สำนักพิมพ์', icon: Building },
   { key: 'type', label: 'ประเภท', icon: Tag },
 ];
+
+/**
+ * The page numbers to show, with gaps where numbers are skipped.
+ *
+ * 365 books at 20 a page is 19 pages, which fits; 10,000 would be 500 and would
+ * not. So the list is always first, last, and a window around the current page,
+ * with '…' standing in for the rest — the shape stays constant however far the
+ * library grows.
+ */
+function pageWindow(current, total, span = 1) {
+  const wanted = new Set([1, total]);
+  for (let p = current - span; p <= current + span; p += 1) {
+    if (p > 1 && p < total) wanted.add(p);
+  }
+
+  const sorted = [...wanted].sort((a, b) => a - b);
+  const out = [];
+  let previous = 0;
+
+  for (const p of sorted) {
+    // A single skipped number is not worth an ellipsis — show the number.
+    if (p - previous === 2) out.push(previous + 1);
+    else if (p - previous > 2) out.push(`gap-${p}`);
+    out.push(p);
+    previous = p;
+  }
+  return out;
+}
 
 /** Reads the opening state out of the address bar (client-only). */
 function readUrlState() {
@@ -87,7 +118,7 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlight, setHighlight] = useState(-1);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(1);
 
   const [fullyLoaded, setFullyLoaded] = useState(false);
   const searchRef = useRef(null);
@@ -230,7 +261,7 @@ export default function Home() {
 
   // A fresh query means a fresh first page.
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
+    setPage(1);
   }, [queryText, filters]);
 
   // --- Autocomplete ---
@@ -354,9 +385,19 @@ export default function Home() {
     }
   };
 
-  const shown = results.slice(0, visibleCount);
+  const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
+  // The shelf can shrink under a new filter while sitting on a high page.
+  const current = Math.min(page, pageCount);
+  const shown = results.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+
   const authored = filters.person ? results.filter((b) => b.author === filters.person) : [];
   const translated = filters.person ? results.filter((b) => b.translator === filters.person) : [];
+
+  const goToPage = (next) => {
+    setPage(next);
+    // Otherwise page 5 opens halfway down page 4's covers.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const filterSelects = [
     ['category', categories],
@@ -609,18 +650,49 @@ export default function Home() {
                 {shown.map((book) => <BookCard key={book.id} book={book} />)}
               </section>
 
-              {results.length > shown.length && (
-                <div className={styles.moreRow}>
+              {pageCount > 1 && (
+                <nav className={styles.pager} aria-label="หน้าของรายการหนังสือ">
                   <button
-                    className="btn"
-                    onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+                    className={styles.pageStep}
+                    onClick={() => goToPage(current - 1)}
+                    disabled={current === 1}
+                    aria-label="หน้าก่อนหน้า"
                   >
-                    ดูเพิ่มอีก {Math.min(PAGE_SIZE, results.length - shown.length)} เล่ม
+                    <ChevronLeft size={16} />
                   </button>
-                  <span className={styles.moreCount}>
-                    แสดง {shown.length} จาก {results.length}
+
+                  <ol className={styles.pageList}>
+                    {pageWindow(current, pageCount).map((item) =>
+                      typeof item === 'string' ? (
+                        <li key={item} className={styles.pageGap} aria-hidden>…</li>
+                      ) : (
+                        <li key={item}>
+                          <button
+                            className={`${styles.pageNum} ${item === current ? styles.pageOn : ''}`}
+                            onClick={() => goToPage(item)}
+                            aria-label={`หน้า ${item}`}
+                            aria-current={item === current ? 'page' : undefined}
+                          >
+                            {item.toLocaleString('th-TH')}
+                          </button>
+                        </li>
+                      )
+                    )}
+                  </ol>
+
+                  <button
+                    className={styles.pageStep}
+                    onClick={() => goToPage(current + 1)}
+                    disabled={current === pageCount}
+                    aria-label="หน้าถัดไป"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+
+                  <span className={styles.pageCount} aria-live="polite">
+                    หน้า {current.toLocaleString('th-TH')} จาก {pageCount.toLocaleString('th-TH')}
                   </span>
-                </div>
+                </nav>
               )}
             </>
           )}

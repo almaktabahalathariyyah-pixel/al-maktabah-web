@@ -1,5 +1,5 @@
 import { resolveReader, tokenFrom, fetchDocAsUser } from '@/lib/serverAuth';
-import { probeDrive, driveDownloadUrl, drivePreviewUrl, BLOCK_REASONS } from '@/lib/driveHealth';
+import { probeDrive, driveDownloadUrl, BLOCK_REASONS } from '@/lib/driveHealth';
 import { unavailableHtml } from '@/lib/unavailablePage';
 
 export const runtime = 'edge';
@@ -94,6 +94,43 @@ async function serveFromTelegram({ telegramFileId, title, action }) {
 }
 
 /**
+ * Streams the Drive copy through this origin.
+ *
+ * Redirecting to Drive's /preview page was handing the reader Google's viewer
+ * inside our iframe, chrome and all — including its pop-out button, which took
+ * them straight out of the library and into Drive. Serving the bytes ourselves
+ * means the browser's own PDF viewer renders it: no Drive branding, no way out
+ * of the site, and the Drive file id is never exposed to the page.
+ *
+ * Returns null when Drive does not hand over a file, so the caller can fail
+ * over to the mirror exactly as before.
+ */
+async function serveFromDrive({ driveId, title, action }) {
+  try {
+    const res = await fetch(driveDownloadUrl(driveId), { redirect: 'follow' });
+    if (!res.ok) return null;
+
+    const type = (res.headers.get('content-type') || '').toLowerCase();
+    // An HTML body here is a Drive interstitial, not a book.
+    if (type.includes('text/html')) return null;
+
+    const disposition = action === 'download' ? 'attachment' : 'inline';
+    const safeName = encodeURIComponent(`${title}.pdf`);
+
+    return new Response(res.body, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `${disposition}; filename*=UTF-8''${safeName}`,
+        'Cache-Control': 'private, no-store',
+        'X-Maktabah-Source': 'drive',
+      },
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Serves a book, trying every copy before giving up.
  *
  *   1. ?source=telegram          the reader explicitly asked for the backup
@@ -163,10 +200,10 @@ export async function GET(request, { params }) {
         const health = await probeDrive(driveId);
 
         if (health.ok) {
-          return Response.redirect(
-            action === 'download' ? driveDownloadUrl(driveId) : drivePreviewUrl(driveId),
-            302
-          );
+          // Proxied, not redirected — see serveFromDrive. A redirect is what
+          // put Google's viewer (and its "open in Drive" button) on the page.
+          const served = await serveFromDrive({ driveId, title, action });
+          if (served) return served;
         }
 
         // ---- 3. Drive is blocked — fail over to the mirror silently -------

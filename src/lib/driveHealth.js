@@ -22,9 +22,9 @@ export function driveDownloadUrl(driveId) {
   return `https://drive.usercontent.google.com/download?id=${driveId}&export=download&confirm=t`;
 }
 
-export function drivePreviewUrl(driveId) {
-  return `https://drive.google.com/file/d/${driveId}/preview`;
-}
+// drivePreviewUrl() used to live here. Nothing embeds Google's viewer any more:
+// it brought its own chrome into our iframe, including a pop-out button that
+// took the reader off the site and into Drive. The bytes are proxied instead.
 
 /**
  * Fetches the first couple of kilobytes and reads what came back.

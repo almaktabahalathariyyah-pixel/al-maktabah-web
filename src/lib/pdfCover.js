@@ -92,36 +92,21 @@ export async function renderFirstPage(file) {
 }
 
 /**
- * Renders the cover and stores it.
+ * Renders the cover and stores it in the Telegram channel.
  *
  * Returns { url, error } rather than a bare string. The old version collapsed
- * every failure — unrenderable PDF, expired token, Telegram not configured —
+ * every failure — unrenderable PDF, expired token, storage refusing the file —
  * into '' and a console.warn, so a run of 362 books could finish reporting
  * "อัปโหลดสำเร็จ" with not one cover saved and nothing on screen saying why.
  * The caller now has something to show.
  *
- * `driveToken` is preferred when present: it keeps covers in the same Drive as
- * the books and needs no server-side configuration at all. The Telegram route
- * stays as the fallback so existing covers and setups keep working.
+ * Deliberately NOT Drive: that quota is reserved for the books themselves, and
+ * a few hundred cover JPEGs would compete for room more books could use.
+ * Telegram hosts them for free and counts against nothing.
  */
-export async function makeCover(file, { idToken, driveToken } = {}) {
+export async function makeCover(file, { idToken } = {}) {
   const blob = await renderFirstPage(file);
   if (!blob) return { url: '', error: 'อ่านหน้าแรกของ PDF ไม่ได้' };
-
-  if (driveToken) {
-    try {
-      const { uploadImageToDrive } = await import('./googleDrive');
-      const { url } = await uploadImageToDrive({
-        token: driveToken,
-        blob,
-        name: `cover-${file.name.replace(/\.pdf$/i, '')}.jpg`,
-      });
-      return { url, error: '' };
-    } catch (err) {
-      // Fall through to the server route rather than giving up on the cover.
-      console.warn('Drive cover upload failed, trying server route:', err?.message || err);
-    }
-  }
 
   if (!idToken) return { url: '', error: 'ไม่มีสิทธิ์อัปโหลดรูปปก' };
 

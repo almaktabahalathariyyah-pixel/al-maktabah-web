@@ -122,7 +122,14 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body { max-width: 100vw; overflow-x: hidden; }
+/* `clip`, NOT `hidden`.
+   overflow-x: hidden turns the element into a scroll container, and a scroll
+   container between a sticky element and the viewport is what `position: sticky`
+   resolves against. Since body never scrolls itself, every sticky thing in the
+   app silently stopped sticking — the admin sidebar scrolled away leaving only
+   its bottom row floating, and the author rail did the same. `clip` cuts the
+   overflow off without creating that scroll container, so sticky works. */
+html, body { max-width: 100vw; overflow-x: clip; }
 
 body {
   background: var(--bg);

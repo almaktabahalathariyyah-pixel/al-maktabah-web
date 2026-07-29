@@ -223,7 +223,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
         if (autoCover) {
           patch(item.id, { status: 'covering' });
           const idToken = await user.getIdToken();
-          const cover = await makeCover(item.file, { idToken, driveToken: googleToken });
+          const cover = await makeCover(item.file, { idToken });
           coverUrl = cover.url;
 
           if (!cover.url) {

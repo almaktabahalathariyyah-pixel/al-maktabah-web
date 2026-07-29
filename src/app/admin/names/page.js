@@ -118,58 +118,48 @@ export default function NamesPage() {
 
   return (
     <div className="container" style={{ maxWidth: '1000px', paddingBottom: '5rem' }}>
-      <header style={{ padding: 'clamp(2.25rem, 5vw, 3.5rem) 0 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Classes, not inline styles: this header has to reflow under 700px and
+          an inline style cannot carry a media query, which is why the buttons
+          were climbing into the heading on a phone. */}
+      <header className={styles.pageHead}>
         <div>
           <p className="eyebrow" style={{ display: 'block', marginBottom: '0.7rem' }}>ผู้ดูแลระบบ</p>
-          <h1 style={{ fontFamily: 'var(--display)', fontSize: 'clamp(1.8rem, 4.5vw, 2.6rem)', fontWeight: 600, margin: 0 }}>จัดการรายชื่อ</h1>
+          <h1 className={styles.pageTitle}>จัดการรายชื่อ</h1>
           <p className="lede" style={{ marginTop: '0.5rem' }}>
             จัดการผู้แต่ง ผู้แปล และสำนักพิมพ์สำหรับตัวเลือกในระบบ
           </p>
         </div>
-        
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button 
-            className="btn" 
-            onClick={handleSyncFromBooks} 
-            disabled={syncing || saving}
-            style={{ fontSize: '0.9rem', padding: '0.75rem 1rem' }}
-          >
-            {syncing ? 'กำลังดึงข้อมูล...' : 'ดึงรายชื่อจากหนังสือ'}
+
+        <div className={styles.pageHeadActs}>
+          <button className="btn" onClick={handleSyncFromBooks} disabled={syncing || saving}>
+            {syncing ? 'กำลังดึงข้อมูล…' : 'ดึงรายชื่อจากหนังสือ'}
           </button>
-          <button 
-            className="btn btn-solid" 
-            onClick={handleSave} 
-            disabled={saving || syncing}
-            style={{ background: 'var(--accent)', borderColor: 'var(--accent)', fontSize: '1rem', padding: '0.75rem 1.5rem' }}
-          >
-            <Save size={18} style={{ marginRight: '0.5rem' }}/>
-            {saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
+          <button className="btn btn-solid" onClick={handleSave} disabled={saving || syncing}>
+            <Save size={17} />
+            {saving ? 'กำลังบันทึก…' : 'บันทึกการเปลี่ยนแปลง'}
           </button>
         </div>
       </header>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-        <button 
-          className={`btn ${activeTab === 'authors' ? 'btn-solid' : ''}`}
+      <div className={styles.tabs}>
+        <button
+          className={`btn ${activeTab === 'authors' ? 'btn-solid' : ''} ${styles.tab}`}
           onClick={() => setActiveTab('authors')}
-          style={{ flex: 1, justifyContent: 'center' }}
         >
-          ผู้แต่ง (Authors)
+          ผู้แต่ง <span className={styles.tabEn}>(Authors)</span>
         </button>
-        <button 
-          className={`btn ${activeTab === 'translators' ? 'btn-solid' : ''}`}
+        <button
+          className={`btn ${activeTab === 'translators' ? 'btn-solid' : ''} ${styles.tab}`}
           onClick={() => setActiveTab('translators')}
-          style={{ flex: 1, justifyContent: 'center' }}
         >
-          ผู้แปล (Translators)
+          ผู้แปล <span className={styles.tabEn}>(Translators)</span>
         </button>
-        <button 
-          className={`btn ${activeTab === 'publishers' ? 'btn-solid' : ''}`}
+        <button
+          className={`btn ${activeTab === 'publishers' ? 'btn-solid' : ''} ${styles.tab}`}
           onClick={() => setActiveTab('publishers')}
-          style={{ flex: 1, justifyContent: 'center' }}
         >
-          สำนักพิมพ์ (Publishers)
+          สำนักพิมพ์ <span className={styles.tabEn}>(Publishers)</span>
         </button>
       </div>
 

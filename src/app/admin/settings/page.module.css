@@ -40,10 +40,86 @@
 
 .sectionHeader {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border);
+}
+
+/* ---------------- Slide-over panel header ----------------
+   .headerRow was referenced by SettingsPanel but never declared here, so the
+   class resolved to undefined and the row had no layout at all — the title and
+   its buttons simply stacked. */
+.headerRow {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.headerActs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+
+@media (max-width: 620px) {
+  /* Close stays pinned by the title; the two long actions drop to their own
+     row so neither is truncated. */
+  .headerRow { flex-wrap: wrap; }
+  .headerActs { width: 100%; order: 2; }
+  .headerActs > :global(.btn) { flex: 1 1 0; justify-content: center; min-width: 0; }
+  .headerClose {
+    position: absolute;
+    top: 1.1rem;
+    right: 1.1rem;
+  }
+}
+
+/* ---------------- Page header (จัดการรายชื่อ) ---------------- */
+.pageHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: clamp(2.25rem, 5vw, 3.5rem) 0 1.75rem;
+}
+
+.pageTitle {
+  font-family: var(--display);
+  font-size: clamp(1.8rem, 4.5vw, 2.6rem);
+  font-weight: 600;
+  line-height: var(--lh-display);
+  margin: 0;
+}
+
+.pageHeadActs { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+/* ---------------- Tabs ---------------- */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.tab { flex: 1; justify-content: center; min-width: 0; }
+
+@media (max-width: 700px) {
+  /* Buttons take their own full-width row rather than squeezing beside the
+     title — long Thai labels leave no room to share it. */
+  .pageHead { align-items: stretch; gap: 1rem; }
+  .pageHeadActs { width: 100%; }
+  .pageHeadActs > :global(.btn) { flex: 1 1 0; justify-content: center; }
+}
+
+@media (max-width: 560px) {
+  /* Three tabs still fit across once the English gloss steps aside. */
+  .tabEn { display: none; }
+  .tabs { gap: 0.35rem; }
+  .tab { padding-inline: 0.5rem; font-size: var(--t-micro); }
 }
 
 .sectionTitle {

@@ -231,23 +231,23 @@ export default function SettingsPanel({ isOpen, onClose }) {
         <div className={panelStyles.header}>
             <div className={styles.headerRow}>
               <h2 className={styles.title}>ตั้งค่าหมวดหมู่</h2>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button 
-                  className="btn" 
-                  onClick={handleSyncFromBooks} 
-                  disabled={syncing || saving}
-                >
-                  {syncing ? 'กำลังดึง...' : 'ดึงจากหนังสือ'}
+              <div className={styles.headerActs}>
+                <button className="btn" onClick={handleSyncFromBooks} disabled={syncing || saving}>
+                  {syncing ? 'กำลังดึง…' : 'ดึงจากหนังสือ'}
                 </button>
-                <button 
-                  className="btn btn-solid" 
-                  onClick={handleSave} 
+                <button
+                  className="btn btn-solid"
+                  onClick={handleSave}
                   disabled={saving || syncing}
-                  style={{ background: 'var(--accent)', borderColor: 'var(--accent)' }}
                 >
-                  <Save size={16} /> <span>{saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}</span>
+                  <Save size={16} />
+                  <span>{saving ? 'กำลังบันทึก…' : 'บันทึกการเปลี่ยนแปลง'}</span>
                 </button>
-                <button className={panelStyles.closeButton} onClick={onClose}>
+                <button
+                  className={`${panelStyles.closeButton} ${styles.headerClose}`}
+                  onClick={onClose}
+                  aria-label="ปิด"
+                >
                   <X size={20} />
                 </button>
               </div>

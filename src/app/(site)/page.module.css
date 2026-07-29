@@ -266,18 +266,83 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* ---------------- Load more ---------------- */
-.moreRow {
+/* ---------------- Pager ----------------
+   Numbered pages rather than a load-more button: with hundreds of titles the
+   reader needs to be able to come back to where they were, and "ดูเพิ่มอีก"
+   only ever grows one direction and forgets on reload. */
+.pager {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.65rem;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 2.5rem 0 0.5rem;
 }
-.moreCount {
+
+.pageList {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pageNum,
+.pageStep {
+  display: grid;
+  place-items: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 0.6rem;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-family: var(--text);
+  font-size: var(--t-small);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--dur) var(--ease),
+              color var(--dur) var(--ease),
+              transform var(--dur-fast) var(--spring);
+}
+.pageNum:hover,
+.pageStep:hover:not(:disabled) { background: var(--surface-3); color: var(--fg); }
+.pageNum:active,
+.pageStep:active:not(:disabled) { transform: scale(0.94); }
+
+.pageOn {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.pageOn:hover { background: var(--accent-hover); color: var(--accent-ink); }
+
+.pageStep:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.pageGap {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 38px;
+  color: var(--fg-3);
+}
+
+/* Its own line, so the row of numbers stays centred on the grid above. */
+.pageCount {
+  flex-basis: 100%;
+  margin-top: 0.6rem;
+  text-align: center;
   font-size: var(--t-micro);
   color: var(--fg-3);
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  /* Thumb-sized targets, and no wrapping into a ragged second row. */
+  .pager { gap: 0.3rem; }
+  .pageNum, .pageStep { min-width: 34px; height: 34px; padding: 0 0.4rem; }
+  .pageGap { min-width: 14px; height: 34px; }
 }
 
 /* ---------------- Cover grid ---------------- */

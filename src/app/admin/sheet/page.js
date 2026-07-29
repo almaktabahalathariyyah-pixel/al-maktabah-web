@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { collection, getDocs, doc, writeBatch, query, orderBy } from 'firebase/firestore';
-import { Save, Search, ArrowDownToLine, Undo2, Loader2 } from 'lucide-react';
+import { Save, Search, ArrowDownToLine, Undo2, Loader2, Filter } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
@@ -34,6 +34,19 @@ const COLUMNS = [
   { key: 'description', label: 'คำอธิบาย', width: 320, type: 'text' },
 ];
 
+/** Columns offered as dropdown filters, in the order they appear above the grid. */
+const FILTERABLE = ['author', 'translator', 'category', 'type', 'language', 'publisher', 'year'];
+
+const FACET_LABELS = {
+  author: 'ผู้แต่ง',
+  translator: 'ผู้แปล',
+  category: 'หมวดหมู่',
+  type: 'ประเภท',
+  language: 'ภาษา',
+  publisher: 'สำนักพิมพ์',
+  year: 'ปีพิมพ์',
+};
+
 /** Firestore caps a batch at 500 writes. */
 const BATCH_LIMIT = 400;
 
@@ -47,6 +60,15 @@ export default function SheetPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState('');
+  /**
+   * Column filters, keyed by book field.
+   *
+   * A single text box over 365 rows is already a scroll; over tens of thousands
+   * it is unusable, and the columnar filters the rest of the desk has were
+   * missing from the one screen built for bulk work.
+   */
+  const [facets, setFacets] = useState({});
+  const [showFilters, setShowFilters] = useState(false);
   const [active, setActive] = useState({ row: 0, col: 0 });
 
   const gridRef = useRef(null);
@@ -118,15 +140,67 @@ export default function SheetPage() {
     });
   }, []);
 
+  /** Distinct values per filterable column, taken from the rows in memory. */
+  const facetValues = useMemo(() => {
+    const out = {};
+    for (const key of FILTERABLE) {
+      const seen = new Set();
+      for (const row of rows) {
+        const value = String(row[key] ?? '').trim();
+        if (value) seen.add(value);
+      }
+      out[key] = [...seen].sort((a, b) => a.localeCompare(b, 'th'));
+    }
+    return out;
+  }, [rows]);
+
   const visible = useMemo(() => {
     const needle = filter.trim().toLowerCase();
-    if (!needle) return rows;
-    return rows.filter((r) =>
-      `${r.title ?? ''} ${r.author ?? ''} ${r.category ?? ''} ${r.sourceFile ?? ''}`
+
+    return rows.filter((row) => {
+      for (const [key, want] of Object.entries(facets)) {
+        if (!want) continue;
+        // '__blank__' is how you find the rows still needing this column filled.
+        const value = String(row[key] ?? '').trim();
+        if (want === '__blank__' ? value !== '' : value !== want) return false;
+      }
+
+      if (!needle) return true;
+      return `${row.title ?? ''} ${row.author ?? ''} ${row.translator ?? ''} ${row.publisher ?? ''} ${row.category ?? ''} ${row.sourceFile ?? ''}`
         .toLowerCase()
-        .includes(needle)
-    );
-  }, [rows, filter]);
+        .includes(needle);
+    });
+  }, [rows, filter, facets]);
+
+  const activeFacets = Object.values(facets).filter(Boolean).length;
+
+  /**
+   * A narrowed sheet is a different grid, so the cursor goes back to the top —
+   * done here rather than in an effect watching the filters, which would be a
+   * render cascade for something every caller already knows it is doing.
+   */
+  const toTopLeft = () => setActive({ row: 0, col: 0 });
+
+  const changeFilter = (value) => {
+    setFilter(value);
+    toTopLeft();
+  };
+
+  const setFacet = (key, value) => {
+    setFacets((prev) => {
+      const next = { ...prev };
+      if (value) next[key] = value;
+      else delete next[key];
+      return next;
+    });
+    toTopLeft();
+  };
+
+  const clearFilters = () => {
+    setFacets({});
+    setFilter('');
+    toTopLeft();
+  };
 
   const changedCount = Object.keys(edits).length;
 
@@ -243,11 +317,20 @@ export default function SheetPage() {
             <input
               className={styles.search}
               type="search"
-              placeholder="กรองรายการ…"
+              placeholder="ค้นชื่อ ผู้แต่ง ผู้แปล สำนักพิมพ์…"
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={(e) => changeFilter(e.target.value)}
             />
           </div>
+
+          <button
+            className={`btn ${showFilters ? 'btn-solid' : ''}`}
+            onClick={() => setShowFilters((v) => !v)}
+            aria-expanded={showFilters}
+          >
+            <Filter size={16} /> ตัวกรอง
+            {activeFacets > 0 && <span className={styles.pip}>{activeFacets}</span>}
+          </button>
 
           <button className="btn" onClick={fillDown} title="เติมค่าจากช่องที่เลือกลงทุกแถวข้างล่าง (Ctrl+D)">
             <ArrowDownToLine size={16} /> เติมลงล่าง
@@ -263,6 +346,41 @@ export default function SheetPage() {
           </button>
         </div>
       </header>
+
+      {showFilters && (
+        <div className={styles.facets}>
+          {FILTERABLE.map((key) => (
+            <label key={key} className={styles.facet}>
+              <span className={styles.facetLabel}>{FACET_LABELS[key]}</span>
+              <select
+                className={styles.facetSelect}
+                value={facets[key] || ''}
+                onChange={(e) => setFacet(key, e.target.value)}
+              >
+                <option value="">ทั้งหมด</option>
+                <option value="__blank__">— ยังไม่ได้กรอก —</option>
+                {facetValues[key]?.map((value) => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </label>
+          ))}
+
+          <div className={styles.facetActions}>
+            <button className="btn" onClick={clearFilters} disabled={activeFacets === 0 && !filter}>
+              ล้างตัวกรองทั้งหมด
+            </button>
+          </div>
+        </div>
+      )}
+
+      {(activeFacets > 0 || filter.trim()) && (
+        <p className={styles.narrowed}>
+          แสดง <strong>{visible.length.toLocaleString('th-TH')}</strong> จาก{' '}
+          {rows.length.toLocaleString('th-TH')} เล่ม
+          {changedCount > 0 && ' · การแก้ไขที่ค้างอยู่ยังไม่หายไปเมื่อกรอง'}
+        </p>
+      )}
 
       <p className={styles.hint}>
         คลิกช่องแล้วพิมพ์ได้เลย · <kbd>Tab</kbd> ไปช่องขวา · <kbd>Enter</kbd> ลงแถวล่าง ·
