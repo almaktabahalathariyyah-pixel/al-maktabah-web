@@ -16,6 +16,19 @@ export default function ThemeToggle() {
     setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
   }, []);
 
+  // Follow the choice made in another tab, rather than needing a reload to
+  // notice. The event fires only in the tabs that did not make the change.
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key !== 'theme' && e.key !== null) return;
+      const next = localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
+      setTheme(next);
+      document.documentElement.setAttribute('data-theme', next);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   const toggle = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);

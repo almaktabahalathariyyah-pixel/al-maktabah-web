@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { mirrorToTelegram, canMirror, bookSizeBytes, MIRROR_LIMIT } from '@/lib/mirror';
+import { useTabLock } from '@/lib/tabLock';
 import styles from './MirrorRunner.module.css';
 
 /**
@@ -29,6 +30,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export default function MirrorRunner() {
   const { user } = useAuth();
   const { toast } = useToast();
+  // One pass at a time across the whole browser: two runners pacing themselves
+  // at 3s each believe they are alone and together exceed what Telegram accepts.
+  const { runExclusive, busyElsewhere } = useTabLock('mirror');
 
   const [pending, setPending] = useState([]);
   const [tooBig, setTooBig] = useState(0);
@@ -79,7 +83,12 @@ export default function MirrorRunner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const run = async () => {
+  const run = () =>
+    runExclusive(runPass, () =>
+      toast.error('การสำรองกำลังทำงานอยู่ในอีกแท็บ — ปิดแท็บนั้น หรือรอให้เสร็จก่อน')
+    );
+
+  const runPass = async () => {
     if (pending.length === 0) return;
 
     setRunning(true);
@@ -211,12 +220,23 @@ export default function MirrorRunner() {
                 </button>
               </>
             ) : (
-              <button className="btn btn-solid" onClick={run} disabled={pending.length === 0}>
-                <Play size={15} /> เริ่มสำรอง {pending.length} เล่ม
+              <button
+                className="btn btn-solid"
+                onClick={run}
+                disabled={pending.length === 0 || busyElsewhere}
+              >
+                <Play size={15} />
+                {busyElsewhere ? 'กำลังทำงานในอีกแท็บ' : `เริ่มสำรอง ${pending.length} เล่ม`}
               </button>
             )}
           </div>
         </>
+      )}
+
+      {busyElsewhere && !running && (
+        <p className={styles.note}>
+          มีอีกแท็บกำลังสำรองอยู่ ปุ่มจะกลับมากดได้เองเมื่อแท็บนั้นทำเสร็จหรือถูกปิด
+        </p>
       )}
 
       {tooBig > 0 && (

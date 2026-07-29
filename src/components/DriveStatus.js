@@ -8,6 +8,7 @@ import {
   clearSavedToken,
   fetchDriveAccount,
   formatBytes,
+  TOKEN_STORAGE_KEY,
 } from '@/lib/googleDrive';
 import { useToast } from '@/context/ToastContext';
 import styles from './DriveStatus.module.css';
@@ -57,6 +58,31 @@ export default function DriveStatus({ active = true, onToken, onAccount }) {
     const saved = readSavedToken();
     publish(saved?.token || null);
     refreshAccount(saved?.token || null);
+  }, [active, publish, refreshAccount]);
+
+  /**
+   * Follow the token across tabs.
+   *
+   * The token lives in localStorage, which every tab shares, but this component
+   * only ever read it once on mount. So disconnecting in one admin tab left the
+   * other still showing "เชื่อมต่อแล้ว", and switching to a second Google
+   * account in one tab left the other stamping the previous address onto
+   * driveOwner. The storage event fires only in the OTHER tabs, which is
+   * exactly the ones holding a stale copy.
+   */
+  useEffect(() => {
+    if (!active) return;
+
+    const onStorage = (e) => {
+      // key === null is a whole-storage clear.
+      if (e.key !== TOKEN_STORAGE_KEY && e.key !== null) return;
+      const saved = readSavedToken();
+      publish(saved?.token || null);
+      refreshAccount(saved?.token || null);
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, [active, publish, refreshAccount]);
 
   const connect = async (chooseAccount) => {

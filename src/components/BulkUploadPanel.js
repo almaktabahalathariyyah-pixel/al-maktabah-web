@@ -12,6 +12,7 @@ import { uploadPdfToDrive } from '@/lib/googleDrive';
 import { loadCatalog, matchRow, bookFromRow } from '@/lib/csvCatalog';
 import { canMirror } from '@/lib/mirror';
 import { makeCover } from '@/lib/pdfCover';
+import { useTabLock } from '@/lib/tabLock';
 import {
   X, UploadCloud, CheckCircle, AlertCircle, Loader2, FileSpreadsheet,
   FolderOpen, Play, Pause, SkipForward,
@@ -37,6 +38,9 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
   const { user } = useAuth();
+  // Two tabs uploading the same folder both read the "already in the library"
+  // set before either has written anything, so both treat every file as new.
+  const { runExclusive, busyElsewhere } = useTabLock('bulk-upload');
 
   const [catalog, setCatalog] = useState(null);
   const [catalogName, setCatalogName] = useState('');
@@ -161,7 +165,12 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
 
   // ----------------------------------------------------------------- upload --
 
-  const run = async () => {
+  const run = () =>
+    runExclusive(runQueue, () =>
+      toast.error('การอัปโหลดกำลังทำงานอยู่ในอีกแท็บ — ปิดแท็บนั้น หรือรอให้เสร็จก่อน')
+    );
+
+  const runQueue = async () => {
     // Reachable now: the button used to be `disabled` without a token, so a
     // click did nothing at all and never said why.
     if (!googleToken) {
@@ -481,6 +490,9 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
               <span className={styles.warn} id="drive-required">
                 กรุณาเชื่อมต่อไดรฟ์ก่อน
               </span>
+            )}
+            {busyElsewhere && !running && (
+              <span className={styles.warn}>กำลังอัปโหลดอยู่ในอีกแท็บ</span>
             )}
             {counts.done > 0 && <span className={styles.ok}>เสร็จ {counts.done}</span>}
             {counts.error > 0 && <span className={styles.warn}>ไม่สำเร็จ {counts.error}</span>}

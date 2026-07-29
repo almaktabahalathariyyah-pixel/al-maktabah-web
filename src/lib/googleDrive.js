@@ -10,6 +10,9 @@
  */
 
 const STORAGE_KEY = 'googleDriveToken';
+
+/** So a tab can tell when another one connected, switched or disconnected. */
+export const TOKEN_STORAGE_KEY = STORAGE_KEY;
 const SCOPES = [
   // Create and manage only the files this app made. It cannot see the rest
   // of the owner's Drive.
