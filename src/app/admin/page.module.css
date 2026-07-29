@@ -169,13 +169,15 @@ input[type='text'].searchInput {
 }
 
 /* The label swaps between a count and a progress reading, so it must not
-   re-flow the row every few books — nowrap plus a floor keeps it still.
-   The floor stays modest: this is one of five controls sharing the line, and
-   a wider one is what pushed the rest onto a second row to begin with. */
+   re-flow the row every few books — a floor keeps it still. The floor stays
+   modest: this is one of five controls sharing the line, and a wider one is
+   what pushed the rest onto a second row to begin with. */
 .fileNameBtn {
   min-width: 10.5rem;
-  white-space: nowrap;
 }
+
+/* The counterpart to .hideMobile: only appears once the labels are gone. */
+.mobileOnly { display: none; }
 
 .hotBtn {
   background: var(--hot);
@@ -511,18 +513,27 @@ input[type='text'].searchInput {
     width: auto;
     margin-left: 0;
     align-items: center;
+    justify-content: flex-end;
   }
 
+  /* Glyph only. Sized as a square touch target rather than a shrunken pill,
+     and allowed to widen only for the progress count. */
   .actionButtons > :global(.btn) {
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 0.7rem;
     justify-content: center;
-    padding: 0.65rem 0.75rem;
     font-size: 0.8rem;
-    min-width: 0;
   }
 
   .fileNameBtn {
-    flex-basis: 100%;
+    min-width: 44px;
+  }
+
+  .mobileOnly {
+    display: inline;
+    font-variant-numeric: tabular-nums;
   }
 }
 

@@ -627,20 +627,42 @@ export default function AdminPage() {
                 <LayoutGrid size={18} />
               </button>
             </div>
+            {/* Below 600px these keep the glyph and drop the words. Three Thai
+                labels cannot share a phone's width without breaking mid-word,
+                and a button whose label has broken is worse than no label —
+                the tooltip and aria-label carry the meaning instead. */}
             <button
               onClick={handleStoreFileNames}
               className={`btn ${styles.fileNameBtn}`}
               disabled={storingFileNames || driveBookCount === 0}
               title={fileNameButtonHint}
+              aria-label={fileNameButtonLabel}
             >
               <FileText size={18} />
-              <span>{fileNameButtonLabel}</span>
+              <span className={styles.hideMobile}>{fileNameButtonLabel}</span>
+              {/* A 365-book run is long enough that the phone needs the count
+                  too, even once the label is gone. */}
+              {storingFileNames && (
+                <span className={styles.mobileOnly}>
+                  {fileNameProgress.done}/{fileNameProgress.total}
+                </span>
+              )}
             </button>
-            <button onClick={() => setIsBulkUploadOpen(true)} className={`btn btn-solid ${styles.hotBtn}`}>
-              <UploadCloud size={18} /> <span>อัปโหลดหลายเล่ม</span>
+            <button
+              onClick={() => setIsBulkUploadOpen(true)}
+              className={`btn btn-solid ${styles.hotBtn}`}
+              title="อัปโหลดหลายเล่ม"
+              aria-label="อัปโหลดหลายเล่ม"
+            >
+              <UploadCloud size={18} /> <span className={styles.hideMobile}>อัปโหลดหลายเล่ม</span>
             </button>
-            <button onClick={handleOpenNewBook} className="btn btn-solid">
-              <Plus size={18} /> <span>เพิ่มหนังสือ</span>
+            <button
+              onClick={handleOpenNewBook}
+              className="btn btn-solid"
+              title="เพิ่มหนังสือ"
+              aria-label="เพิ่มหนังสือ"
+            >
+              <Plus size={18} /> <span className={styles.hideMobile}>เพิ่มหนังสือ</span>
             </button>
           </div>
         </div>

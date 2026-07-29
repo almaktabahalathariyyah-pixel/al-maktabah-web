@@ -222,6 +222,10 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   font-size: var(--t-small);
   font-weight: 600;
   line-height: 1.5;
+  /* A label that breaks mid-word — "ตัว / กรอง" — reads as a broken button,
+     and Thai has no spaces to break on, so the browser picks the spot. Let
+     the ROW wrap instead: a button is as wide as its label or it is not. */
+  white-space: nowrap;
   color: var(--fg);
   background: var(--surface-2);
   border: 1px solid var(--border);
