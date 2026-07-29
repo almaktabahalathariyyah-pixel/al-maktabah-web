@@ -22,12 +22,9 @@ async function loadPdfjs() {
   if (pdfjs) return pdfjs;
 
   const lib = await import('pdfjs-dist');
-  // The worker has to be resolved through the bundler, not a CDN — a strict
-  // origin is one less moving part, and the file is already in node_modules.
-  lib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-  ).toString();
+  // The worker has to be resolved through a CDN or copied to public.
+  // Using unpkg ensures it matches the exact version without Webpack import.meta.url issues.
+  lib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${lib.version}/build/pdf.worker.min.mjs`;
 
   pdfjs = lib;
   return pdfjs;
