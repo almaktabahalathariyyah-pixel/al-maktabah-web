@@ -168,7 +168,7 @@ export async function POST(request) {
        * there, upload them ourselves; only if Google withholds them is this
        * really a permissions problem.
        */
-      if (/failed to get HTTP URL content|wrong file identifier|WEBPAGE|HTTP URL/i.test(reason)) {
+      if (/failed to get HTTP URL content|wrong file identifier|WEBPAGE|web page|HTTP URL/i.test(reason)) {
         const pulled = await pullFromDrive(fileUrl);
 
         if (!pulled.ok) return jsonError(pulled.error, pulled.status);

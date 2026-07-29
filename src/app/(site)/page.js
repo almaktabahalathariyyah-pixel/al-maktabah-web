@@ -431,7 +431,6 @@ export default function Home() {
 
         <div className={styles.barTools}>
           <div className={styles.searchWrap}>
-            <Search size={15} className={styles.searchIcon} />
             <input
               ref={searchRef}
               className={styles.search}
@@ -452,7 +451,7 @@ export default function Home() {
               // A click on a suggestion fires after blur; give it room to land.
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             />
-            {queryText ? (
+            {queryText && (
               <button
                 className={styles.searchClear}
                 onClick={() => {
@@ -463,7 +462,9 @@ export default function Home() {
               >
                 <X size={14} />
               </button>
-            ) : (
+            )}
+            <Search size={15} className={styles.searchIcon} />
+            {!queryText && (
               <kbd className={styles.kbd} aria-hidden>/</kbd>
             )}
 
