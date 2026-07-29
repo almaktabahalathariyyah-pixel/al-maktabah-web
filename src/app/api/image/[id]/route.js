@@ -57,7 +57,7 @@ export async function GET(request, { params }) {
     const contentType = resolveImageType(
       fileData.result.file_path,
       imgRes.headers.get('content-type')
-    );
+    ) || 'image/jpeg';
     if (!contentType) return fail(415, 'not-an-image');
 
     return new Response(imgRes.body, { headers: imageHeaders(contentType) });

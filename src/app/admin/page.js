@@ -519,8 +519,7 @@ export default function AdminPage() {
           <div className={styles.filterBottomRow}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>เรียงลำดับ</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(1)} styles={selectStyles}
                 options={[
                   { value: 'desc', label: 'ใหม่ไปเก่า' },
                   { value: 'asc', label: 'เก่าไปใหม่' }
@@ -534,8 +533,7 @@ export default function AdminPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>หมวดหมู่</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(2)} styles={selectStyles}
                 options={[{ value: '', label: 'ทั้งหมด' }, ...categories.map(c => ({ value: c, label: c }))]}
                 value={{ value: categoryFilter, label: categoryFilter || 'ทั้งหมด' }}
                 onChange={(selected) => setCategoryFilter(selected ? selected.value : '')}
@@ -547,8 +545,7 @@ export default function AdminPage() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ประเภท</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(3)} styles={selectStyles}
                 options={[{ value: '', label: 'ทั้งหมด' }, ...types.map(c => ({ value: c, label: c }))]}
                 value={{ value: typeFilter, label: typeFilter || 'ทั้งหมด' }}
                 onChange={(selected) => setTypeFilter(selected ? selected.value : '')}
@@ -560,8 +557,7 @@ export default function AdminPage() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สถานะ</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(4)} styles={selectStyles}
                 options={[
                   { value: '', label: 'ทั้งหมด' },
                   { value: 'public', label: 'สาธารณะ' },
@@ -577,8 +573,7 @@ export default function AdminPage() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ภาษา</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(5)} styles={selectStyles}
                 options={[{ value: '', label: 'ทั้งหมด' }, ...languages.map(c => ({ value: c, label: c }))]}
                 value={{ value: languageFilter, label: languageFilter || 'ทั้งหมด' }}
                 onChange={(selected) => setLanguageFilter(selected ? selected.value : '')}
@@ -590,8 +585,7 @@ export default function AdminPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ปีพิมพ์</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(6)} styles={selectStyles}
                 options={[{ value: '', label: 'ทั้งหมด' }, ...years.map(c => ({ value: c, label: c }))]}
                 value={{ value: yearFilter, label: yearFilter || 'ทั้งหมด' }}
                 onChange={(selected) => setYearFilter(selected ? selected.value : '')}
@@ -603,8 +597,7 @@ export default function AdminPage() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แต่ง</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(7)} styles={selectStyles}
                 options={[{ value: '', label: 'ทั้งหมด' }, ...authors.map(c => ({ value: c, label: c }))]}
                 value={{ value: authorFilter, label: authorFilter || 'ทั้งหมด' }}
                 onChange={(selected) => setAuthorFilter(selected ? selected.value : '')}
@@ -616,8 +609,7 @@ export default function AdminPage() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ผู้แปล</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(8)} styles={selectStyles}
                 options={[{ value: '', label: 'ทั้งหมด' }, ...translators.map(c => ({ value: c, label: c }))]}
                 value={{ value: translatorFilter, label: translatorFilter || 'ทั้งหมด' }}
                 onChange={(selected) => setTranslatorFilter(selected ? selected.value : '')}
@@ -629,8 +621,7 @@ export default function AdminPage() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>สำนักพิมพ์</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(9)} styles={selectStyles}
                 options={[{ value: '', label: 'ทั้งหมด' }, ...publishers.map(c => ({ value: c, label: c }))]}
                 value={{ value: publisherFilter, label: publisherFilter || 'ทั้งหมด' }}
                 onChange={(selected) => setPublisherFilter(selected ? selected.value : '')}
@@ -642,8 +633,7 @@ export default function AdminPage() {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>บัญชี Google ที่เก็บไฟล์</label>
-              <Select
-                styles={selectStyles}
+              <Select instanceId={String(10)} styles={selectStyles}
                 options={[
                   { value: '', label: 'ทั้งหมด' },
                   ...owners.map(o => ({ value: o, label: o })),
