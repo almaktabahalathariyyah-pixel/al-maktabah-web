@@ -471,7 +471,6 @@ export default function AdminPage() {
       <div className={styles.filterBar}>
         <div className={styles.filterTopRow}>
           <div className={styles.searchWrap}>
-            <Search className={styles.searchIcon} size={18} />
             <input 
               type="text" 
               placeholder="ค้นหาชื่อ หรือผู้แต่ง..."
@@ -479,6 +478,7 @@ export default function AdminPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className={styles.searchInput}
             />
+            <Search className={styles.searchIcon} size={18} />
           </div>
           
           <button 

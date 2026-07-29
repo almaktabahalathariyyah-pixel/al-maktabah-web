@@ -1,6 +1,5 @@
 import { resolveReader, tokenFrom, jsonError } from '@/lib/serverAuth';
 
-export const runtime = 'edge';
 
 /**
  * Telegram will fetch a document from a URL itself, capped at 20MB — the same
