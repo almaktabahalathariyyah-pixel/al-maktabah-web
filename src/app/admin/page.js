@@ -49,6 +49,12 @@ function pageWindow(current, total, span = 1) {
   return out;
 }
 
+function readInitialHealthFilter() {
+  if (typeof window === 'undefined') return '';
+  const health = new URLSearchParams(window.location.search).get('health');
+  return ['nofile', 'telegram', 'unmirrored'].includes(health) ? health : '';
+}
+
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -88,7 +94,7 @@ export default function AdminPage() {
   const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = Newest first, 'asc' = Oldest first
   const [currentPage, setCurrentPage] = useState(1);
   // Set by the links on the stats page: 'nofile' | 'telegram' | ''
-  const [healthFilter, setHealthFilter] = useState('');
+  const [healthFilter, setHealthFilter] = useState(readInitialHealthFilter);
 
 
   // Selection & Bulk Edit
@@ -97,15 +103,14 @@ export default function AdminPage() {
   const [bulkValues, setBulkValues] = useState({ category: '', author: '', language: '', restricted: '' });
   const [submittingBulk, setSubmittingBulk] = useState(false);
 
+  const updateFilter = (setter, value) => {
+    setter(value);
+    setCurrentPage(1);
+  };
+
   // The Google script is only needed when a delete touches Drive.
   useEffect(() => {
     loadGoogleScript();
-  }, []);
-
-  // Arriving from the stats page pre-narrows the table to the problem books.
-  useEffect(() => {
-    const health = new URLSearchParams(window.location.search).get('health');
-    if (['nofile', 'telegram', 'unmirrored'].includes(health)) setHealthFilter(health);
   }, []);
 
   useEffect(() => {
@@ -419,11 +424,6 @@ export default function AdminPage() {
   const current = Math.min(currentPage, pageCount);
   const shownBooks = sortedBooks.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  // Reset page to 1 when filters or search change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, categoryFilter, authorFilter, translatorFilter, publisherFilter, languageFilter, typeFilter, yearFilter, statusFilter, ownerFilter, healthFilter, sortOrder]);
-
   const totalBooks = books.length;
   const restrictedCount = books.filter(b => b.restricted).length;
   const publicCount = totalBooks - restrictedCount;
@@ -465,7 +465,7 @@ export default function AdminPage() {
                 ? 'เธเธณเธฅเธฑเธเนเธชเธ”เธเน€เธเธเธฒเธฐเน€เธฅเนเธกเธ—เธตเนเธขเธฑเธเนเธกเนเธกเธตเธชเธณเน€เธเธฒเธชเธณเธฃเธญเธ โ€” เน€เธเธดเธ”เน€เธฅเนเธกเธเธฑเนเธเนเธฅเนเธงเธเธ” "เธชเธณเธฃเธญเธเธ•เธญเธเธเธตเน"'
                 : 'เธเธณเธฅเธฑเธเนเธชเธ”เธเน€เธเธเธฒเธฐเน€เธฅเนเธกเธ—เธตเนเธกเธตเนเธ•เนเนเธเธฅเน Telegram (เน€เธฅเนเธกเนเธซเธเนเธเธงเนเธฒ 20MB เธเธฐเน€เธเธดเธ”เนเธกเนเนเธ”เน)'}
           </span>
-          <button className="btn" onClick={() => setHealthFilter('')}>เนเธชเธ”เธเธ—เธฑเนเธเธซเธกเธ”</button>
+          <button className="btn" onClick={() => updateFilter(setHealthFilter, '')}>เนเธชเธ”เธเธ—เธฑเนเธเธซเธกเธ”</button>
         </div>
       )}
 
@@ -476,7 +476,7 @@ export default function AdminPage() {
               type="text" 
               placeholder="เธเนเธเธซเธฒเธเธทเนเธญ เธซเธฃเธทเธญเธเธนเนเนเธ•เนเธ..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => updateFilter(setSearchQuery, e.target.value)}
               className={styles.searchInput}
             />
             <Search className={styles.searchIcon} size={18} />
@@ -526,7 +526,7 @@ export default function AdminPage() {
                   { value: 'asc', label: 'เน€เธเนเธฒเนเธเนเธซเธกเน' }
                 ]}
                 value={{ value: sortOrder, label: sortOrder === 'asc' ? 'เน€เธเนเธฒเนเธเนเธซเธกเน' : 'เนเธซเธกเนเนเธเน€เธเนเธฒ' }}
-                onChange={(selected) => setSortOrder(selected ? selected.value : 'desc')}
+                onChange={(selected) => updateFilter(setSortOrder, selected ? selected.value : 'desc')}
                 isSearchable={false}
                 classNamePrefix="react-select"
               />
@@ -537,7 +537,7 @@ export default function AdminPage() {
               <Select instanceId={"select-2"} styles={selectStyles}
                 options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...categories.map(c => ({ value: c, label: c }))]}
                 value={{ value: categoryFilter, label: categoryFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
-                onChange={(selected) => setCategoryFilter(selected ? selected.value : '')}
+                onChange={(selected) => updateFilter(setCategoryFilter, selected ? selected.value : '')}
                 placeholder="เธ—เธฑเนเธเธซเธกเธ”"
                 isSearchable={true}
                 classNamePrefix="react-select"
@@ -549,7 +549,7 @@ export default function AdminPage() {
               <Select instanceId={"select-3"} styles={selectStyles}
                 options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...types.map(c => ({ value: c, label: c }))]}
                 value={{ value: typeFilter, label: typeFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
-                onChange={(selected) => setTypeFilter(selected ? selected.value : '')}
+                onChange={(selected) => updateFilter(setTypeFilter, selected ? selected.value : '')}
                 placeholder="เธ—เธฑเนเธเธซเธกเธ”"
                 isSearchable={true}
                 classNamePrefix="react-select"
@@ -565,7 +565,7 @@ export default function AdminPage() {
                   { value: 'restricted', label: 'เธชเธเธงเธเธชเธดเธ—เธเธดเน' }
                 ]}
                 value={{ value: statusFilter, label: statusFilter === 'public' ? 'เธชเธฒเธเธฒเธฃเธ“เธฐ' : statusFilter === 'restricted' ? 'เธชเธเธงเธเธชเธดเธ—เธเธดเน' : 'เธ—เธฑเนเธเธซเธกเธ”' }}
-                onChange={(selected) => setStatusFilter(selected ? selected.value : '')}
+                onChange={(selected) => updateFilter(setStatusFilter, selected ? selected.value : '')}
                 placeholder="เธ—เธฑเนเธเธซเธกเธ”"
                 isSearchable={false}
                 classNamePrefix="react-select"
@@ -577,7 +577,7 @@ export default function AdminPage() {
               <Select instanceId={"select-5"} styles={selectStyles}
                 options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...languages.map(c => ({ value: c, label: c }))]}
                 value={{ value: languageFilter, label: languageFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
-                onChange={(selected) => setLanguageFilter(selected ? selected.value : '')}
+                onChange={(selected) => updateFilter(setLanguageFilter, selected ? selected.value : '')}
                 placeholder="เธ—เธฑเนเธเธซเธกเธ”"
                 isSearchable={true}
                 classNamePrefix="react-select"
@@ -589,7 +589,7 @@ export default function AdminPage() {
               <Select instanceId={"select-6"} styles={selectStyles}
                 options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...years.map(c => ({ value: c, label: c }))]}
                 value={{ value: yearFilter, label: yearFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
-                onChange={(selected) => setYearFilter(selected ? selected.value : '')}
+                onChange={(selected) => updateFilter(setYearFilter, selected ? selected.value : '')}
                 placeholder="เธ—เธฑเนเธเธซเธกเธ”"
                 isSearchable={true}
                 classNamePrefix="react-select"
@@ -601,7 +601,7 @@ export default function AdminPage() {
               <Select instanceId={"select-7"} styles={selectStyles}
                 options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...authors.map(c => ({ value: c, label: c }))]}
                 value={{ value: authorFilter, label: authorFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
-                onChange={(selected) => setAuthorFilter(selected ? selected.value : '')}
+                onChange={(selected) => updateFilter(setAuthorFilter, selected ? selected.value : '')}
                 placeholder="เธ—เธฑเนเธเธซเธกเธ”"
                 isSearchable={true}
                 classNamePrefix="react-select"
@@ -613,7 +613,7 @@ export default function AdminPage() {
               <Select instanceId={"select-8"} styles={selectStyles}
                 options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...translators.map(c => ({ value: c, label: c }))]}
                 value={{ value: translatorFilter, label: translatorFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
-                onChange={(selected) => setTranslatorFilter(selected ? selected.value : '')}
+                onChange={(selected) => updateFilter(setTranslatorFilter, selected ? selected.value : '')}
                 placeholder="เธ—เธฑเนเธเธซเธกเธ”"
                 isSearchable={true}
                 classNamePrefix="react-select"
@@ -625,7 +625,7 @@ export default function AdminPage() {
               <Select instanceId={"select-9"} styles={selectStyles}
                 options={[{ value: '', label: 'เธ—เธฑเนเธเธซเธกเธ”' }, ...publishers.map(c => ({ value: c, label: c }))]}
                 value={{ value: publisherFilter, label: publisherFilter || 'เธ—เธฑเนเธเธซเธกเธ”' }}
-                onChange={(selected) => setPublisherFilter(selected ? selected.value : '')}
+                onChange={(selected) => updateFilter(setPublisherFilter, selected ? selected.value : '')}
                 placeholder="เธ—เธฑเนเธเธซเธกเธ”"
                 isSearchable={true}
                 classNamePrefix="react-select"
@@ -644,7 +644,7 @@ export default function AdminPage() {
                   value: ownerFilter,
                   label: ownerFilter === '__none__' ? 'เธขเธฑเธเนเธกเนเนเธ”เนเธเธฑเธเธ—เธถเธเธเธฑเธเธเธต' : ownerFilter || 'เธ—เธฑเนเธเธซเธกเธ”',
                 }}
-                onChange={(selected) => setOwnerFilter(selected ? selected.value : '')}
+                onChange={(selected) => updateFilter(setOwnerFilter, selected ? selected.value : '')}
                 placeholder="เธ—เธฑเนเธเธซเธกเธ”"
                 isSearchable={true}
                 classNamePrefix="react-select"
@@ -657,6 +657,7 @@ export default function AdminPage() {
                 setPublisherFilter(''); setTypeFilter(''); setLanguageFilter('');
                 setYearFilter(''); setStatusFilter(''); setOwnerFilter(''); setSearchQuery('');
                 setSortOrder('desc');
+                setCurrentPage(1);
               }}>เธฅเนเธฒเธเธ•เธฑเธงเธเธฃเธญเธเธ—เธฑเนเธเธซเธกเธ”</button>
             </div>
           </div>
