@@ -13,13 +13,13 @@ import CreatableSelect from 'react-select/creatable';
 import { selectStyles } from '@/lib/selectStyles';
 import { getNextBookId } from '@/lib/sequentialId';
 import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
-import { uploadPdfToDrive } from '@/lib/googleDrive';
+import { uploadPdfToDrive, driveIdFrom, pickDriveFile, shareWithAnyone } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror, bookSizeBytes } from '@/lib/mirror';
 import { makeCover } from '@/lib/pdfCover';
 import { extractPdfInfo } from '@/lib/pdfInfo';
 import { toCE } from '@/lib/thaiYear';
 import { asList } from '@/lib/people';
-import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy, Sparkles, Loader2 } from 'lucide-react';
+import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy, Sparkles, Loader2, FolderOpen } from 'lucide-react';
 import styles from './BookFormPanel.module.css';
 
 /** Fields the form owns directly; everything else comes from the schema. */
@@ -58,6 +58,10 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   // owner touches that field.
   const [autoFilled, setAutoFilled] = useState(new Set());
   const [analyzing, setAnalyzing] = useState(false);
+  // "ดึงข้อมูลจากลิงก์" — a separate spinner from `analyzing` because this one
+  // downloads the whole PDF first, which for a large book takes real time.
+  const [fetchingFromDrive, setFetchingFromDrive] = useState(false);
+  const [picking, setPicking] = useState(false);
 
   // Uploader state. Google Drive only — see startUpload.
   const [isDragging, setIsDragging] = useState(false);
@@ -307,6 +311,109 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
       }
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  /**
+   * The same analysis as `analyzeFile`, for a book that already has a Drive
+   * link and no local copy in the browser — the common case for old books
+   * added before this page could read a file directly.
+   *
+   * Only works when the file was uploaded through this app's own Drive
+   * connection: the `drive.file` OAuth scope only grants access to files the
+   * app itself created, so a link pasted in from somewhere else (uploaded by
+   * hand, or by a different tool) comes back 403/404 no matter which Google
+   * account is connected. That is a Google restriction, not a bug here.
+   */
+  const analyzeFromDriveLink = async () => {
+    const id = driveIdFrom(driveUrl);
+    if (!id) {
+      toast.error('ลิงก์ Google Drive ไม่ถูกต้อง');
+      return;
+    }
+    if (!googleToken) {
+      toast.error('กรุณาเชื่อมต่อ Google Drive ก่อน');
+      return;
+    }
+
+    setFetchingFromDrive(true);
+    try {
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
+        headers: { Authorization: `Bearer ${googleToken}` },
+      });
+
+      if (res.status === 401) {
+        toast.error('สิทธิ์ Google Drive หมดอายุ กรุณาเชื่อมต่อใหม่');
+        return;
+      }
+      if (res.status === 403 || res.status === 404) {
+        toast.error(
+          'อ่านไฟล์นี้อัตโนมัติไม่ได้ — น่าจะเป็นไฟล์ที่อัปโหลดจากที่อื่น ไม่ใช่ผ่านปุ่มอัปโหลดของเว็บนี้ ' +
+          'ลองดาวน์โหลดมาไว้ในเครื่องแล้วลากเข้าช่องอัปโหลดด้านบนแทน'
+        );
+        return;
+      }
+      if (!res.ok) {
+        toast.error(`ดึงไฟล์จาก Drive ไม่สำเร็จ (${res.status})`);
+        return;
+      }
+
+      const blob = await res.blob();
+      const file = new File([blob], 'book.pdf', { type: 'application/pdf' });
+      await analyzeFile(file);
+    } catch (err) {
+      console.error(err);
+      toast.error('เชื่อมต่อ Google Drive ไม่สำเร็จ');
+    } finally {
+      setFetchingFromDrive(false);
+    }
+  };
+
+  /**
+   * The general-purpose version of analyzeFromDriveLink: opens Google's own
+   * picker so the owner can point at a PDF already in their Drive — from a
+   * previous upload, or another tool entirely — without re-uploading it, and
+   * without needing to already have a working link pasted in.
+   *
+   * Picking a file this way is what grants this app's token permission to
+   * read it (see pickDriveFile), so unlike analyzeFromDriveLink this works
+   * for files this app never touched.
+   */
+  const pickFromDrive = async () => {
+    if (!googleToken) {
+      toast.error('กรุณาเชื่อมต่อ Google Drive ก่อน');
+      return;
+    }
+
+    setPicking(true);
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PICKER_API_KEY;
+      const picked = await pickDriveFile({ token: googleToken, apiKey });
+      if (!picked) return; // ปิดหน้าต่างโดยไม่เลือกไฟล์
+
+      setDriveUrl(`https://drive.google.com/file/d/${picked.id}/view`);
+      if (connectedOwner) setDriveOwner(connectedOwner);
+
+      const shared = await shareWithAnyone(picked.id, googleToken);
+      if (!shared) {
+        toast.error('เลือกไฟล์แล้ว แต่ตั้งค่าเปิดสาธารณะไม่สำเร็จ — ผู้อ่านอาจเปิดไฟล์นี้ไม่ได้ ลองเปิดสิทธิ์ "ใครมีลิงก์ก็เปิดได้" เองใน Drive');
+      }
+
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${picked.id}?alt=media`, {
+        headers: { Authorization: `Bearer ${googleToken}` },
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const file = new File([blob], picked.name || 'book.pdf', { type: 'application/pdf' });
+        await analyzeFile(file);
+      }
+
+      toast.success(`เลือกไฟล์ “${picked.name}” จาก Drive แล้ว`);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'เปิดตัวเลือกไฟล์ไม่สำเร็จ');
+    } finally {
+      setPicking(false);
     }
   };
 
@@ -738,6 +845,46 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                       ระบบกรอกให้เองหลังอัปโหลด วางเองได้ถ้าไฟล์อยู่ใน Drive อยู่แล้ว
                     </span>
                   </label>
+
+                  {!pdfFile && (
+                    <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.75rem' }}>
+                      {driveUrl && (
+                        <button
+                          type="button"
+                          className="btn"
+                          style={{ flex: 1 }}
+                          onClick={analyzeFromDriveLink}
+                          disabled={fetchingFromDrive || !googleToken}
+                        >
+                          {fetchingFromDrive ? (
+                            <><Loader2 size={15} className={styles.spin} /> กำลังดึงไฟล์…</>
+                          ) : (
+                            <><Sparkles size={15} /> ดึงข้อมูล/ปกจากลิงก์นี้</>
+                          )}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn"
+                        style={{ flex: 1 }}
+                        onClick={pickFromDrive}
+                        disabled={picking || !googleToken}
+                      >
+                        {picking ? (
+                          <><Loader2 size={15} className={styles.spin} /> กำลังเปิด Drive…</>
+                        ) : (
+                          <><FolderOpen size={15} /> เลือกไฟล์จาก Drive</>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                  {!pdfFile && (
+                    <span className={styles.fieldHint}>
+                      {driveUrl
+                        ? '“ดึงข้อมูลจากลิงก์นี้” ใช้ได้เฉพาะไฟล์ที่อัปโหลดผ่านปุ่มอัปโหลดของเว็บนี้ — ถ้าเป็นลิงก์จากที่อื่นจะอ่านไม่ได้ ให้ใช้ “เลือกไฟล์จาก Drive” แทน แล้วเลือกไฟล์เดียวกันในหน้าต่างที่เปิดขึ้น'
+                        : '“เลือกไฟล์จาก Drive” เปิดหน้าต่างเลือกไฟล์ของ Google ใช้ได้กับไฟล์ PDF ที่มีอยู่ใน Drive แล้ว ไม่ว่าจะอัปโหลดจากที่ไหนมาก็ตาม'}
+                    </span>
+                  )}
 
                   {/* Which inbox to search when this file needs chasing down. */}
                   <label className={styles.field}>

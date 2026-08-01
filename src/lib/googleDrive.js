@@ -198,19 +198,30 @@ export async function uploadPdfToDrive({ token, file, name, onProgress }) {
   if (!result?.id) throw new Error('Google Drive ไม่ได้ส่งรหัสไฟล์กลับมา');
 
   // Without this the link only works for the account that uploaded it.
-  const permRes = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${result.id}/permissions`,
+  const shared = await shareWithAnyone(result.id, token);
+  if (!shared) throw new Error('อัปโหลดสำเร็จ แต่ตั้งค่าให้เปิดสาธารณะไม่สำเร็จ');
+
+  return { id: result.id, url: `https://drive.google.com/file/d/${result.id}/view` };
+}
+
+/**
+ * Grants "anyone with the link" read access — the sharing level every reader
+ * page assumes, since a book opens straight to Drive rather than through a
+ * server that could check membership itself. Files this app uploads get this
+ * automatically; a file picked from an existing Drive (pickDriveFile below)
+ * needs it applied explicitly, since it was shared however the owner had it
+ * before.
+ */
+export async function shareWithAnyone(id, token) {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${id}/permissions`,
     {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ role: 'reader', type: 'anyone' }),
     }
   );
-  if (!permRes.ok) {
-    throw new Error('อัปโหลดสำเร็จ แต่ตั้งค่าให้เปิดสาธารณะไม่สำเร็จ');
-  }
-
-  return { id: result.id, url: `https://drive.google.com/file/d/${result.id}/view` };
+  return res.ok;
 }
 
 /** Pulls the file id out of either Drive link shape. */
@@ -283,6 +294,91 @@ export async function deleteFromDrive(driveUrl, token) {
   } catch {
     return { ok: false, reason: 'network' };
   }
+}
+
+// -------------------------------------------------------------- picker ----
+
+let pickerApiReady = null;
+
+/**
+ * Google's classic `gapi` loader, needed only to pull in the Picker module —
+ * everything else here talks to the REST API directly and has no use for it.
+ */
+function loadPickerApi() {
+  if (typeof window === 'undefined') return Promise.resolve(false);
+  if (window.google?.picker) return Promise.resolve(true);
+  if (pickerApiReady) return pickerApiReady;
+
+  pickerApiReady = new Promise((resolve) => {
+    const loadPickerModule = () => {
+      window.gapi.load('picker', { callback: () => resolve(true), onerror: () => resolve(false) });
+    };
+    if (window.gapi?.load) {
+      loadPickerModule();
+      return;
+    }
+
+    const existing = document.querySelector('script[src*="apis.google.com/js/api.js"]');
+    if (existing) {
+      existing.addEventListener('load', loadPickerModule);
+      existing.addEventListener('error', () => resolve(false));
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://apis.google.com/js/api.js';
+    script.async = true;
+    script.defer = true;
+    script.onload = loadPickerModule;
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+  return pickerApiReady;
+}
+
+/**
+ * Opens Google's own file browser so the owner can point at a PDF already
+ * sitting in their Drive — uploaded by hand, or by another tool entirely —
+ * without re-uploading the bytes through this app.
+ *
+ * This is also the ONLY way this app's `drive.file`-scoped token can ever
+ * read a file it did not itself create: picking a file through this exact
+ * dialog is what Google counts as the app being "given" that file, which is
+ * what the scope actually grants access to. There is no API call that
+ * shortcuts this — a pasted link alone never earns read access.
+ *
+ * Resolves to { id, name }, or null if the owner closes the dialog empty-handed.
+ */
+export async function pickDriveFile({ token, apiKey }) {
+  if (!apiKey) throw new Error('ยังไม่ได้ตั้งค่า NEXT_PUBLIC_GOOGLE_PICKER_API_KEY');
+
+  const ready = await loadPickerApi();
+  if (!ready) throw new Error('โหลดตัวเลือกไฟล์ของ Google ไม่สำเร็จ ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+
+  return new Promise((resolve, reject) => {
+    try {
+      const picker = window.google.picker;
+      const view = new picker.DocsView(picker.ViewId.DOCS)
+        .setMimeTypes('application/pdf')
+        .setIncludeFolders(true);
+
+      new picker.PickerBuilder()
+        .addView(view)
+        .setOAuthToken(token)
+        .setDeveloperKey(apiKey)
+        .setCallback((data) => {
+          if (data.action === picker.Action.PICKED) {
+            const doc = data.docs?.[0];
+            resolve(doc ? { id: doc.id, name: doc.name } : null);
+          } else if (data.action === picker.Action.CANCEL) {
+            resolve(null);
+          }
+        })
+        .build()
+        .setVisible(true);
+    } catch (err) {
+      reject(err instanceof Error ? err : new Error('เปิดตัวเลือกไฟล์ไม่สำเร็จ'));
+    }
+  });
 }
 
 export const DELETE_REASONS = {
