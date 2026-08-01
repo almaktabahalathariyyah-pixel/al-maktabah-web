@@ -849,12 +849,15 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                   {!pdfFile && (
                     <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.75rem' }}>
                       {driveUrl && (
+                        // Not gated on !googleToken — a disabled button here would
+                        // look identical to a dead one. It stays clickable and the
+                        // handler explains what's missing, same as the dropzone.
                         <button
                           type="button"
                           className="btn"
                           style={{ flex: 1 }}
                           onClick={analyzeFromDriveLink}
-                          disabled={fetchingFromDrive || !googleToken}
+                          disabled={fetchingFromDrive}
                         >
                           {fetchingFromDrive ? (
                             <><Loader2 size={15} className={styles.spin} /> กำลังดึงไฟล์…</>
@@ -868,7 +871,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                         className="btn"
                         style={{ flex: 1 }}
                         onClick={pickFromDrive}
-                        disabled={picking || !googleToken}
+                        disabled={picking}
                       >
                         {picking ? (
                           <><Loader2 size={15} className={styles.spin} /> กำลังเปิด Drive…</>
