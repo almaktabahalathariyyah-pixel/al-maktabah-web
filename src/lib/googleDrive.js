@@ -86,7 +86,20 @@ export async function connectDrive({ chooseAccount = false } = {}) {
         if (response.error) reject(new Error('การยืนยันตัวตน Google ล้มเหลว'));
         else resolve(response.access_token);
       },
-      error_callback: () => reject(new Error('ยกเลิกการเชื่อมต่อ Google')),
+      // A blocked popup fires this with no dialog ever appearing — from the
+      // owner's side that looks identical to the button doing nothing, which
+      // is exactly the complaint this message exists to head off.
+      error_callback: (err) => {
+        if (err?.type === 'popup_failed_to_open') {
+          reject(new Error(
+            'เบราว์เซอร์บล็อกหน้าต่างเชื่อมต่อ Google — กรุณาอนุญาตป๊อปอัพสำหรับเว็บนี้ในตั้งค่าเบราว์เซอร์ แล้วกด "เชื่อมต่อเลย" อีกครั้ง'
+          ));
+        } else if (err?.type === 'popup_closed') {
+          reject(new Error('ปิดหน้าต่างเชื่อมต่อ Google ไปก่อนเสร็จ ลองกด "เชื่อมต่อเลย" อีกครั้ง'));
+        } else {
+          reject(new Error('ยกเลิกการเชื่อมต่อ Google'));
+        }
+      },
     });
     client.requestAccessToken();
   });

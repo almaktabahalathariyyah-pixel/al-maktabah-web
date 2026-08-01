@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import Link from 'next/link';
-import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, UploadCloud, Filter, Mail, FileText } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, UploadCloud, Filter, Mail, FileText, Sparkles } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
 import dynamic from 'next/dynamic';
@@ -22,8 +22,11 @@ import {
   deleteFromDrive,
   fetchDriveAccount,
   fetchDriveFileMeta,
+  driveIdFrom,
   DELETE_REASONS,
 } from '@/lib/googleDrive';
+import { makeCover } from '@/lib/pdfCover';
+import { extractPdfInfo } from '@/lib/pdfInfo';
 import { canMirror, bookSizeBytes } from '@/lib/mirror';
 import { asList, joinPeople, hasPerson, splitPeople } from '@/lib/people';
 import BookFormPanel from '@/components/BookFormPanel';
@@ -51,6 +54,13 @@ function pageWindow(current, total, span = 1) {
     previous = p;
   }
   return out;
+}
+
+/** A book worth re-reading: it has a file, but is missing something the file itself could answer. */
+function needsEnrich(book) {
+  return Boolean(book.driveUrl) && (
+    !book.coverUrl || !book.pages || !book.year || !book.language || asList(book.author).length === 0
+  );
 }
 
 function readInitialHealthFilter() {
@@ -108,6 +118,10 @@ export default function AdminPage() {
   const [submittingBulk, setSubmittingBulk] = useState(false);
   const [storingFileNames, setStoringFileNames] = useState(false);
   const [fileNameProgress, setFileNameProgress] = useState({ done: 0, total: 0 });
+  const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0 });
+  // Lets the "หยุด" click during a run reach the loop without re-running the effect.
+  const enrichCancelled = useRef(false);
 
   const updateFilter = (setter, value) => {
     setter(value);
@@ -491,6 +505,141 @@ export default function AdminPage() {
     }
   };
 
+  /**
+   * Runs the same cover-render + text-scan the single-book form runs on one
+   * file (src/lib/pdfCover.js, src/lib/pdfInfo.js) across every book that
+   * already has a Drive file but is missing something that file could answer
+   * — pages, author, year, language, or the cover itself.
+   *
+   * Sequential and slow on purpose: each book downloads its whole PDF and
+   * renders it in this tab, unlike handleStoreFileNames above which is a
+   * cheap metadata-only call Drive answers in bulk. A shelf of a few hundred
+   * books legitimately takes minutes, hence the stop button.
+   *
+   * Only reads files this app uploaded — the drive.file scope cannot open
+   * anything else without the owner picking it by hand in Google's own
+   * picker, which is what the "เลือกไฟล์จาก Drive" button on the single-book
+   * form is for. A book this loop can't open is reported, not retried.
+   *
+   * Never overwrites a field that already has a value.
+   */
+  const handleEnrichMissing = async () => {
+    if (enriching) {
+      enrichCancelled.current = true;
+      return;
+    }
+
+    const targets = books.filter(needsEnrich);
+    if (targets.length === 0) {
+      toast.info('ไม่มีเล่มที่ต้องเติมข้อมูลแล้ว');
+      return;
+    }
+
+    enrichCancelled.current = false;
+    setEnriching(true);
+    setEnrichProgress({ done: 0, total: targets.length });
+
+    let saved;
+    try {
+      saved = readSavedToken();
+      if (!saved) {
+        toast.info('กำลังเปิดหน้าต่างเชื่อมต่อ Google Drive');
+        saved = await connectDrive();
+      }
+    } catch (err) {
+      toast.error(err.message || 'เชื่อมต่อ Google Drive ไม่สำเร็จ');
+      setEnriching(false);
+      setEnrichProgress({ done: 0, total: 0 });
+      return;
+    }
+
+    let updated = 0;
+    let unreadable = 0;
+    let expired = false;
+    const seenAuthors = new Set();
+    const seenTranslators = new Set();
+
+    for (let i = 0; i < targets.length; i += 1) {
+      if (enrichCancelled.current || expired) break;
+      const book = targets[i];
+
+      try {
+        const id = driveIdFrom(book.driveUrl);
+        const res = id
+          ? await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
+              headers: { Authorization: `Bearer ${saved.token}` },
+            })
+          : null;
+
+        if (res?.status === 401) { expired = true; break; }
+        if (!res || !res.ok) { unreadable += 1; continue; }
+
+        const blob = await res.blob();
+        const file = new File([blob], book.sourceFile || 'book.pdf', { type: 'application/pdf' });
+
+        const patch = {};
+
+        if (!book.coverUrl) {
+          const idToken = await user.getIdToken();
+          const cover = await makeCover(file, { idToken });
+          if (cover.url) patch.coverUrl = cover.url;
+        }
+
+        const info = await extractPdfInfo(file);
+        if (info.pages && !book.pages) patch.pages = info.pages;
+        if (info.year && !book.year) patch.year = info.year;
+        if (info.language && !book.language) patch.language = info.language;
+        if (info.author && asList(book.author).length === 0) {
+          patch.author = [info.author];
+          seenAuthors.add(info.author);
+        }
+        if (info.translator && asList(book.translator).length === 0) {
+          patch.translator = [info.translator];
+          seenTranslators.add(info.translator);
+        }
+
+        if (Object.keys(patch).length > 0) {
+          await updateDoc(doc(db, 'books', book.id), patch);
+          setBooks((prev) => prev.map((b) => (b.id === book.id ? { ...b, ...patch } : b)));
+          updated += 1;
+        }
+      } catch (err) {
+        console.error('Enrich failed for', book.id, err);
+        unreadable += 1;
+      } finally {
+        setEnrichProgress((prev) => ({ ...prev, done: i + 1 }));
+      }
+
+      // A small gap between books — the same courtesy delay the bulk uploader uses.
+      await new Promise((r) => setTimeout(r, 400));
+    }
+
+    if (seenAuthors.size > 0 || seenTranslators.size > 0) {
+      await rememberDropdowns({ authors: [...seenAuthors], translators: [...seenTranslators] });
+    }
+
+    if (expired) {
+      clearSavedToken();
+      toast.error('สิทธิ์ Google Drive หมดอายุ — กดปุ่มนี้อีกครั้งเพื่อเชื่อมต่อใหม่');
+    } else if (enrichCancelled.current) {
+      toast.info(`หยุดแล้ว — เติมข้อมูลไปแล้ว ${updated} เล่ม`);
+    } else if (updated === 0) {
+      toast.info(
+        unreadable > 0
+          ? `อ่านไฟล์ไม่ได้ ${unreadable} เล่ม — ไฟล์เหล่านั้นน่าจะไม่ได้อัปโหลดผ่านเว็บนี้ ใช้ "เลือกไฟล์จาก Drive" ในหน้าแก้ไขเล่มนั้นแทน`
+          : 'ไม่มีอะไรให้เติมเพิ่ม'
+      );
+    } else {
+      toast.success(
+        `เติมข้อมูลสำเร็จ ${updated} เล่ม` +
+        (unreadable > 0 ? ` · อ่านไม่ได้ ${unreadable} เล่ม (ไฟล์จากที่อื่น)` : '')
+      );
+    }
+
+    setEnriching(false);
+    setEnrichProgress({ done: 0, total: 0 });
+  };
+
   if (authLoading || loadingBooks) {
     return <div className="container" style={{paddingTop: '4rem'}}>กำลังตรวจสอบสิทธิ์...</div>;
   }
@@ -562,7 +711,17 @@ export default function AdminPage() {
   const fileNameButtonHint = missingMetaCount > 0
     ? `ยังขาดชื่อไฟล์หรือบัญชี Google อยู่ ${missingMetaCount} เล่ม — กดเพื่อดึงจากไดรฟ์`
     : 'ข้อมูลครบแล้ว — กดเพื่อตรวจซ้ำทั้งคลัง';
-  
+
+  const enrichCount = books.filter(needsEnrich).length;
+  const enrichButtonLabel = enriching
+    ? `กำลังอ่าน ${enrichProgress.done}/${enrichProgress.total} — หยุด`
+    : `เติมข้อมูลที่ขาด${enrichCount > 0 ? ` (${enrichCount})` : ''}`;
+  const enrichButtonHint = enriching
+    ? 'กดอีกครั้งเพื่อหยุดกลางคัน'
+    : enrichCount > 0
+      ? `มี ${enrichCount} เล่มที่ยังขาดปก/ผู้แต่ง/ปี/ภาษา ฯลฯ — กดเพื่อลองอ่านจากไฟล์ให้อัตโนมัติ`
+      : 'ข้อมูลที่ตรวจอัตโนมัติได้ครบแล้วทุกเล่ม';
+
   const allSelected =
     shownBooks.length > 0 && shownBooks.every((b) => selectedBooks.has(b.id));
 
@@ -651,7 +810,7 @@ export default function AdminPage() {
             <button
               onClick={handleStoreFileNames}
               className={`btn ${styles.fileNameBtn}`}
-              disabled={storingFileNames || driveBookCount === 0}
+              disabled={storingFileNames || enriching || driveBookCount === 0}
               title={fileNameButtonHint}
               aria-label={fileNameButtonLabel}
             >
@@ -662,6 +821,21 @@ export default function AdminPage() {
               {storingFileNames && (
                 <span className={styles.mobileOnly}>
                   {fileNameProgress.done}/{fileNameProgress.total}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={handleEnrichMissing}
+              className={`btn ${styles.fileNameBtn}`}
+              disabled={storingFileNames || (driveBookCount === 0 && !enriching)}
+              title={enrichButtonHint}
+              aria-label={enrichButtonLabel}
+            >
+              <Sparkles size={18} />
+              <span className={styles.hideMobile}>{enrichButtonLabel}</span>
+              {enriching && (
+                <span className={styles.mobileOnly}>
+                  {enrichProgress.done}/{enrichProgress.total}
                 </span>
               )}
             </button>

@@ -303,6 +303,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
       if (info.author && asList(current.author).length === 0) { next.author = [info.author]; filled.push('author'); }
       if (info.translator && asList(current.translator).length === 0) { next.translator = [info.translator]; filled.push('translator'); }
       if (info.year && !current.year) { next.year = info.year; filled.push('year'); }
+      if (info.language && !current.language) { next.language = info.language; filled.push('language'); }
 
       if (filled.length > 0) {
         setValues(next);

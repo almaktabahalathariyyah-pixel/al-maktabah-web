@@ -117,14 +117,36 @@ function extractYear(text) {
 }
 
 /**
+ * Which script dominates the text — counted, not just "contains", so a
+ * bismillah on a Thai title page does not make the book Arabic. Mirrors
+ * scripts/extract-catalog.mjs's detectLanguage, but with a higher signal
+ * threshold: that version often has only a filename to go on, this one has
+ * several pages of real text.
+ */
+function detectLanguage(text) {
+  const thai = (text.match(/[฀-๿]/g) || []).length;
+  const arabic = (text.match(/[؀-ۿ]/g) || []).length;
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+
+  const total = thai + arabic + latin;
+  if (total < 40) return '';
+
+  if (thai / total > 0.25) return 'ไทย';
+  if (arabic / total > 0.5) return 'อาหรับ';
+  if (latin / total > 0.5) return 'อังกฤษ';
+  return '';
+}
+
+/**
  * Reads `file`'s page count, embedded Author metadata, and (best-effort)
- * author, translator and publication year out of its first pages of text.
+ * author, translator, language and publication year out of its first pages
+ * of text.
  *
  * Never throws — a file pdf.js cannot parse comes back as all-empty, the
  * same as a file with nothing to find.
  */
 export async function extractPdfInfo(file) {
-  const result = { pages: 0, author: '', translator: '', year: '' };
+  const result = { pages: 0, author: '', translator: '', year: '', language: '' };
   let doc = null;
 
   try {
@@ -161,6 +183,7 @@ export async function extractPdfInfo(file) {
     }
     result.translator = extractByline(text, TRANSLATOR_BYLINE_PATTERNS);
     result.year = extractYear(text);
+    result.language = detectLanguage(text);
   } catch (err) {
     console.warn('Could not read info from', file.name, err?.message || err);
   } finally {
