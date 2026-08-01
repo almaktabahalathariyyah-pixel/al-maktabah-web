@@ -15,8 +15,11 @@ import { getNextBookId } from '@/lib/sequentialId';
 import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
 import { uploadPdfToDrive } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror, bookSizeBytes } from '@/lib/mirror';
+import { makeCover } from '@/lib/pdfCover';
+import { extractPdfInfo } from '@/lib/pdfInfo';
+import { toCE } from '@/lib/thaiYear';
 import { asList } from '@/lib/people';
-import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy } from 'lucide-react';
+import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy, Sparkles, Loader2 } from 'lucide-react';
 import styles from './BookFormPanel.module.css';
 
 /** Fields the form owns directly; everything else comes from the schema. */
@@ -50,6 +53,12 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [note, setNote] = useState('');
 
+  // Fields the file itself filled in, so the owner knows which values to
+  // double-check rather than trust outright. Clears per-field as soon as the
+  // owner touches that field.
+  const [autoFilled, setAutoFilled] = useState(new Set());
+  const [analyzing, setAnalyzing] = useState(false);
+
   // Uploader state. Google Drive only — see startUpload.
   const [isDragging, setIsDragging] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
@@ -82,6 +91,12 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   const onCloseRef = useRef(onClose);
   useEffect(() => { toastRef.current = toast; }, [toast]);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
+  // analyzeFile reads this after an `await`, by which point the owner may
+  // already have typed something — a plain closure over `values` would see
+  // whatever was there when the file was picked, not what's on screen now.
+  const valuesRef = useRef(values);
+  useEffect(() => { valuesRef.current = values; }, [values]);
 
   // Load data when opened
   useEffect(() => {
@@ -201,6 +216,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           setSizeBytes(0);
           setMirrorNote('');
         }
+        setAutoFilled(new Set());
       } catch (err) {
         console.error("Error fetching data:", err);
         if (isMounted) toastRef.current.error('เกิดข้อผิดพลาดในการโหลดข้อมูล');
@@ -213,7 +229,17 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     return () => { isMounted = false; };
   }, [isOpen, bookId]);
 
-  const set = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
+  const set = (key, value) => {
+    setValues((prev) => ({ ...prev, [key]: value }));
+    // Once the owner has looked at (or changed) a value, it is no longer an
+    // unverified guess — even setting it back to what the file suggested.
+    setAutoFilled((prev) => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  };
 
   // Dropzone Handlers
   const onDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
@@ -236,6 +262,52 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     setUploadStatus('idle');
     setUploadError('');
     setDriveProgress(0);
+    analyzeFile(file);
+  };
+
+  /**
+   * Runs the moment a PDF is picked, before Drive upload even starts: the
+   * file's first page becomes the cover (same renderer the bulk uploader
+   * uses) and its first few pages of text are scanned for facts the owner
+   * would otherwise type by hand. Both are best-effort and never block
+   * anything — a book with neither is exactly today's behavior.
+   */
+  const analyzeFile = async (file) => {
+    if (!coverUrl) {
+      setUploadingImage(true);
+      try {
+        const idToken = await user.getIdToken();
+        const { url, error } = await makeCover(file, { idToken });
+        if (url) {
+          setCoverUrl(url);
+        } else if (error) {
+          setNote(`สร้างปกจากไฟล์อัตโนมัติไม่ได้ — ${error}`);
+        }
+      } finally {
+        setUploadingImage(false);
+      }
+    }
+
+    setAnalyzing(true);
+    try {
+      const info = await extractPdfInfo(file);
+
+      const current = valuesRef.current;
+      const next = { ...current };
+      const filled = [];
+      if (info.pages && !current.pages) { next.pages = info.pages; filled.push('pages'); }
+      if (info.author && asList(current.author).length === 0) { next.author = [info.author]; filled.push('author'); }
+      if (info.translator && asList(current.translator).length === 0) { next.translator = [info.translator]; filled.push('translator'); }
+      if (info.year && !current.year) { next.year = info.year; filled.push('year'); }
+
+      if (filled.length > 0) {
+        setValues(next);
+        setAutoFilled((prev) => new Set([...prev, ...filled]));
+        toast.info('ระบบตรวจพบข้อมูลบางส่วนจากไฟล์ — กรุณาตรวจสอบความถูกต้องก่อนบันทึก');
+      }
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const startUpload = async () => {
@@ -465,7 +537,14 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   /** One field, rendered from the schema. */
   const renderField = (field) => (
     <label key={field.key} className={`${styles.field} ${field.type === 'textarea' ? styles.wide : ''}`}>
-      <span className={styles.label}>{field.label}</span>
+      <span className={styles.label}>
+        {field.label}
+        {autoFilled.has(field.key) && (
+          <span className={styles.autoBadge}>
+            <Sparkles size={11} /> จากไฟล์ โปรดตรวจสอบ
+          </span>
+        )}
+      </span>
       {field.type === 'textarea' ? (
         <textarea rows={4} className={styles.input} value={values[field.key] || ''} onChange={(e) => set(field.key, e.target.value)} />
       ) : field.type === 'bool' ? (
@@ -496,6 +575,14 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           options={options[field.key] || []}
           value={values[field.key] ? { value: values[field.key], label: values[field.key] } : null}
           onChange={(selected) => set(field.key, selected ? selected.value : '')}
+          // A ปีพิมพ์ typed as พ.ศ. (e.g. 2568) is not among the ค.ศ. year
+          // options offered, so it always lands here rather than onChange —
+          // this is where it gets converted before it ever reaches the form.
+          onCreateOption={field.key === 'year' ? (inputValue) => {
+            const ce = toCE(inputValue);
+            if (ce !== inputValue) toast.info(`แปลง พ.ศ. ${inputValue} เป็น ค.ศ. ${ce} ให้แล้ว`);
+            set(field.key, ce);
+          } : undefined}
           placeholder="ค้นหาหรือเพิ่มใหม่..."
           formatCreateLabel={(inputValue) => `เพิ่ม "${inputValue}"`}
           classNamePrefix="react-select"
@@ -600,6 +687,12 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                           {(pdfFile.size / (1024 * 1024)).toFixed(2)} MB
                         </span>
                       </div>
+
+                      {analyzing && (
+                        <p className={styles.uploadOk}>
+                          <Loader2 size={15} className={styles.spin} /> กำลังอ่านไฟล์เพื่อทำปกและตรวจข้อมูล…
+                        </p>
+                      )}
 
                       {uploadStatus === 'idle' && (
                         <button type="button" onClick={startUpload} className="btn btn-solid btn-block">

@@ -15,10 +15,11 @@ const JPEG_QUALITY = 0.82;
 let pdfjs = null;
 
 /**
- * pdf.js is ~1MB and only the bulk uploader needs it, so it is imported on
- * first use rather than shipped to every reader.
+ * pdf.js is ~1MB and only the admin upload forms need it, so it is imported
+ * on first use rather than shipped to every reader. Exported so pdfInfo.js
+ * shares the same cached instance instead of loading the library twice.
  */
-async function loadPdfjs() {
+export async function loadPdfjs() {
   if (pdfjs) return pdfjs;
 
   const lib = await import('pdfjs-dist');

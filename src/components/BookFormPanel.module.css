@@ -113,6 +113,20 @@
   font-weight: 500;
 }
 
+.autoBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--r-pill);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  vertical-align: middle;
+}
+
 .input {
   width: 100%;
   padding: 0.6rem 0.75rem;
