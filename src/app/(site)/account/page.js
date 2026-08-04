@@ -2,15 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { doc, getDoc } from 'firebase/firestore';
-import { LogOut, MessageCircle, Send, Globe } from 'lucide-react';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { LogOut, MessageCircle, Send, Globe, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/firebase';
 import styles from './page.module.css';
 
 export default function AccountPage() {
-  const { user, loading, logout } = useAuth();
+  const { user, profile, approved, isAdmin, loading, logout } = useAuth();
+  const { toast } = useToast();
   const [contactChannels, setContactChannels] = useState([]);
+  const [social, setSocial] = useState('');
+  const [note, setNote] = useState('');
+  const [sending, setSending] = useState(false);
+  // Mirrors what was just saved, so the card switches to "รออนุมัติ" without
+  // waiting for the profile to be re-read.
+  const [justSent, setJustSent] = useState(false);
 
   useEffect(() => {
     const fetchChannels = async () => {
@@ -28,6 +36,41 @@ export default function AccountPage() {
     };
     fetchChannels();
   }, []);
+
+  // Start the form from whatever was sent last time, so a reader editing a
+  // request does not have to retype it.
+  useEffect(() => {
+    if (!profile) return;
+    setSocial(profile.social || '');
+    setNote(profile.requestNote || '');
+  }, [profile]);
+
+  const submitRequest = async (e) => {
+    e.preventDefault();
+    if (!social.trim() && !note.trim()) {
+      toast.error('กรุณากรอกอย่างน้อยหนึ่งช่อง เพื่อให้ผู้ดูแลรู้ว่าคุณเป็นใคร');
+      return;
+    }
+
+    setSending(true);
+    try {
+      // These four fields, and only these four, are what the security rule
+      // lets a reader write about their own access — see firestore.rules.
+      await updateDoc(doc(db, 'users', user.uid), {
+        social: social.trim(),
+        requestNote: note.trim(),
+        accessStatus: 'pending',
+        requestedAt: new Date(),
+      });
+      setJustSent(true);
+      toast.success('ส่งคำขอแล้ว รอผู้ดูแลตรวจสอบ');
+    } catch (err) {
+      console.error('Access request failed:', err);
+      toast.error('ส่งคำขอไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (loading) return <p className={styles.loading}>กำลังโหลด…</p>;
 
@@ -74,6 +117,80 @@ export default function AccountPage() {
           <button className={`btn ${styles.logout}`} onClick={logout}>
             <LogOut size={15} /> ออกจากระบบ
           </button>
+        </section>
+
+        {/* Access to the restricted shelf: where it stands, and how to ask. */}
+        <section className={styles.card}>
+          <h2 className={styles.sectionTitle}>สิทธิ์อ่านหนังสือสงวนสิทธิ์</h2>
+
+          {approved || isAdmin ? (
+            <p className={`${styles.statusLine} ${styles.statusOk}`}>
+              <CheckCircle size={17} />
+              <span>
+                {isAdmin
+                  ? 'คุณเป็นผู้ดูแลระบบ เข้าถึงได้ทุกเล่ม'
+                  : 'ได้รับอนุมัติแล้ว เปิดอ่านได้ทุกเล่ม'}
+              </span>
+            </p>
+          ) : justSent || profile?.accessStatus === 'pending' ? (
+            <>
+              <p className={`${styles.statusLine} ${styles.statusWait}`}>
+                <Clock size={17} />
+                <span>ส่งคำขอแล้ว รอผู้ดูแลตรวจสอบ</span>
+              </p>
+              <p className={styles.statusHelp}>
+                เมื่อได้รับอนุมัติ หนังสือสงวนสิทธิ์จะเปิดอ่านได้ทันทีโดยไม่ต้องทำอะไรเพิ่ม
+                หากต้องการแก้ไขข้อมูล ส่งใหม่ได้จากด้านล่าง
+              </p>
+            </>
+          ) : profile?.accessStatus === 'rejected' ? (
+            <p className={`${styles.statusLine} ${styles.statusNo}`}>
+              <AlertTriangle size={17} />
+              <span>คำขอก่อนหน้านี้ไม่ได้รับอนุมัติ — ส่งใหม่พร้อมข้อมูลเพิ่มเติมได้</span>
+            </p>
+          ) : (
+            <p className={styles.statusHelp}>
+              หนังสือบางเล่มเปิดให้เฉพาะสมาชิกที่ได้รับอนุมัติ
+              กรอกข้อมูลด้านล่างเพื่อให้ผู้ดูแลรู้ว่าคุณเป็นใคร แล้วกดส่งคำขอ
+            </p>
+          )}
+
+          {!approved && !isAdmin && (
+            <form className={styles.requestForm} onSubmit={submitRequest}>
+              <label className={styles.field}>
+                <span className={styles.fieldLabel}>ลิงก์โซเชียลหรือช่องทางติดต่อ</span>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={social}
+                  onChange={(e) => setSocial(e.target.value)}
+                  placeholder="เช่น facebook.com/ชื่อคุณ หรือ LINE ID"
+                  maxLength={200}
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.fieldLabel}>แนะนำตัวสั้นๆ</span>
+                <textarea
+                  className={styles.textarea}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="เช่น เรียนอยู่ที่ไหน รู้จักคลังนี้จากใคร ต้องการอ่านเรื่องอะไร"
+                  rows={3}
+                  maxLength={500}
+                />
+                <span className={styles.counter}>{note.length}/500</span>
+              </label>
+
+              <button type="submit" className="btn btn-solid" disabled={sending}>
+                {sending
+                  ? 'กำลังส่ง…'
+                  : justSent || profile?.accessStatus === 'pending'
+                    ? 'ส่งข้อมูลอีกครั้ง'
+                    : 'ส่งคำขอสิทธิ์'}
+              </button>
+            </form>
+          )}
         </section>
 
         {contactChannels.length > 0 && (

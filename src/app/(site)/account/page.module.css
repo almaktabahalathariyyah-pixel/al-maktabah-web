@@ -102,3 +102,71 @@
 .channel:hover svg {
   color: var(--accent);
 }
+
+/* ---------------- Access request ---------------- */
+.statusLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: var(--t-small);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+.statusLine svg { flex: none; margin-top: 0.15rem; }
+.statusOk { color: var(--accent); }
+.statusWait { color: var(--fg-2); }
+.statusNo { color: var(--hot); }
+
+.statusHelp {
+  font-size: var(--t-small);
+  line-height: 1.7;
+  color: var(--fg-3);
+}
+
+.requestForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.field { display: flex; flex-direction: column; gap: 0.4rem; position: relative; }
+.fieldLabel {
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: var(--tr-label);
+  color: var(--fg-2);
+}
+
+/* Qualified with the element+attribute: globals.css styles input[type="text"]
+   at (0,1,1), which outranks a lone class however the sheets are ordered. */
+input[type='text'].input,
+.textarea {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: var(--t-small);
+  line-height: 1.6;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.textarea { resize: vertical; min-height: 5.5rem; }
+
+input[type='text'].input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.counter {
+  align-self: flex-end;
+  font-size: var(--t-micro);
+  color: var(--fg-3);
+  font-variant-numeric: tabular-nums;
+}

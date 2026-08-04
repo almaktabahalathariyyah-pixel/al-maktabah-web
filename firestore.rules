@@ -91,6 +91,24 @@ service cloud.firestore {
         // `role` and `approved` are deliberately absent from this list.
         || (isSelf(uid) && changed().hasOnly(['savedBooks', 'social', 'displayName', 'photoURL']))
 
+        // Asking to be let in. A reader may put THEMSELVES in the queue and
+        // say who they are, but the decision stays the owner's: `approved`
+        // must still be false afterwards and `role` cannot be touched, so the
+        // worst a forged request can do is join a queue. The note is bounded
+        // because it is free text written by someone not yet trusted.
+        || (isSelf(uid)
+            && changed().hasOnly(['social', 'requestNote', 'accessStatus', 'requestedAt'])
+            && request.resource.data.accessStatus == 'pending'
+            && request.resource.data.approved == false
+            && (!('requestNote' in request.resource.data)
+                || request.resource.data.requestNote is string)
+            && (!('requestNote' in request.resource.data)
+                || request.resource.data.requestNote.size() <= 500)
+            && (!('social' in request.resource.data)
+                || request.resource.data.social is string)
+            && (!('social' in request.resource.data)
+                || request.resource.data.social.size() <= 200))
+
         // Redeeming an invite. The code is checked HERE, in the rule, because
         // the join page runs in the reader's own browser and can be edited.
         || (isSelf(uid)

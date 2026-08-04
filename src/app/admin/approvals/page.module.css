@@ -100,5 +100,23 @@
 
 @media (max-width: 760px) {
   .row { grid-template-columns: 1fr auto; row-gap: 0.6rem; }
-  .social, .noSocial { grid-column: 1 / -1; }
+  .said { grid-column: 1 / -1; }
+}
+
+/* What the reader said about themselves: the link (or LINE id) and the note
+   they wrote when asking to be let in. Kept in one cell so the note sits
+   under its own link rather than in the actions column. */
+.said {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.note {
+  font-size: var(--t-small);
+  line-height: 1.6;
+  color: var(--fg-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

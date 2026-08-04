@@ -131,19 +131,30 @@ export default function ApprovalsPage() {
                 </div>
               </div>
 
-              {u.social ? (
-                <a
-                  className={styles.social}
-                  href={u.social.startsWith('http') ? u.social : `https://${u.social}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span className={styles.socialText}>{u.social}</span>
-                  <ExternalLink size={13} />
-                </a>
-              ) : (
-                <span className={styles.noSocial}>ไม่ได้แนบลิงก์</span>
-              )}
+              <div className={styles.said}>
+                {/* Only linkify something that looks like a URL — a LINE ID is
+                    a perfectly good answer here and must not become a broken
+                    https:// link. */}
+                {u.social ? (
+                  /^(https?:\/\/|www\.)|\.[a-z]{2,}(\/|$)/i.test(u.social) ? (
+                    <a
+                      className={styles.social}
+                      href={u.social.startsWith('http') ? u.social : `https://${u.social}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span className={styles.socialText}>{u.social}</span>
+                      <ExternalLink size={13} />
+                    </a>
+                  ) : (
+                    <span className={styles.socialText}>{u.social}</span>
+                  )
+                ) : (
+                  <span className={styles.noSocial}>ไม่ได้แนบลิงก์</span>
+                )}
+
+                {u.requestNote && <p className={styles.note}>{u.requestNote}</p>}
+              </div>
 
               <div className={styles.acts}>
                 {tab !== 'approved' && (
