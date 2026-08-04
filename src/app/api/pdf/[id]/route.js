@@ -23,7 +23,13 @@ function textError(message, status) {
 function htmlPage(html, status = 200) {
   return new Response(html, {
     status,
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      // This page carries the reader's token in its own URL and links out to
+      // the contact channel; no request from it may leak a Referer.
+      'Referrer-Policy': 'no-referrer',
+    },
   });
 }
 
@@ -84,6 +90,11 @@ async function serveFromTelegram({ telegramFileId, title, action }) {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `${disposition}; filename*=UTF-8''${safeName}`,
         'Cache-Control': 'private, no-store',
+        // The reader's ID token travels in this URL — an <iframe src> and a
+        // window.open() cannot carry an Authorization header, which is why
+        // tokenFrom() accepts ?token= at all. Nothing this document loads may
+        // therefore be allowed to send a Referer, or the token rides along.
+        'Referrer-Policy': 'no-referrer',
         // Lets the reader-facing page tell which copy they are looking at.
         'X-Maktabah-Source': 'telegram',
       },
@@ -122,6 +133,11 @@ async function serveFromDrive({ driveId, title, action }) {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `${disposition}; filename*=UTF-8''${safeName}`,
         'Cache-Control': 'private, no-store',
+        // The reader's ID token travels in this URL — an <iframe src> and a
+        // window.open() cannot carry an Authorization header, which is why
+        // tokenFrom() accepts ?token= at all. Nothing this document loads may
+        // therefore be allowed to send a Referer, or the token rides along.
+        'Referrer-Policy': 'no-referrer',
         'X-Maktabah-Source': 'drive',
       },
     });

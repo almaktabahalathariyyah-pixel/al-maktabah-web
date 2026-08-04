@@ -59,12 +59,6 @@ function write(name, claim) {
   }
 }
 
-/** True when this tab holds the lock (or storage is unavailable to arbitrate). */
-export function heldByUs(name) {
-  const claim = read(name);
-  return !claim || claim.owner === TAB_ID;
-}
-
 /** Whether some OTHER tab currently holds it. */
 export function heldByOther(name) {
   const claim = read(name);

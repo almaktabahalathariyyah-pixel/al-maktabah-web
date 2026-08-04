@@ -7,6 +7,22 @@ import { resolveImageType, imageHeaders } from '@/lib/coverType';
  * broke. The body stays generic — Telegram's own error text can carry the chat
  * id — but the admin cover check reads the header, so "ปกไม่แสดง" is one click
  * away from a reason instead of a guess.
+ *
+ * DELIBERATELY UNAUTHENTICATED, and it has to be: covers are rendered with a
+ * plain <img src>, which sends no Authorization header, and the public shelf
+ * must show them to signed-out visitors.
+ *
+ * That leaves a gap against firestore.rules, which states that a restricted
+ * title must not be readable "not its cover, not its description". Here the
+ * only thing protecting a restricted cover is that reaching it requires the
+ * opaque Telegram file_id, and the file_id lives on the book document, which
+ * the rules do gate. So it is obscurity standing in for a check.
+ *
+ * Closing it properly means addressing the cover by BOOK id rather than
+ * file_id, so this route can load the book and honour `restricted` — which
+ * also means rewriting every stored `coverUrl`. That migration has not been
+ * done because the shelf currently holds no restricted titles at all; do it
+ * before the first one is added, not after.
  */
 
 /**

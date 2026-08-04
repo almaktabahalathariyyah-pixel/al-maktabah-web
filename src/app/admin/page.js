@@ -28,6 +28,7 @@ import {
 import { makeCover } from '@/lib/pdfCover';
 import { extractPdfInfo } from '@/lib/pdfInfo';
 import { canMirror, bookSizeBytes } from '@/lib/mirror';
+import { useTabLock } from '@/lib/tabLock';
 import { asList, joinPeople, hasPerson, splitPeople } from '@/lib/people';
 import BookFormPanel from '@/components/BookFormPanel';
 import BulkUploadPanel from '@/components/BulkUploadPanel';
@@ -94,6 +95,14 @@ export default function AdminPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { confirm, ask } = useConfirm();
+  /**
+   * Both passes below walk the entire shelf and write to Firestore, which is
+   * exactly what the bulk uploader and the Telegram mirror already hold a
+   * lease for. Two admin tabs running these at once doubles every Drive
+   * download, every OCR pass and every write — the last of which comes
+   * straight out of a Spark-tier quota.
+   */
+  const { runExclusive: runShelfJob, busyElsewhere: shelfJobElsewhere } = useTabLock('shelf-scan');
 
   const [books, setBooks] = useState([]);
   const [loadingBooks, setLoadingBooks] = useState(true);
@@ -436,7 +445,12 @@ export default function AdminPage() {
    * Files in a second Google account answer 404 under the connected token, so
    * they are reported as skipped rather than failed: switch account, run again.
    */
-  const handleStoreFileNames = async () => {
+  const handleStoreFileNames = () =>
+    runShelfJob(runStoreFileNamesPass, () =>
+      toast.error('มีการตรวจคลังทำงานอยู่ในอีกแท็บ — ปิดแท็บนั้น หรือรอให้เสร็จก่อน')
+    );
+
+  const runStoreFileNamesPass = async () => {
     const onDrive = books.filter((book) => book.driveUrl);
     if (onDrive.length === 0) {
       toast.info('ยังไม่มีเล่มที่เก็บไฟล์ไว้ใน Google Drive');
@@ -549,22 +563,43 @@ export default function AdminPage() {
    * re-reads every book with a file, ignoring that stamp.
    */
   const handleEnrichMissing = async () => {
+    // Stopping a run in progress is this same button, and must not be gated
+    // on a lease this tab already holds.
     if (enriching) {
       enrichCancelled.current = true;
       return;
     }
+    runShelfJob(runEnrichPass, () =>
+      toast.error('มีการตรวจคลังทำงานอยู่ในอีกแท็บ — ปิดแท็บนั้น หรือรอให้เสร็จก่อน')
+    );
+  };
 
-    // Nothing left unchecked — "กดเพื่อตรวจซ้ำทั้งคลัง" promises a real
-    // recheck, so an explicit click here re-reads every file regardless of
-    // enrichCheckedAt, on the assumption the owner has a reason to ask again
-    // (a relinked file, a newly-connected Drive account, and so on).
+  const runEnrichPass = async () => {
     let targets = books.filter(needsEnrich);
+
+    // Nothing left unchecked. Re-reading the whole shelf is a legitimate thing
+    // to want — a relinked file, a newly connected Drive account — but it is
+    // hours of downloading and OCR, and the button still reads "เติมข้อมูลที่
+    // ขาด" with no count beside it. On a phone the explanatory tooltip cannot
+    // be seen at all, so a mis-tap would silently start the most expensive job
+    // in the app. Ask first.
     if (targets.length === 0) {
-      targets = books.filter((b) => Boolean(b.driveUrl));
-      if (targets.length === 0) {
+      const everything = books.filter((b) => Boolean(b.driveUrl));
+      if (everything.length === 0) {
         toast.info('ยังไม่มีหนังสือที่มีไฟล์ให้ตรวจ');
         return;
       }
+      const goAhead = await confirm({
+        title: 'ตรวจซ้ำทั้งคลัง?',
+        message:
+          `ทุกเล่มถูกตรวจไปแล้ว การตรวจซ้ำจะดาวน์โหลดไฟล์ทั้ง ${everything.length} เล่มใหม่ทั้งหมด ` +
+          'และใช้เวลานานมาก (เล่มที่เป็นภาพสแกนต้องอ่านตัวอักษรจากภาพทีละเล่ม) ' +
+          'ทำเมื่อไฟล์ใน Drive เปลี่ยนไปจริงๆ เท่านั้น',
+        confirmLabel: 'ตรวจซ้ำทั้งคลัง',
+        tone: 'danger',
+      });
+      if (!goAhead) return;
+      targets = everything;
     }
 
     enrichCancelled.current = false;
@@ -605,8 +640,25 @@ export default function AdminPage() {
             })
           : null;
 
+        // 401 is OUR token expiring — every remaining book would fail the same
+        // way, so stop rather than burn through the shelf marking it unreadable.
         if (res?.status === 401) { expired = true; break; }
-        if (!res || !res.ok) { unreadable += 1; continue; }
+
+        if (!res || !res.ok) {
+          unreadable += 1;
+          // 403/404 means this file belongs to a different Google account (or
+          // is gone). That is permanent as far as the connected token is
+          // concerned, so stamp it and stop asking — otherwise these books
+          // sit in the queue being re-attempted on every single run forever,
+          // which is the exact waste enrichCheckedAt exists to end. Anything
+          // else (a timeout, a 5xx) is left unstamped so it retries.
+          if (res && (res.status === 403 || res.status === 404)) {
+            const stamp = { enrichCheckedAt: new Date() };
+            await updateDoc(doc(db, 'books', book.id), stamp);
+            setBooks((prev) => prev.map((b) => (b.id === book.id ? { ...b, ...stamp } : b)));
+          }
+          continue;
+        }
 
         const blob = await res.blob();
         const file = new File([blob], book.sourceFile || 'book.pdf', { type: 'application/pdf' });
@@ -771,6 +823,8 @@ export default function AdminPage() {
     : `เติมข้อมูลที่ขาด${enrichCount > 0 ? ` (${enrichCount})` : ''}`;
   const enrichButtonHint = enriching
     ? `กำลังอ่าน: ${enrichCurrent || '…'} — กดอีกครั้งเพื่อหยุดกลางคัน`
+    : shelfJobElsewhere
+    ? 'มีการตรวจคลังทำงานอยู่ในอีกแท็บ'
     : enrichCount > 0
       ? `มี ${enrichCount} เล่มที่ยังไม่เคยตรวจ และยังขาดปก/ผู้แต่ง/ภาษา ฯลฯ — กดเพื่อลองอ่านจากไฟล์ให้อัตโนมัติ`
       : 'ทุกเล่มที่มีไฟล์ถูกตรวจแล้ว — กดอีกครั้งเพื่อตรวจซ้ำทั้งคลัง';
@@ -889,7 +943,7 @@ export default function AdminPage() {
             <button
               onClick={handleStoreFileNames}
               className={`btn ${styles.fileNameBtn}`}
-              disabled={storingFileNames || enriching || driveBookCount === 0}
+              disabled={storingFileNames || enriching || shelfJobElsewhere || driveBookCount === 0}
               title={fileNameButtonHint}
               aria-label={fileNameButtonLabel}
             >
@@ -906,7 +960,12 @@ export default function AdminPage() {
             <button
               onClick={handleEnrichMissing}
               className={`btn ${styles.fileNameBtn}`}
-              disabled={storingFileNames || (driveBookCount === 0 && !enriching)}
+              // Never disabled while THIS tab is running: the same button is
+              // the stop control.
+              disabled={
+                !enriching &&
+                (storingFileNames || shelfJobElsewhere || driveBookCount === 0)
+              }
               title={enrichButtonHint}
               aria-label={enrichButtonLabel}
             >
