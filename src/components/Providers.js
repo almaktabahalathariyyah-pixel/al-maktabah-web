@@ -8,14 +8,14 @@ import ConfirmDialog from './ConfirmDialog';
 
 export default function Providers({ children }) {
   return (
-    <AuthProvider>
-      <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
         <ConfirmProvider>
           {children}
           <ConfirmDialog />
           <Toast />
         </ConfirmProvider>
-      </ToastProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }

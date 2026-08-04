@@ -20,13 +20,12 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setBusy(true);
     try {
+      // Redirects the whole page to Google — there is nothing to do after
+      // this resolves, since the browser is already leaving. Any failure
+      // (network down, redirect blocked outright) still lands in catch.
       await loginWithGoogle();
-      router.replace('/');
     } catch (error) {
-      // Closing the Google popup is a decision, not a failure.
-      if (error?.code !== 'auth/popup-closed-by-user' && error?.code !== 'auth/cancelled-popup-request') {
-        toast.error('เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
-      }
+      toast.error('เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
       setBusy(false);
     }
   };

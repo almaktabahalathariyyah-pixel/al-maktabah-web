@@ -3,18 +3,21 @@
 import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import {
   onAuthStateChanged,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   signOut,
 } from 'firebase/auth';
 import { getFirebaseAuth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useToast } from './ToastContext';
 
 const AuthContext = createContext({});
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
+  const { toast } = useToast();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -72,10 +75,26 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  /**
+   * A popup on mobile is two nested browser contexts (this page, then Google,
+   * then a jump back through Firebase's own handler) sharing state through
+   * sessionStorage — Chrome for Android's storage partitioning drops that
+   * state often enough to be a real, recurring login failure, not an edge
+   * case. A redirect is one hop instead of two and needs the browser to do
+   * far less to keep the state around, so it fails far less often. The one
+   * cost is a full page reload, which is a fine trade for "login works".
+   */
+  useEffect(() => {
+    getRedirectResult(getFirebaseAuth()).catch((error) => {
+      console.error('Redirect login error:', error);
+      toast.error('เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    });
+  }, [toast]);
+
   const loginWithGoogle = useCallback(async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(getFirebaseAuth(), provider);
+      await signInWithRedirect(getFirebaseAuth(), provider);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
