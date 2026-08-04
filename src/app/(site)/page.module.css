@@ -488,8 +488,13 @@
 
 @media (max-width: 560px) {
   .bar { padding: 1.25rem 0 1rem; flex-direction: column; align-items: stretch; }
-  .barTools { flex: 1 1 100%; width: 100%; }
-  .searchWrap { max-width: 100%; }
+  /* barTools keeps justify-content: flex-end from the base rule, so once the
+     search box and filter button no longer both fit on one line, the row
+     overflows off the LEFT edge instead of wrapping — the search box was
+     rendering a few px off-screen. Giving the search box the full row forces
+     the filter button onto its own line below instead of fighting for space. */
+  .barTools { flex: 1 1 100%; width: 100%; flex-wrap: wrap; }
+  .searchWrap { max-width: 100%; flex: 1 1 100%; }
   .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem 0.75rem; }
 }
 
