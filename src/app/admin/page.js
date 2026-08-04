@@ -56,10 +56,20 @@ function pageWindow(current, total, span = 1) {
   return out;
 }
 
-/** A book worth re-reading: it has a file, but is missing something the file itself could answer. */
+/**
+ * A book worth re-reading: it has a file, but is missing something the file
+ * itself could answer.
+ *
+ * Year is deliberately not one of those things. Most of this library's scans
+ * simply never printed a publication year — that is not a gap re-reading the
+ * file can close, so counting it here meant hundreds of books stayed flagged
+ * forever no matter how many times this ran. The enrich pass still fills year
+ * whenever it does find one; it just stops being the reason a book is stuck
+ * on the list.
+ */
 function needsEnrich(book) {
   return Boolean(book.driveUrl) && (
-    !book.coverUrl || !book.pages || !book.year || !book.language || asList(book.author).length === 0
+    !book.coverUrl || !book.pages || !book.language || asList(book.author).length === 0
   );
 }
 
