@@ -8,7 +8,7 @@ import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch, update
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import Link from 'next/link';
-import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, UploadCloud, Filter, Mail, FileText, Sparkles } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, BookImage, UploadCloud, Filter, Mail, FileText, Sparkles } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
 import dynamic from 'next/dynamic';
@@ -31,6 +31,7 @@ import { canMirror, bookSizeBytes } from '@/lib/mirror';
 import { asList, joinPeople, hasPerson, splitPeople } from '@/lib/people';
 import BookFormPanel from '@/components/BookFormPanel';
 import BulkUploadPanel from '@/components/BulkUploadPanel';
+import BookCover from '@/components/BookCover';
 import styles from './page.module.css';
 import { useAdmin } from '@/context/AdminContext';
 
@@ -102,7 +103,7 @@ export default function AdminPage() {
   const [predefinedPublishers, setPredefinedPublishers] = useState([]);
   const [predefinedLanguages, setPredefinedLanguages] = useState([]);
   const [predefinedTypes, setPredefinedTypes] = useState([]);
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'card'
+  const [viewMode, setViewMode] = useState('table'); // 'table' | 'card' | 'cover'
 
   // Form Panel State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -866,12 +867,19 @@ export default function AdminPage() {
               >
                 <List size={18} />
               </button>
-              <button 
+              <button
                 className={`${styles.viewBtn} ${viewMode === 'card' ? styles.viewBtnActive : ''}`}
                 onClick={() => setViewMode('card')}
                 title="มุมมองการ์ด"
               >
                 <LayoutGrid size={18} />
+              </button>
+              <button
+                className={`${styles.viewBtn} ${viewMode === 'cover' ? styles.viewBtnActive : ''}`}
+                onClick={() => setViewMode('cover')}
+                title="มุมมองปกหนังสือ"
+              >
+                <BookImage size={18} />
               </button>
             </div>
             {/* Below 600px these keep the glyph and drop the words. Three Thai
@@ -1077,13 +1085,13 @@ export default function AdminPage() {
         )}
       </div>
 
-      <div className={styles.tableHeader} style={{ display: viewMode === 'card' ? 'none' : '' }}>
+      <div className={styles.tableHeader} style={{ display: viewMode !== 'table' ? 'none' : '' }}>
         <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '1.1rem' }}>
-          <input 
-            type="checkbox" 
-            className={styles.checkbox} 
-            checked={allSelected} 
-            onChange={(e) => handleSelectAll(e, shownBooks)} 
+          <input
+            type="checkbox"
+            className={styles.checkbox}
+            checked={allSelected}
+            onChange={(e) => handleSelectAll(e, shownBooks)}
           />
         </div>
         <div style={{ paddingLeft: '1rem', color: 'var(--fg-3)', fontSize: '0.85rem' }}>
@@ -1091,74 +1099,117 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {viewMode === 'card' && (
+      {viewMode !== 'table' && (
         <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <input 
-            type="checkbox" 
-            className={styles.checkbox} 
-            checked={allSelected} 
-            onChange={(e) => handleSelectAll(e, shownBooks)} 
+          <input
+            type="checkbox"
+            className={styles.checkbox}
+            checked={allSelected}
+            onChange={(e) => handleSelectAll(e, shownBooks)}
           />
           <span style={{ color: 'var(--fg-3)', fontSize: '0.85rem' }}>เลือกทั้งหมดในหน้านี้</span>
         </div>
       )}
 
-      <ul className={`${viewMode === 'card' ? styles.rowsCard : styles.rows} stagger`}>
-        {shownBooks.length === 0 && (
-          <li style={{color: 'var(--fg-3)', padding: '2rem', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)'}}>
-            {searchQuery || categoryFilter || statusFilter ? 'ไม่พบหนังสือที่ค้นหา' : 'ยังไม่มีหนังสือในระบบ'}
-          </li>
-        )}
-        {shownBooks.map((book) => (
-          <li key={book.id} className={`${styles.bookRow} ${selectedBooks.has(book.id) ? styles.rowSelected : ''}`}>
-            <div className={styles.checkboxWrap}>
-              <input 
-                type="checkbox" 
-                className={styles.checkbox}
-                checked={selectedBooks.has(book.id)}
-                onChange={() => handleSelectBook(book.id)}
-              />
-            </div>
-            <div className={styles.who}>
-              <span className={styles.name}>{book.title}</span>
-              <span className={styles.smallMeta}>
-                {joinPeople(book.author) || 'ไม่ระบุผู้แต่ง'}
-                {book.driveOwner && (
-                  <>
-                    {' · '}
-                    <span className={styles.owner} title={`ไฟล์อยู่ในบัญชี ${book.driveOwner}`}>
-                      <Mail size={11} /> {book.driveOwner}
-                    </span>
-                  </>
-                )}
-              </span>
-            </div>
-            <span className={styles.when}>{book.category}</span>
-            <span className={book.restricted ? styles.flagOn : styles.flag}>
-              {book.restricted ? 'สงวนสิทธิ์' : 'สาธารณะ'}
-            </span>
-            <span className={styles.downloads}>
-              <Download size={14} /> {book.downloadCount || 0}
-            </span>
-            <div className={styles.rowActions}>
-              <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.view}>
-                <span className="tlink">ดู</span>
+      {viewMode === 'cover' ? (
+        <ul className={`${styles.rowsCover} stagger`}>
+          {shownBooks.length === 0 && (
+            <li style={{color: 'var(--fg-3)', padding: '2rem', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)'}}>
+              {searchQuery || categoryFilter || statusFilter ? 'ไม่พบหนังสือที่ค้นหา' : 'ยังไม่มีหนังสือในระบบ'}
+            </li>
+          )}
+          {shownBooks.map((book) => (
+            <li key={book.id} className={`${styles.coverCard} ${selectedBooks.has(book.id) ? styles.rowSelected : ''}`}>
+              <div className={styles.coverCheckbox}>
+                <input
+                  type="checkbox"
+                  className={styles.checkbox}
+                  checked={selectedBooks.has(book.id)}
+                  onChange={() => handleSelectBook(book.id)}
+                />
+              </div>
+              <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.coverWrap}>
+                <BookCover src={book.coverUrl} title={book.title} author={book.author} />
               </Link>
-              <button onClick={() => handleOpenEditBook(book.id)} className={styles.edit} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem' }}>
-                <span className="tlink">แก้ไข</span>
-              </button>
-              <button 
-                onClick={() => handleSingleDelete(book.id)} 
-                className={styles.delete} 
-                style={{ background: 'none', border: 'none', color: 'var(--hot)', cursor: 'pointer', padding: '0.4rem', borderRadius: 'var(--r-sm)' }}
-                title="ลบหนังสือ"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+              <span className={styles.name} title={book.title}>{book.title}</span>
+              <span className={styles.smallMeta}>{joinPeople(book.author) || 'ไม่ระบุผู้แต่ง'}</span>
+              <div className={styles.coverActions}>
+                <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.view}>
+                  <span className="tlink">ดู</span>
+                </Link>
+                <button onClick={() => handleOpenEditBook(book.id)} className={styles.edit} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem' }}>
+                  <span className="tlink">แก้ไข</span>
+                </button>
+                <button
+                  onClick={() => handleSingleDelete(book.id)}
+                  className={styles.delete}
+                  style={{ background: 'none', border: 'none', color: 'var(--hot)', cursor: 'pointer', padding: '0.4rem', borderRadius: 'var(--r-sm)' }}
+                  title="ลบหนังสือ"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ul className={`${viewMode === 'card' ? styles.rowsCard : styles.rows} stagger`}>
+          {shownBooks.length === 0 && (
+            <li style={{color: 'var(--fg-3)', padding: '2rem', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)'}}>
+              {searchQuery || categoryFilter || statusFilter ? 'ไม่พบหนังสือที่ค้นหา' : 'ยังไม่มีหนังสือในระบบ'}
+            </li>
+          )}
+          {shownBooks.map((book) => (
+            <li key={book.id} className={`${styles.bookRow} ${selectedBooks.has(book.id) ? styles.rowSelected : ''}`}>
+              <div className={styles.checkboxWrap}>
+                <input
+                  type="checkbox"
+                  className={styles.checkbox}
+                  checked={selectedBooks.has(book.id)}
+                  onChange={() => handleSelectBook(book.id)}
+                />
+              </div>
+              <div className={styles.who}>
+                <span className={styles.name}>{book.title}</span>
+                <span className={styles.smallMeta}>
+                  {joinPeople(book.author) || 'ไม่ระบุผู้แต่ง'}
+                  {book.driveOwner && (
+                    <>
+                      {' · '}
+                      <span className={styles.owner} title={`ไฟล์อยู่ในบัญชี ${book.driveOwner}`}>
+                        <Mail size={11} /> {book.driveOwner}
+                      </span>
+                    </>
+                  )}
+                </span>
+              </div>
+              <span className={styles.when}>{book.category}</span>
+              <span className={book.restricted ? styles.flagOn : styles.flag}>
+                {book.restricted ? 'สงวนสิทธิ์' : 'สาธารณะ'}
+              </span>
+              <span className={styles.downloads}>
+                <Download size={14} /> {book.downloadCount || 0}
+              </span>
+              <div className={styles.rowActions}>
+                <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.view}>
+                  <span className="tlink">ดู</span>
+                </Link>
+                <button onClick={() => handleOpenEditBook(book.id)} className={styles.edit} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem' }}>
+                  <span className="tlink">แก้ไข</span>
+                </button>
+                <button
+                  onClick={() => handleSingleDelete(book.id)}
+                  className={styles.delete}
+                  style={{ background: 'none', border: 'none', color: 'var(--hot)', cursor: 'pointer', padding: '0.4rem', borderRadius: 'var(--r-sm)' }}
+                  title="ลบหนังสือ"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {pageCount > 1 && (
         <div className={styles.pagination}>

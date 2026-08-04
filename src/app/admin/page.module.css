@@ -283,6 +283,65 @@ input[type='text'].searchInput {
    card — the intent was always the tally, so name it. */
 .rowsCard .downloads { display: flex; }
 
+/* ---------------- Cover View ---------------- */
+.rowsCover {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.5rem 1.25rem;
+  margin-bottom: 6rem;
+}
+
+.coverCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.coverCard.rowSelected { background: none !important; border: none !important; }
+
+.coverCheckbox {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  display: flex;
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: 0.2rem;
+  box-shadow: var(--shadow);
+}
+
+.coverWrap {
+  display: block;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: transform var(--dur) var(--ease), outline-color var(--dur) var(--ease);
+}
+.coverCard:hover .coverWrap { transform: translateY(-4px); }
+.coverCard.rowSelected .coverWrap { outline-color: var(--accent); }
+
+.coverCard .name {
+  margin-top: 0.15rem;
+  white-space: normal;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.coverCard .smallMeta { white-space: normal; }
+
+.coverActions {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  margin-top: 0.1rem;
+}
+
 .who { display: flex; flex-direction: column; min-width: 0; }
 .name {
   font-family: var(--display);
