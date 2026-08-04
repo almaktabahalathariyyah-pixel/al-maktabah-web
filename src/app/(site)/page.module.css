@@ -488,13 +488,23 @@
 
 @media (max-width: 560px) {
   .bar { padding: 1.25rem 0 1rem; flex-direction: column; align-items: stretch; }
-  /* barTools keeps justify-content: flex-end from the base rule, so once the
-     search box and filter button no longer both fit on one line, the row
-     overflows off the LEFT edge instead of wrapping — the search box was
-     rendering a few px off-screen. Giving the search box the full row forces
-     the filter button onto its own line below instead of fighting for space. */
-  .barTools { flex: 1 1 100%; width: 100%; flex-wrap: wrap; }
-  .searchWrap { max-width: 100%; flex: 1 1 100%; }
+  /* barTools keeps justify-content: flex-end from the base rule, so if content
+     ever doesn't fit one line, flex-wrap: wrap sends the overflow to a new
+     row instead of bleeding off the LEFT edge (the old bug). Shrinking the
+     filter button to a glyph below means it usually does not even need to. */
+  .barTools { flex: 1 1 100%; width: 100%; flex-wrap: wrap; gap: 0.6rem; }
+  .searchWrap { max-width: 100%; flex: 1 1 auto; min-width: 0; }
+  .hideMobile { display: none; }
+  /* Glyph only, square touch target. "ตัวกรอง" next to the search box read as
+     crowded — a button whose label has to fight the search box for room is
+     worse than no label; the tooltip and aria-label carry the meaning instead. */
+  .barTools :global(.btn) {
+    flex: 0 0 auto;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 0.7rem;
+    justify-content: center;
+  }
   .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem 0.75rem; }
 }
 

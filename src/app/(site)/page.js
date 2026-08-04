@@ -520,9 +520,11 @@ export default function Home() {
             className={`btn ${showFilters ? 'btn-solid' : ''}`}
             onClick={() => setShowFilters((v) => !v)}
             aria-expanded={showFilters}
+            aria-label="ตัวกรอง"
+            title="ตัวกรอง"
           >
             <Filter size={15} />
-            ตัวกรอง
+            <span className={styles.hideMobile}>ตัวกรอง</span>
             {activeCount > 0 && <span className={styles.pip}>{activeCount}</span>}
           </button>
         </div>
