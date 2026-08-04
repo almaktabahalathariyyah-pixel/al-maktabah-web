@@ -61,7 +61,25 @@ export default function ApprovalsPage() {
     }
   };
 
-  const statusOf = (u) => u.accessStatus || (u.approved ? 'approved' : 'none');
+  /**
+   * Which bucket a member belongs in.
+   *
+   * A fresh sign-in is written with accessStatus 'none' (see AuthContext), and
+   * nothing in the app ever moves anyone to 'pending' — there is no
+   * "request access" step for a reader to take. So the three tabs used to
+   * match a status no account could hold: every real member fell through the
+   * gaps and this desk sat empty however many people had signed up.
+   *
+   * Undecided is undecided: 'none' and 'pending' are the same thing to the
+   * owner, so both land in รอตรวจสอบ. Admins are filtered out because they
+   * already have full access and asking the owner to approve themselves reads
+   * as a bug.
+   */
+  const statusOf = (u) => {
+    if (u.role === 'admin' || u.approved === true) return 'approved';
+    if (u.accessStatus === 'rejected') return 'rejected';
+    return 'pending';
+  };
   const rows = users.filter((u) => statusOf(u) === tab);
   const countOf = (key) => users.filter((u) => statusOf(u) === key).length;
 
