@@ -66,9 +66,18 @@ function pageWindow(current, total, span = 1) {
  * forever no matter how many times this ran. The enrich pass still fills year
  * whenever it does find one; it just stops being the reason a book is stuck
  * on the list.
+ *
+ * `enrichCheckedAt` is the other half of that: once a book's file has
+ * actually been downloaded and read, it is done being asked about, even if
+ * some fields stayed empty — re-reading the same bytes a second time cannot
+ * find what was not there the first time. Without this, a book whose author
+ * genuinely cannot be parsed out of its text would get re-downloaded and
+ * re-OCR'd on every single run, forever, for nothing. The "กดเพื่อตรวจซ้ำ"
+ * fallback in handleEnrichMissing is the deliberate way around this, for
+ * when a file behind an existing link has actually changed.
  */
 function needsEnrich(book) {
-  return Boolean(book.driveUrl) && (
+  return Boolean(book.driveUrl) && !book.enrichCheckedAt && (
     !book.coverUrl || !book.pages || !book.language || asList(book.author).length === 0
   );
 }
@@ -532,7 +541,11 @@ export default function AdminPage() {
    * picker, which is what the "เลือกไฟล์จาก Drive" button on the single-book
    * form is for. A book this loop can't open is reported, not retried.
    *
-   * Never overwrites a field that already has a value.
+   * Never overwrites a field that already has a value. Every book whose file
+   * was successfully read gets `enrichCheckedAt` stamped regardless of what
+   * was found, so a normal run only ever looks at books it has not looked at
+   * before — see needsEnrich. When nothing is left to check, this instead
+   * re-reads every book with a file, ignoring that stamp.
    */
   const handleEnrichMissing = async () => {
     if (enriching) {
@@ -540,10 +553,17 @@ export default function AdminPage() {
       return;
     }
 
-    const targets = books.filter(needsEnrich);
+    // Nothing left unchecked — "กดเพื่อตรวจซ้ำทั้งคลัง" promises a real
+    // recheck, so an explicit click here re-reads every file regardless of
+    // enrichCheckedAt, on the assumption the owner has a reason to ask again
+    // (a relinked file, a newly-connected Drive account, and so on).
+    let targets = books.filter(needsEnrich);
     if (targets.length === 0) {
-      toast.info('ไม่มีเล่มที่ต้องเติมข้อมูลแล้ว');
-      return;
+      targets = books.filter((b) => Boolean(b.driveUrl));
+      if (targets.length === 0) {
+        toast.info('ยังไม่มีหนังสือที่มีไฟล์ให้ตรวจ');
+        return;
+      }
     }
 
     enrichCancelled.current = false;
@@ -611,9 +631,15 @@ export default function AdminPage() {
           seenTranslators.add(info.translator);
         }
 
-        if (Object.keys(patch).length > 0) {
-          await updateDoc(doc(db, 'books', book.id), patch);
-          setBooks((prev) => prev.map((b) => (b.id === book.id ? { ...b, ...patch } : b)));
+        // Whatever this pass found is everything this file has to give — a
+        // future run gains nothing by re-downloading and re-OCRing it, so it
+        // is marked read regardless of whether anything above was empty.
+        const hadRealPatch = Object.keys(patch).length > 0;
+        patch.enrichCheckedAt = new Date();
+
+        await updateDoc(doc(db, 'books', book.id), patch);
+        setBooks((prev) => prev.map((b) => (b.id === book.id ? { ...b, ...patch } : b)));
+        if (hadRealPatch) {
           updated += 1;
           for (const key of Object.keys(patch)) {
             if (key in filledCounts) filledCounts[key] += 1;
@@ -745,8 +771,8 @@ export default function AdminPage() {
   const enrichButtonHint = enriching
     ? `กำลังอ่าน: ${enrichCurrent || '…'} — กดอีกครั้งเพื่อหยุดกลางคัน`
     : enrichCount > 0
-      ? `มี ${enrichCount} เล่มที่ยังขาดปก/ผู้แต่ง/ปี/ภาษา ฯลฯ — กดเพื่อลองอ่านจากไฟล์ให้อัตโนมัติ`
-      : 'ข้อมูลที่ตรวจอัตโนมัติได้ครบแล้วทุกเล่ม';
+      ? `มี ${enrichCount} เล่มที่ยังไม่เคยตรวจ และยังขาดปก/ผู้แต่ง/ภาษา ฯลฯ — กดเพื่อลองอ่านจากไฟล์ให้อัตโนมัติ`
+      : 'ทุกเล่มที่มีไฟล์ถูกตรวจแล้ว — กดอีกครั้งเพื่อตรวจซ้ำทั้งคลัง';
 
   const allSelected =
     shownBooks.length > 0 && shownBooks.every((b) => selectedBooks.has(b.id));
