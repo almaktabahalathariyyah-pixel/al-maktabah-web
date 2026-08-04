@@ -120,6 +120,7 @@ export default function AdminPage() {
   const [fileNameProgress, setFileNameProgress] = useState({ done: 0, total: 0 });
   const [enriching, setEnriching] = useState(false);
   const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0 });
+  const [enrichCurrent, setEnrichCurrent] = useState('');
   // Lets the "หยุด" click during a run reach the loop without re-running the effect.
   const enrichCancelled = useRef(false);
 
@@ -558,10 +559,12 @@ export default function AdminPage() {
     let expired = false;
     const seenAuthors = new Set();
     const seenTranslators = new Set();
+    const filledCounts = { coverUrl: 0, pages: 0, year: 0, language: 0, author: 0, translator: 0 };
 
     for (let i = 0; i < targets.length; i += 1) {
       if (enrichCancelled.current || expired) break;
       const book = targets[i];
+      setEnrichCurrent(book.title || book.id);
 
       try {
         const id = driveIdFrom(book.driveUrl);
@@ -602,6 +605,9 @@ export default function AdminPage() {
           await updateDoc(doc(db, 'books', book.id), patch);
           setBooks((prev) => prev.map((b) => (b.id === book.id ? { ...b, ...patch } : b)));
           updated += 1;
+          for (const key of Object.keys(patch)) {
+            if (key in filledCounts) filledCounts[key] += 1;
+          }
         }
       } catch (err) {
         console.error('Enrich failed for', book.id, err);
@@ -618,11 +624,19 @@ export default function AdminPage() {
       await rememberDropdowns({ authors: [...seenAuthors], translators: [...seenTranslators] });
     }
 
+    const FIELD_LABELS = {
+      coverUrl: 'ปก', pages: 'หน้า', year: 'ปี', language: 'ภาษา', author: 'ผู้แต่ง', translator: 'ผู้แปล',
+    };
+    const breakdown = Object.entries(filledCounts)
+      .filter(([, n]) => n > 0)
+      .map(([key, n]) => `${FIELD_LABELS[key]} ${n}`)
+      .join(' · ');
+
     if (expired) {
       clearSavedToken();
       toast.error('สิทธิ์ Google Drive หมดอายุ — กดปุ่มนี้อีกครั้งเพื่อเชื่อมต่อใหม่');
     } else if (enrichCancelled.current) {
-      toast.info(`หยุดแล้ว — เติมข้อมูลไปแล้ว ${updated} เล่ม`);
+      toast.info(`หยุดแล้ว — เติมข้อมูลไปแล้ว ${updated} เล่ม` + (breakdown ? ` (${breakdown})` : ''));
     } else if (updated === 0) {
       toast.info(
         unreadable > 0
@@ -632,12 +646,14 @@ export default function AdminPage() {
     } else {
       toast.success(
         `เติมข้อมูลสำเร็จ ${updated} เล่ม` +
+        (breakdown ? ` (${breakdown})` : '') +
         (unreadable > 0 ? ` · อ่านไม่ได้ ${unreadable} เล่ม (ไฟล์จากที่อื่น)` : '')
       );
     }
 
     setEnriching(false);
     setEnrichProgress({ done: 0, total: 0 });
+    setEnrichCurrent('');
   };
 
   if (authLoading || loadingBooks) {
@@ -717,7 +733,7 @@ export default function AdminPage() {
     ? `กำลังอ่าน ${enrichProgress.done}/${enrichProgress.total} — หยุด`
     : `เติมข้อมูลที่ขาด${enrichCount > 0 ? ` (${enrichCount})` : ''}`;
   const enrichButtonHint = enriching
-    ? 'กดอีกครั้งเพื่อหยุดกลางคัน'
+    ? `กำลังอ่าน: ${enrichCurrent || '…'} — กดอีกครั้งเพื่อหยุดกลางคัน`
     : enrichCount > 0
       ? `มี ${enrichCount} เล่มที่ยังขาดปก/ผู้แต่ง/ปี/ภาษา ฯลฯ — กดเพื่อลองอ่านจากไฟล์ให้อัตโนมัติ`
       : 'ข้อมูลที่ตรวจอัตโนมัติได้ครบแล้วทุกเล่ม';
@@ -760,6 +776,25 @@ export default function AdminPage() {
                 : 'กำลังแสดงเฉพาะเล่มที่มีแต่ไฟล์ Telegram (เล่มใหญ่กว่า 20MB จะเปิดไม่ได้)'}
           </span>
           <button className="btn" onClick={() => updateFilter(setHealthFilter, '')}>แสดงทั้งหมด</button>
+        </div>
+      )}
+
+      {enriching && (
+        <div className={`${styles.healthBanner} ${styles.enrichBanner}`}>
+          <div className={styles.enrichBannerTop}>
+            <span>
+              กำลังอ่าน {enrichProgress.done}/{enrichProgress.total} — {enrichCurrent || '…'}
+            </span>
+            <button className="btn" onClick={handleEnrichMissing}>หยุด</button>
+          </div>
+          <div className={styles.enrichTrack}>
+            <div
+              className={styles.enrichFill}
+              style={{
+                width: `${enrichProgress.total > 0 ? Math.round((enrichProgress.done / enrichProgress.total) * 100) : 0}%`,
+              }}
+            />
+          </div>
         </div>
       )}
 

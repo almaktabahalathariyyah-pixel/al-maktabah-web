@@ -13,6 +13,11 @@
  * Nothing here is authoritative. Every value is a guess the owner still
  * reviews; a wrong attribution on a religious text is worse than a blank
  * field, so this only ever fills fields that are still empty.
+ *
+ * A scanned book has pages but no selectable text, so pdf.js's text layer
+ * comes back empty and every heuristic above has nothing to read. When that
+ * happens this falls back to OCR (Tesseract.js, in the browser) on the title
+ * page — much slower, only paid when the fast path truly found nothing.
  */
 
 import { loadPdfjs } from './pdfCover';
@@ -116,6 +121,18 @@ function extractYear(text) {
   return '';
 }
 
+function scriptCharCount(text) {
+  const thai = (text.match(/[฀-๿]/g) || []).length;
+  const arabic = (text.match(/[؀-ۿ]/g) || []).length;
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+  return { thai, arabic, latin, total: thai + arabic + latin };
+}
+
+/** True once there is enough real text to say anything about it at all. */
+function hasTextSignal(text) {
+  return scriptCharCount(text).total >= 40;
+}
+
 /**
  * Which script dominates the text — counted, not just "contains", so a
  * bismillah on a Thai title page does not make the book Arabic. Mirrors
@@ -124,17 +141,82 @@ function extractYear(text) {
  * several pages of real text.
  */
 function detectLanguage(text) {
-  const thai = (text.match(/[฀-๿]/g) || []).length;
-  const arabic = (text.match(/[؀-ۿ]/g) || []).length;
-  const latin = (text.match(/[A-Za-z]/g) || []).length;
-
-  const total = thai + arabic + latin;
+  const { thai, arabic, latin, total } = scriptCharCount(text);
   if (total < 40) return '';
 
   if (thai / total > 0.25) return 'ไทย';
   if (arabic / total > 0.5) return 'อาหรับ';
   if (latin / total > 0.5) return 'อังกฤษ';
   return '';
+}
+
+// ------------------------------------------------------------------ OCR ----
+
+const OCR_LANGS = ['eng', 'ara', 'tha'];
+// Wide enough for Tesseract to read small print, not so wide that one page
+// takes forever — this is already the slow path, run only when pdf.js's text
+// layer came back empty (a scanned book, not a digitally-typeset one).
+const OCR_SCALE_WIDTH = 1600;
+
+let ocrWorkerPromise = null;
+
+/**
+ * One Tesseract worker, reused for every scanned book in a run. Spinning one
+ * up costs real time and a few MB of downloaded language data (cached by the
+ * browser after the first book) — paying that once per bulk pass is fine,
+ * paying it once per book across a few hundred books is not.
+ */
+function getOcrWorker() {
+  if (!ocrWorkerPromise) {
+    ocrWorkerPromise = import('tesseract.js').then(({ createWorker }) =>
+      createWorker(OCR_LANGS)
+    );
+  }
+  return ocrWorkerPromise;
+}
+
+/**
+ * OCRs one pdf.js page and returns whatever text Tesseract finds.
+ * Never throws — a page OCR can't read is just another empty result, same as
+ * a page with no text layer at all.
+ */
+async function ocrPage(page) {
+  const canvas = document.createElement('canvas');
+  try {
+    const worker = await getOcrWorker();
+    const base = page.getViewport({ scale: 1 });
+    const viewport = page.getViewport({ scale: OCR_SCALE_WIDTH / base.width });
+
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const context = canvas.getContext('2d', { alpha: false });
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: context, viewport, canvas }).promise;
+
+    const { data } = await worker.recognize(canvas);
+    return data?.text || '';
+  } catch (err) {
+    console.warn('OCR failed for page', page?.pageNumber, err?.message || err);
+    return '';
+  } finally {
+    canvas.width = 0;
+    canvas.height = 0;
+  }
+}
+
+/**
+ * Falls back to OCR when pdf.js found no real text layer to begin with — the
+ * signature of a scanned book. Tries the title page first since that is
+ * where author/translator/year usually live; only pays for a second page
+ * when the first came back just as empty (a plain cover graphic, say).
+ */
+async function ocrFallbackText(doc) {
+  let text = await ocrPage(await doc.getPage(1));
+  if (!hasTextSignal(text) && doc.numPages > 1) {
+    text += '\n' + (await ocrPage(await doc.getPage(2)));
+  }
+  return text;
 }
 
 /**
@@ -177,6 +259,15 @@ export async function extractPdfInfo(file) {
       if (text.length > MAX_TEXT_LENGTH) break;
     }
     text = text.slice(0, MAX_TEXT_LENGTH);
+
+    // No selectable text at all means a scanned book — pdf.js's text layer
+    // has nothing to give, so this is the only way to still find a language,
+    // author, translator or year. Slow (several seconds), so it only runs
+    // when the fast path truly found nothing.
+    if (!hasTextSignal(text)) {
+      const ocrText = await ocrFallbackText(doc);
+      if (ocrText) text = ocrText.slice(0, MAX_TEXT_LENGTH);
+    }
 
     if (!result.author) {
       result.author = matchFirst(AUTHOR_PATTERNS, text) || extractByline(text, AUTHOR_BYLINE_PATTERNS);

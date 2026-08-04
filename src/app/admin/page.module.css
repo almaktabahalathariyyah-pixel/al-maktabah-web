@@ -566,6 +566,20 @@ input[type='text'].searchInput {
   line-height: 1.6;
   color: var(--fg-2);
 }
+.enrichBanner { flex-direction: column; align-items: stretch; }
+.enrichBannerTop { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.enrichTrack {
+  height: 6px;
+  margin-top: 0.75rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.enrichFill {
+  height: 100%;
+  background: var(--accent);
+  transition: width var(--dur) var(--ease);
+}
 .pagination { display: flex; justify-content: center; gap: 1rem; align-items: center; margin-top: 2rem; }
 .pageNumbers { display: flex; gap: 0.5rem; align-items: center; }
 .pageGap { color: var(--fg-3); }
