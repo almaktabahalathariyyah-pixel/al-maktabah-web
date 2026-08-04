@@ -5,6 +5,8 @@ import {
   onAuthStateChanged,
   signInWithRedirect,
   getRedirectResult,
+  setPersistence,
+  indexedDBLocalPersistence,
   GoogleAuthProvider,
   signOut,
 } from 'firebase/auth';
@@ -13,6 +15,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useToast } from './ToastContext';
 
 const AuthContext = createContext({});
+const PENDING_LOGIN_KEY = 'pendingGoogleLogin';
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -83,19 +86,43 @@ export const AuthProvider = ({ children }) => {
    * case. A redirect is one hop instead of two and needs the browser to do
    * far less to keep the state around, so it fails far less often. The one
    * cost is a full page reload, which is a fine trade for "login works".
+   *
+   * That storage can still vanish on the trip through firebaseapp.com — some
+   * browsers treat "our site → a different site → our site" as bounce-tracking
+   * and quietly drop storage set right before the bounce, Firebase's own
+   * pending-redirect flag included. When that happens Google confirms the
+   * sign-in successfully but getRedirectResult() comes back with nothing, no
+   * error thrown — the reader just lands back here still signed out with no
+   * clue why. PENDING_LOGIN_KEY is our own marker, checked here, to tell that
+   * silent case apart from "nobody tried to log in" so it can say something.
    */
   useEffect(() => {
-    getRedirectResult(getFirebaseAuth()).catch((error) => {
-      console.error('Redirect login error:', error);
-      toast.error('เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
-    });
+    getRedirectResult(getFirebaseAuth())
+      .then((result) => {
+        const attempted = localStorage.getItem(PENDING_LOGIN_KEY);
+        localStorage.removeItem(PENDING_LOGIN_KEY);
+        if (!result && attempted) {
+          toast.error('เข้าสู่ระบบไม่สำเร็จ — เบราว์เซอร์บล็อกเซสชันระหว่างล็อกอิน กรุณาลองใหม่อีกครั้ง');
+        }
+      })
+      .catch((error) => {
+        localStorage.removeItem(PENDING_LOGIN_KEY);
+        console.error('Redirect login error:', error);
+        toast.error('เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      });
   }, [toast]);
 
   const loginWithGoogle = useCallback(async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithRedirect(getFirebaseAuth(), provider);
+      const auth = getFirebaseAuth();
+      // The IndexedDB-backed store survives the storage restrictions above
+      // more often than the older localStorage-backed default.
+      await setPersistence(auth, indexedDBLocalPersistence);
+      localStorage.setItem(PENDING_LOGIN_KEY, '1');
+      await signInWithRedirect(auth, provider);
     } catch (error) {
+      localStorage.removeItem(PENDING_LOGIN_KEY);
       console.error('Login error:', error);
       throw error;
     }
