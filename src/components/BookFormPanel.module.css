@@ -113,6 +113,22 @@
   font-weight: 500;
 }
 
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.viewFileLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--t-micro);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
 .autoBadge {
   display: inline-flex;
   align-items: center;
@@ -152,12 +168,25 @@
 }
 
 .blockTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: var(--t-small);
   font-weight: 600;
   color: var(--fg);
   padding: 0 0.5rem;
   margin-left: -0.5rem;
 }
+
+/* Only <summary> elements (the two collapsible sections) get a pointer and a
+   chevron — <legend> has no marker to hide and no reason to look clickable. */
+summary.blockTitle {
+  cursor: pointer;
+  list-style: none;
+}
+summary.blockTitle::-webkit-details-marker { display: none; }
+.chevron { transition: transform var(--dur) var(--ease); color: var(--fg-3); flex: none; }
+details[open] > summary.blockTitle .chevron { transform: rotate(180deg); }
 
 .toggle {
   display: flex;
@@ -412,6 +441,30 @@
   .filesGrid { grid-template-columns: 1fr; }
   .fieldGrid { grid-template-columns: 1fr; }
   .panel { width: 100%; max-width: 100%; }
+
+  /* A phone loses the desktop's "tap the dimmed backdrop to close" affordance
+     once the panel fills the screen — this is then the only way out, so it
+     has to read as an obvious button, not a bare icon in the corner. */
+  .closeBtn {
+    padding: 0.7rem;
+    background: var(--surface-2);
+  }
+
+  /* 16px stops iOS Safari auto-zooming into the field on focus; the taller
+     tap area is for fields and selects together, since both share .input. */
+  .input {
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
+
+  .toggle input {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .block {
+    padding: 1rem;
+  }
 }
 
 /* ---------------- Telegram backup copy ---------------- */

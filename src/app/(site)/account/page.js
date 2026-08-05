@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { LogOut, MessageCircle, Send, Globe, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { LogOut, MessageCircle, Send, Globe, Clock, CheckCircle, AlertTriangle, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/firebase';
+import { VERIFY_CHANNELS } from '@/lib/verifyChannels';
 import styles from './page.module.css';
+
+const toMillis = (ts) => ts?.toMillis?.() ?? 0;
 
 export default function AccountPage() {
   const { user, profile, approved, isAdmin, loading, logout } = useAuth();
@@ -72,6 +75,12 @@ export default function AccountPage() {
     }
   };
 
+  // An unanswered ask: the admin's request is newer than the last time this
+  // reader submitted anything. Resubmitting (which already bumps requestedAt)
+  // is what clears it — no separate "seen" field needed.
+  const verifyPending =
+    profile?.verifyRequest && toMillis(profile.verifyRequest.requestedAt) > toMillis(profile?.requestedAt);
+
   if (loading) return <p className={styles.loading}>กำลังโหลด…</p>;
 
   if (!user) {
@@ -122,6 +131,26 @@ export default function AccountPage() {
         {/* Access to the restricted shelf: where it stands, and how to ask. */}
         <section className={styles.card}>
           <h2 className={styles.sectionTitle}>สิทธิ์อ่านหนังสือสงวนสิทธิ์</h2>
+
+          {verifyPending && (
+            <div className={styles.verifyBanner}>
+              <p className={`${styles.statusLine} ${styles.statusNo}`}>
+                <HelpCircle size={17} />
+                <span>ผู้ดูแลขอข้อมูลเพิ่มเติมเพื่อยืนยันตัวตนก่อนอนุมัติ</span>
+              </p>
+              <ul className={styles.verifyList}>
+                {VERIFY_CHANNELS.filter((c) => profile.verifyRequest.channels.includes(c.key)).map(
+                  (c) => <li key={c.key}>{c.label}</li>
+                )}
+              </ul>
+              {profile.verifyRequest.note && (
+                <p className={styles.verifyNote}>“{profile.verifyRequest.note}”</p>
+              )}
+              <p className={styles.statusHelp}>
+                กรอกข้อมูลด้านล่างให้ครบตามที่ขอ แล้วกดส่งอีกครั้ง
+              </p>
+            </div>
+          )}
 
           {approved || isAdmin ? (
             <p className={`${styles.statusLine} ${styles.statusOk}`}>

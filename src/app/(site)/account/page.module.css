@@ -123,6 +123,28 @@
   color: var(--fg-3);
 }
 
+.verifyBanner {
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.verifyBanner .statusLine { margin-bottom: 0.5rem; }
+.verifyList {
+  list-style: disc;
+  padding-left: 1.2rem;
+  font-size: var(--t-small);
+  line-height: 1.7;
+  color: var(--fg-2);
+}
+.verifyNote {
+  font-size: var(--t-small);
+  color: var(--fg-3);
+  font-style: italic;
+  margin-top: 0.4rem;
+}
+
 .requestForm {
   display: flex;
   flex-direction: column;

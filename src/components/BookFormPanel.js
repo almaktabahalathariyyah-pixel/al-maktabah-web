@@ -19,7 +19,7 @@ import { makeCover } from '@/lib/pdfCover';
 import { extractPdfInfo } from '@/lib/pdfInfo';
 import { toCE } from '@/lib/thaiYear';
 import { asList } from '@/lib/people';
-import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy, Sparkles, Loader2, FolderOpen } from 'lucide-react';
+import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy, Sparkles, Loader2, FolderOpen, ExternalLink, ChevronDown } from 'lucide-react';
 import styles from './BookFormPanel.module.css';
 
 /** Fields the form owns directly; everything else comes from the schema. */
@@ -79,6 +79,14 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   const handleToken = useCallback((value) => setGoogleToken(value), []);
   const handleAccount = useCallback((value) => setConnectedOwner(value), []);
 
+  // On a phone this form is a wall of fields and hint text with no way to
+  // skip past what isn't needed right now. Starting the two heaviest
+  // sections collapsed there — expanded everywhere else, where scrolling was
+  // never the complaint — cuts the initial screenful down to just the two
+  // fields most edits actually touch.
+  const [filesOpen, setFilesOpen] = useState(true);
+  const [extraOpen, setExtraOpen] = useState(true);
+
   // The freshly picked file knows its own size; a saved book carries it.
   const fileBytes = pdfFile?.size || sizeBytes;
   const mirrorEligible = canMirror(fileBytes);
@@ -110,6 +118,9 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
     const fetchData = async () => {
       setLoading(true);
       setNote('');
+      const narrow = window.innerWidth <= 768;
+      setFilesOpen(!narrow);
+      setExtraOpen(!narrow);
       try {
         const f = await loadBookFields();
         if (!isMounted) return;
@@ -729,7 +740,16 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
               </fieldset>
 
               {/* 2. ไฟล์และหน้าปก */}
-              <div className={styles.filesGrid}>
+              <details
+                className={styles.block}
+                open={filesOpen}
+                onToggle={(e) => setFilesOpen(e.target.open)}
+              >
+                <summary className={styles.blockTitle}>
+                  <span>ไฟล์และหน้าปก</span>
+                  <ChevronDown size={16} className={styles.chevron} />
+                </summary>
+              <div className={styles.filesGrid} style={{ marginTop: '1rem' }}>
 
                 {/* 2.1 ไฟล์ PDF */}
                 <fieldset className={styles.block} style={{ margin: 0 }}>
@@ -834,7 +854,19 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                   )}
 
                   <label className={styles.field} style={{ marginTop: '1.5rem' }}>
-                    <span className={styles.label}>ลิงก์ Google Drive</span>
+                    <span className={styles.labelRow}>
+                      <span className={styles.label}>ลิงก์ Google Drive</span>
+                      {(driveUrl || telegramUrl) && (
+                        <a
+                          href={driveUrl || telegramUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.viewFileLink}
+                        >
+                          <ExternalLink size={13} /> เปิดดูไฟล์
+                        </a>
+                      )}
+                    </span>
                     <input
                       type="text"
                       className={styles.input}
@@ -975,14 +1007,22 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                   {note && <p className={styles.err}>{note}</p>}
                 </fieldset>
               </div>
+              </details>
 
               {/* 3. รายละเอียดเพิ่มเติม */}
-              <fieldset className={styles.block}>
-                <legend className={styles.blockTitle}>รายละเอียดเพิ่มเติม</legend>
-                <div className={styles.fieldGrid}>
+              <details
+                className={styles.block}
+                open={extraOpen}
+                onToggle={(e) => setExtraOpen(e.target.open)}
+              >
+                <summary className={styles.blockTitle}>
+                  <span>รายละเอียดเพิ่มเติม</span>
+                  <ChevronDown size={16} className={styles.chevron} />
+                </summary>
+                <div className={styles.fieldGrid} style={{ marginTop: '1rem' }}>
                   {fields.filter(f => f.key !== 'title' && f.key !== 'description').map(renderField)}
                 </div>
-              </fieldset>
+              </details>
 
               {/* 4. การมองเห็น */}
               <fieldset className={styles.block}>

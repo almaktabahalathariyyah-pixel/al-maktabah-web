@@ -67,6 +67,11 @@
 }
 .sub { font-size: var(--t-small); line-height: var(--lh-body); color: var(--fg-2); }
 
+.spinner {
+  height: 3rem;
+  border-radius: var(--r-md);
+}
+
 @media (max-width: 768px) {
   .layout {
     grid-template-columns: 1fr;

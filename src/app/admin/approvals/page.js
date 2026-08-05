@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
-import { Check, X, ExternalLink, RotateCcw } from 'lucide-react';
+import {
+  collection, getDocs, doc, updateDoc, query, where, documentId,
+} from 'firebase/firestore';
+import { Check, X, ExternalLink, RotateCcw, HelpCircle, History, Send } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/context/ToastContext';
+import { VERIFY_CHANNELS } from '@/lib/verifyChannels';
 import InviteManager from '@/components/InviteManager';
 import styles from './page.module.css';
 
@@ -20,6 +23,18 @@ export default function ApprovalsPage() {
   const [tab, setTab] = useState('pending');
   const [busy, setBusy] = useState(null);
   const { toast } = useToast();
+
+  // Which row's "ask for more proof" panel is open, and what's checked in it.
+  const [verifyOpenFor, setVerifyOpenFor] = useState(null);
+  const [verifySelected, setVerifySelected] = useState([]);
+  const [verifyNote, setVerifyNote] = useState('');
+  const [verifySending, setVerifySending] = useState(false);
+
+  // Download history per user, fetched lazily and kept once fetched — a
+  // Firestore read this desk otherwise never needs, so it should only happen
+  // for a row the admin actually opens.
+  const [downloadsOpenFor, setDownloadsOpenFor] = useState(null);
+  const [downloadsByUser, setDownloadsByUser] = useState({});
 
   useEffect(() => {
     const load = async () => {
@@ -58,6 +73,78 @@ export default function ApprovalsPage() {
       toast.error('อัปเดตสถานะไม่สำเร็จ');
     } finally {
       setBusy(null);
+    }
+  };
+
+  const openVerify = (u) => {
+    if (verifyOpenFor === u.id) {
+      setVerifyOpenFor(null);
+      return;
+    }
+    setVerifyOpenFor(u.id);
+    setVerifySelected(u.verifyRequest?.channels || []);
+    setVerifyNote(u.verifyRequest?.note || '');
+  };
+
+  const toggleChannel = (key) =>
+    setVerifySelected((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+
+  const sendVerifyRequest = async (userId) => {
+    if (verifySelected.length === 0) {
+      toast.error('เลือกอย่างน้อยหนึ่งช่องทางที่จะขอ');
+      return;
+    }
+    setVerifySending(true);
+    try {
+      const verifyRequest = {
+        channels: verifySelected,
+        note: verifyNote.trim(),
+        requestedAt: new Date(),
+      };
+      await updateDoc(doc(db, 'users', userId), { verifyRequest });
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, verifyRequest } : u)));
+      toast.success('ส่งคำขอให้ยืนยันตัวตนแล้ว');
+      setVerifyOpenFor(null);
+    } catch (error) {
+      console.error('Verify request failed:', error);
+      toast.error('ส่งคำขอไม่สำเร็จ');
+    } finally {
+      setVerifySending(false);
+    }
+  };
+
+  const openDownloads = async (uid) => {
+    if (downloadsOpenFor === uid) {
+      setDownloadsOpenFor(null);
+      return;
+    }
+    setDownloadsOpenFor(uid);
+    if (downloadsByUser[uid]) return; // already fetched once — no repeat reads
+
+    setDownloadsByUser((prev) => ({ ...prev, [uid]: { loading: true, items: [] } }));
+    try {
+      const snap = await getDocs(query(collection(db, 'downloads'), where('userId', '==', uid)));
+      const events = [];
+      snap.forEach((d) => events.push({ id: d.id, ...d.data() }));
+      events.sort((a, b) => (b.timestamp?.toMillis?.() || 0) - (a.timestamp?.toMillis?.() || 0));
+
+      // One batched lookup for titles instead of one read per event.
+      const bookIds = [...new Set(events.map((e) => e.bookId))].slice(0, 30);
+      const titles = {};
+      if (bookIds.length > 0) {
+        const bookSnap = await getDocs(
+          query(collection(db, 'books'), where(documentId(), 'in', bookIds))
+        );
+        bookSnap.forEach((d) => { titles[d.id] = d.data().title; });
+      }
+
+      const items = events.map((e) => ({ ...e, title: titles[e.bookId] || e.bookId }));
+      setDownloadsByUser((prev) => ({ ...prev, [uid]: { loading: false, items } }));
+    } catch (error) {
+      console.error('Error loading download history:', error);
+      setDownloadsByUser((prev) => ({ ...prev, [uid]: { loading: false, items: [], error: true } }));
     }
   };
 
@@ -115,7 +202,8 @@ export default function ApprovalsPage() {
       ) : (
         <ul className={styles.rows}>
           {rows.map((u) => (
-            <li key={u.id} className={styles.row}>
+            <li key={u.id} className={styles.rowWrap}>
+            <div className={styles.row}>
               <div className={styles.who}>
                 {u.photoURL ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -157,6 +245,22 @@ export default function ApprovalsPage() {
               </div>
 
               <div className={styles.acts}>
+                <button
+                  className={`${styles.act} ${u.verifyRequest ? styles.actOn : ''}`}
+                  onClick={() => openVerify(u)}
+                  title="ขอข้อมูลยืนยันตัวตนเพิ่ม"
+                  aria-label="ขอข้อมูลยืนยันตัวตนเพิ่ม"
+                >
+                  <HelpCircle size={16} />
+                </button>
+                <button
+                  className={styles.act}
+                  onClick={() => openDownloads(u.id)}
+                  title="ประวัติการโหลด"
+                  aria-label="ประวัติการโหลด"
+                >
+                  <History size={16} />
+                </button>
                 {tab !== 'approved' && (
                   <button
                     className={`${styles.act} ${styles.approve}`}
@@ -188,6 +292,67 @@ export default function ApprovalsPage() {
                   </button>
                 )}
               </div>
+            </div>
+
+            {verifyOpenFor === u.id && (
+              <div className={styles.panel}>
+                <p className={styles.panelTitle}>เลือกช่องทางที่ขอให้ยืนยันตัวตน</p>
+                <div className={styles.checklist}>
+                  {VERIFY_CHANNELS.map((c) => (
+                    <label key={c.key} className={styles.checkItem}>
+                      <input
+                        type="checkbox"
+                        checked={verifySelected.includes(c.key)}
+                        onChange={() => toggleChannel(c.key)}
+                      />
+                      {c.label}
+                    </label>
+                  ))}
+                </div>
+                <textarea
+                  className={styles.panelNote}
+                  placeholder="เหตุผลสั้นๆ ว่าทำไมต้องขอเพิ่ม (สมาชิกจะเห็นข้อความนี้)"
+                  value={verifyNote}
+                  onChange={(e) => setVerifyNote(e.target.value)}
+                  rows={2}
+                  maxLength={300}
+                />
+                <button
+                  className="btn btn-solid"
+                  onClick={() => sendVerifyRequest(u.id)}
+                  disabled={verifySending}
+                >
+                  <Send size={14} /> {verifySending ? 'กำลังส่ง…' : 'ส่งคำขอ'}
+                </button>
+              </div>
+            )}
+
+            {downloadsOpenFor === u.id && (
+              <div className={styles.panel}>
+                <p className={styles.panelTitle}>ประวัติการโหลดของ {u.displayName || u.email}</p>
+                {downloadsByUser[u.id]?.loading ? (
+                  <p className={styles.panelHint}>กำลังโหลด…</p>
+                ) : downloadsByUser[u.id]?.error ? (
+                  <p className={styles.panelHint}>โหลดประวัติไม่สำเร็จ</p>
+                ) : downloadsByUser[u.id]?.items.length === 0 ? (
+                  <p className={styles.panelHint}>ยังไม่มีประวัติการเปิดหรือโหลดหนังสือ</p>
+                ) : (
+                  <ul className={styles.downloadList}>
+                    {downloadsByUser[u.id].items.map((item) => (
+                      <li key={item.id} className={styles.downloadItem}>
+                        <span className={styles.downloadTitle}>{item.title}</span>
+                        <span className={styles.downloadMeta}>
+                          {item.type === 'download' ? 'ดาวน์โหลด' : 'เปิดอ่าน'}
+                          {item.timestamp?.toDate
+                            ? ` · ${item.timestamp.toDate().toLocaleDateString('th-TH')}`
+                            : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
             </li>
           ))}
         </ul>

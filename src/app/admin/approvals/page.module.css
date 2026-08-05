@@ -37,18 +37,20 @@
 .emptyLead { font-family: var(--display); font-size: 1.15rem; font-weight: 600; color: var(--fg-2); }
 
 .rows { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+.rowWrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  transition: border-color var(--dur) var(--ease);
+}
+.rowWrap:hover { border-color: var(--border-2); }
 .row {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto;
   align-items: center;
   gap: 1.1rem;
   padding: 0.85rem 1.1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  transition: border-color var(--dur) var(--ease);
 }
-.row:hover { border-color: var(--border-2); }
 
 .who { display: flex; align-items: center; gap: 0.8rem; min-width: 0; }
 .avatar { width: 40px; height: 40px; border-radius: var(--r-pill); object-fit: cover; flex: none; }
@@ -97,6 +99,53 @@
 .act:disabled { opacity: 0.4; cursor: not-allowed; }
 .approve:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); }
 .reject:hover:not(:disabled) { background: var(--hot); color: var(--bg); }
+.actOn { background: var(--accent-dim); color: var(--accent); }
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.9rem 1.1rem 1.1rem;
+  border-top: 1px solid var(--border);
+}
+.panelTitle { font-size: var(--t-small); font-weight: 500; color: var(--fg-2); }
+.panelHint { font-size: var(--t-small); color: var(--fg-3); }
+
+.checklist { display: flex; flex-direction: column; gap: 0.5rem; }
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: var(--t-small);
+  color: var(--fg);
+}
+
+.panelNote {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: var(--t-small);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.downloadList { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+.downloadItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  font-size: var(--t-small);
+}
+.downloadTitle { color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.downloadMeta { color: var(--fg-3); font-size: var(--t-micro); white-space: nowrap; flex: none; }
 
 @media (max-width: 760px) {
   .row { grid-template-columns: 1fr auto; row-gap: 0.6rem; }
