@@ -22,6 +22,7 @@
 
 import { loadPdfjs } from './pdfCover';
 import { toCE } from './thaiYear';
+import { looksLikeName } from './nameQuality';
 
 const PAGES_TO_SCAN = 6;
 const MAX_TEXT_LENGTH = 8000;
@@ -245,8 +246,11 @@ export async function extractPdfInfo(file) {
 
     const meta = await doc.getMetadata().catch(() => null);
     const metaAuthor = meta?.info?.Author ? String(meta.info.Author).trim() : '';
-    // Metadata is only trustworthy when it is a name, not a piece of software.
-    if (metaAuthor && !/acrobat|adobe|word|pdf|scanner|unknown/i.test(metaAuthor)) {
+    // Metadata is only trustworthy when it is a name — far more often it is
+    // the Windows account or the software that produced the file, and every
+    // one of those that slipped through became a permanent entry in the
+    // shared author list and a row in the reader's person rail.
+    if (metaAuthor && looksLikeName(metaAuthor)) {
       result.author = metaAuthor;
     }
 
@@ -273,6 +277,13 @@ export async function extractPdfInfo(file) {
       result.author = matchFirst(AUTHOR_PATTERNS, text) || extractByline(text, AUTHOR_BYLINE_PATTERNS);
     }
     result.translator = extractByline(text, TRANSLATOR_BYLINE_PATTERNS);
+
+    // A byline pattern anchored on "by" or "โดย" will happily return the rest
+    // of the sentence when the title page has no byline at all. Better to
+    // leave the field blank for the owner to fill than to publish a clause as
+    // an author — and blank is what needsEnrich already looks for.
+    if (result.author && !looksLikeName(result.author)) result.author = '';
+    if (result.translator && !looksLikeName(result.translator)) result.translator = '';
     result.year = extractYear(text);
     result.language = detectLanguage(text);
   } catch (err) {

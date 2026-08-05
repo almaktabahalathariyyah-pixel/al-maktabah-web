@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Trash2, Search, X } from 'lucide-react';
+import { Plus, Trash2, Search, X, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
+import { nameProblem } from '@/lib/nameQuality';
 import styles from '@/app/admin/settings/page.module.css';
 
 /**
@@ -14,34 +15,54 @@ import styles from '@/app/admin/settings/page.module.css';
  * but the parent now records each rename so it can rewrite the books using
  * that name, and four half-typed names are four wrong rewrites.
  */
-function EditableRow({ value, onCommit, onRemove }) {
+function EditableRow({ value, problem, checkable, checked, onToggle, onCommit, onRemove }) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
 
-  const commit = () => {
+  // A merge the owner declines leaves the typed text sitting in the field
+  // while the list still holds the old name, so the row has to put the old
+  // name back itself — `value` never changed, so nothing else will.
+  const commit = async () => {
     const next = draft.trim();
-    if (!next || next === value) setDraft(value);
-    else onCommit(value, next);
+    if (!next || next === value) { setDraft(value); return; }
+    const accepted = await onCommit(value, next);
+    if (!accepted) setDraft(value);
   };
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <input
-        type="text"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
-          if (e.key === 'Escape') setDraft(value);
-        }}
-        style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '0.9rem' }}
-      />
+      {checkable && (
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggle}
+          aria-label={`เลือก ${value}`}
+          style={{ flex: 'none', width: '1.05rem', height: '1.05rem' }}
+        />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+            if (e.key === 'Escape') setDraft(value);
+          }}
+          style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '0.9rem' }}
+        />
+        {problem && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.25rem', fontSize: '0.75rem', color: 'var(--fg-3)' }}>
+            <AlertTriangle size={11} /> {problem}
+          </span>
+        )}
+      </div>
       <button
         type="button"
         onClick={onRemove}
         title="ลบ"
-        style={{ padding: '0.5rem', border: 'none', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer', color: 'var(--hot)' }}
+        style={{ flex: 'none', padding: '0.5rem', border: 'none', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer', color: 'var(--hot)' }}
       >
         <Trash2 size={14} />
       </button>
@@ -49,18 +70,70 @@ function EditableRow({ value, onCommit, onRemove }) {
   );
 }
 
-export default function SearchableListEditor({ title, description, placeholder, items, onChange, onRename }) {
+export default function SearchableListEditor({ title, description, placeholder, items, onChange, onRename, onDelete }) {
   const [query, setQuery] = useState('');
   const [newItem, setNewItem] = useState('');
+  // Review mode: show only what the heuristic doubts, with a checkbox each.
+  const [reviewing, setReviewing] = useState(false);
+  const [checked, setChecked] = useState(() => new Set());
   const { toast } = useToast();
   const { confirm } = useConfirm();
 
+  /** Entry → why it does not look like a name, for the ones that do not. */
+  const problems = useMemo(() => {
+    const map = new Map();
+    for (const item of items) {
+      const reason = nameProblem(item);
+      if (reason) map.set(item, reason);
+    }
+    return map;
+  }, [items]);
+
   // Filter items based on search query
   const filteredItems = useMemo(() => {
+    if (reviewing) return items.filter((item) => problems.has(item));
     const q = query.trim().toLowerCase();
     if (!q) return items.slice(0, 50); // Show max 50 to avoid lagging if no query
     return items.filter(item => item.toLowerCase().includes(q)).slice(0, 100);
-  }, [items, query]);
+  }, [items, query, reviewing, problems]);
+
+  // Everything flagged starts ticked: the owner is here to clear junk, so the
+  // work is unticking the few real names, not ticking the forty wrong ones.
+  const startReview = () => {
+    setReviewing(true);
+    setQuery('');
+    setChecked(new Set(problems.keys()));
+  };
+
+  const toggleChecked = (item) =>
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(item)) next.delete(item);
+      else next.add(item);
+      return next;
+    });
+
+  const removeChecked = async () => {
+    const names = [...checked].filter((name) => items.includes(name));
+    if (names.length === 0) return;
+
+    const agreed = await confirm({
+      title: `ลบ ${names.length} รายการ?`,
+      message:
+        `เอาออกจากรายการ${title} และลบชื่อเหล่านี้ออกจากหนังสือทุกเล่มที่ใช้อยู่:\n\n` +
+        `${names.slice(0, 15).join('\n')}` +
+        `${names.length > 15 ? `\n…และอีก ${names.length - 15} รายการ` : ''}`,
+      confirmLabel: `ลบ ${names.length} รายการ`,
+      tone: 'danger',
+    });
+    if (!agreed) return;
+
+    const doomed = new Set(names);
+    onChange(items.filter((i) => !doomed.has(i)));
+    if (onDelete) names.forEach((name) => onDelete(name));
+    setChecked(new Set());
+    setReviewing(false);
+  };
 
   const handleAdd = (e) => {
     e.preventDefault();
@@ -78,23 +151,43 @@ export default function SearchableListEditor({ title, description, placeholder, 
   const handleRemove = async (itemToRemove) => {
     const agreed = await confirm({
       title: `ลบ “${itemToRemove}”?`,
-      message: `เอาออกจากรายการ${title} — หนังสือที่ใช้ชื่อนี้อยู่จะไม่ถูกแก้`,
+      message: `เอาออกจากรายการ${title} และลบชื่อนี้ออกจากหนังสือทุกเล่มที่ใช้อยู่`,
       confirmLabel: 'ลบรายการนี้',
       tone: 'danger',
     });
     if (!agreed) return;
     onChange(items.filter(i => i !== itemToRemove));
+    if (onDelete) onDelete(itemToRemove);
   };
 
-  const handleUpdate = (oldItem, newVal) => {
+  /**
+   * Returns whether the edit was accepted, so a declined merge can put the
+   * old name back in the field it was typed over.
+   */
+  const handleUpdate = async (oldItem, newVal) => {
     const val = newVal.trim();
-    if (!val || val === oldItem) return;
+    if (!val || val === oldItem) return false;
+
+    // Typing one entry's name onto another is how the same person spelled two
+    // ways gets fixed — which is a merge, not a collision. Refusing it, as
+    // this used to, left the duplicate with no way to resolve it at all.
     if (items.includes(val)) {
-      toast.info(`“${val}” มีอยู่ในรายการแล้ว`);
-      return;
+      const agreed = await confirm({
+        title: `รวม “${oldItem}” เข้ากับ “${val}”?`,
+        message:
+          `“${val}” มีอยู่ในรายการแล้ว หนังสือที่ใช้ “${oldItem}” จะย้ายไปใช้ “${val}” แทน ` +
+          `และ “${oldItem}” จะหายไปจากรายการ`,
+        confirmLabel: 'รวมเป็นชื่อเดียว',
+      });
+      if (!agreed) return false;
+      onChange(items.filter((i) => i !== oldItem));
+      if (onRename) onRename(oldItem, val);
+      return true;
     }
+
     onChange(items.map(i => i === oldItem ? val : i));
     if (onRename) onRename(oldItem, val);
+    return true;
   };
 
   return (
@@ -118,8 +211,42 @@ export default function SearchableListEditor({ title, description, placeholder, 
         </button>
       </form>
 
+      {/* Junk review. Only offered when there is something to review. */}
+      {problems.size > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+          {!reviewing ? (
+            <>
+              <button type="button" className="btn" onClick={startReview}>
+                <AlertTriangle size={15} /> ตรวจชื่อที่น่าสงสัย ({problems.size})
+              </button>
+              <span style={{ fontSize: '0.8rem', color: 'var(--fg-3)' }}>
+                ชื่อที่น่าจะมาจากข้อมูลในไฟล์ PDF มากกว่าจะเป็นชื่อคนจริง
+              </span>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn"
+                onClick={removeChecked}
+                disabled={checked.size === 0}
+                style={{ color: 'var(--hot)' }}
+              >
+                <Trash2 size={15} /> ลบที่เลือก ({checked.size})
+              </button>
+              <button type="button" className="btn" onClick={() => { setReviewing(false); setChecked(new Set()); }}>
+                ยกเลิก
+              </button>
+              <span style={{ fontSize: '0.8rem', color: 'var(--fg-3)' }}>
+                ติ๊กไว้ให้แล้วทุกชื่อ — เอาติ๊กออกจากชื่อที่เป็นคนจริง แล้วค่อยกดลบ
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Search box */}
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', display: reviewing ? 'none' : 'block' }}>
         <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-3)' }} />
         <input
           type="text"
@@ -146,12 +273,16 @@ export default function SearchableListEditor({ title, description, placeholder, 
             <EditableRow
               key={item}
               value={item}
+              problem={problems.get(item)}
+              checkable={reviewing}
+              checked={checked.has(item)}
+              onToggle={() => toggleChecked(item)}
               onCommit={handleUpdate}
               onRemove={() => handleRemove(item)}
             />
           ))
         )}
-        {items.length > 50 && !query && (
+        {items.length > 50 && !query && !reviewing && (
           <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--fg-3)', marginTop: '0.5rem' }}>
             แสดงเฉพาะ 50 รายการแรก (พิมพ์ค้นหาเพื่อดูรายชื่ออื่นๆ)
           </div>

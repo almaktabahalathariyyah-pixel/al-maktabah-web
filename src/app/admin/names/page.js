@@ -9,7 +9,7 @@ import { useConfirm } from '@/context/ConfirmContext';
 import { Save } from 'lucide-react';
 import SearchableListEditor from '@/components/SearchableListEditor';
 import { asList } from '@/lib/people';
-import { renameInBooks } from '@/lib/renameName';
+import { renameInBooks, removeFromBooks } from '@/lib/renameName';
 import styles from '../settings/page.module.css'; // We can reuse settings styles for layout
 
 /** Thai collation, so ก comes before ข and an English name sorts sensibly. */
@@ -38,28 +38,50 @@ export default function NamesPage() {
   const [activeTab, setActiveTab] = useState('authors'); // 'authors', 'translators', 'publishers'
 
   /**
-   * Per list, the name each entry started as: current spelling → original.
+   * What the books still owe this page, per list, in the order it was done.
    *
-   * Renaming twice before saving (a typo, then a fix) has to reach the books
-   * as ONE rewrite from the original — chaining through the intermediate
-   * spelling would query for a name no book ever held.
+   * Nothing here touches Firestore until save, so the same name can be
+   * renamed twice (a typo, then the fix) or renamed and then deleted before
+   * anything is written. Both have to reach the books as ONE operation
+   * against the name the books actually hold — chaining through a spelling
+   * that only ever existed on this screen would query for nothing.
    */
-  const originalOf = useRef({ authors: new Map(), translators: new Map(), publishers: new Map() });
+  const pending = useRef({
+    authors: { renames: [], deletes: [] },
+    translators: { renames: [], deletes: [] },
+    publishers: { renames: [], deletes: [] },
+  });
 
   const trackRename = useCallback(
     (listKey) => (from, to) => {
-      const map = originalOf.current[listKey];
-      map.set(to, map.get(from) ?? from);
-      map.delete(from);
+      const { renames } = pending.current[listKey];
+      const earlier = renames.find((op) => op.to === from);
+      if (earlier) earlier.to = to;
+      else renames.push({ from, to });
+      // Renaming back to where it started leaves the books alone.
+      pending.current[listKey].renames = renames.filter((op) => op.from !== op.to);
     },
     []
   );
 
-  const pendingRenames = (listKey) =>
-    [...originalOf.current[listKey]].filter(([current, original]) => current !== original);
+  const trackDelete = useCallback(
+    (listKey) => (name) => {
+      const { renames, deletes } = pending.current[listKey];
+      // Deleting something renamed earlier: the books never saw the new
+      // spelling, so drop the rename and delete what they do hold.
+      const earlier = renames.find((op) => op.to === name);
+      if (earlier) {
+        pending.current[listKey].renames = renames.filter((op) => op !== earlier);
+        deletes.push(earlier.from);
+      } else {
+        deletes.push(name);
+      }
+    },
+    []
+  );
 
-  const renameCount = Object.keys(BOOK_FIELD).reduce(
-    (total, key) => total + pendingRenames(key).length,
+  const changeCount = Object.keys(BOOK_FIELD).reduce(
+    (total, key) => total + pending.current[key].renames.length + pending.current[key].deletes.length,
     0
   );
 
@@ -96,16 +118,19 @@ export default function NamesPage() {
   }, [isAdmin, toast]);
 
   const handleSave = async () => {
-    // Renaming here rewrites real books, so it is not something to discover
-    // after the fact — say how many names and let the owner back out.
-    if (renameCount > 0) {
-      const lines = Object.keys(BOOK_FIELD).flatMap((key) =>
-        pendingRenames(key).map(([current, original]) => `“${original}” → “${current}”`)
-      );
+    // This rewrites real books, so it is not something to discover after the
+    // fact — spell out exactly what is about to change and let the owner
+    // back out.
+    if (changeCount > 0) {
+      const lines = Object.keys(BOOK_FIELD).flatMap((key) => [
+        ...pending.current[key].renames.map((op) => `“${op.from}” → “${op.to}”`),
+        ...pending.current[key].deletes.map((name) => `ลบ “${name}”`),
+      ]);
       const agreed = await confirm({
-        title: `แก้ชื่อในหนังสือด้วย? (${renameCount} ชื่อ)`,
+        title: `แก้ข้อมูลในหนังสือด้วย? (${changeCount} ชื่อ)`,
         message:
-          `หนังสือทุกเล่มที่ใช้ชื่อเดิมจะถูกแก้ให้ตรงกับชื่อใหม่:\n\n${lines.join('\n')}`,
+          `หนังสือทุกเล่มที่ใช้ชื่อเหล่านี้จะถูกแก้ตาม:\n\n${lines.slice(0, 20).join('\n')}` +
+          `${lines.length > 20 ? `\n…และอีก ${lines.length - 20} รายการ` : ''}`,
         confirmLabel: 'บันทึกและแก้หนังสือ',
       });
       if (!agreed) return;
@@ -127,23 +152,31 @@ export default function NamesPage() {
 
       let booksTouched = 0;
       for (const [listKey, { field, isMulti }] of Object.entries(BOOK_FIELD)) {
-        for (const [current, original] of pendingRenames(listKey)) {
-          booksTouched += await renameInBooks({ field, from: original, to: current, isMulti });
-          // Cleared as each one lands, so a failure part-way through leaves
-          // only the renames still owed — pressing save again finishes them
-          // rather than redoing what already worked.
-          originalOf.current[listKey].set(current, current);
+        const queue = pending.current[listKey];
+
+        // Renames run in the order they were made, then deletes — each one
+        // dropped from the queue as it lands, so a failure part-way through
+        // leaves only what is still owed. Pressing save again finishes the
+        // job instead of redoing the part that already worked.
+        while (queue.renames.length > 0) {
+          const op = queue.renames[0];
+          booksTouched += await renameInBooks({ field, from: op.from, to: op.to, isMulti });
+          queue.renames.shift();
+        }
+        while (queue.deletes.length > 0) {
+          booksTouched += await removeFromBooks({ field, name: queue.deletes[0], isMulti });
+          queue.deletes.shift();
         }
       }
 
       toast.success(
         booksTouched > 0
-          ? `บันทึกแล้ว และแก้ชื่อในหนังสือ ${booksTouched} เล่ม`
+          ? `บันทึกแล้ว และแก้ข้อมูลในหนังสือ ${booksTouched} เล่ม`
           : 'บันทึกการตั้งค่าสำเร็จ'
       );
     } catch (err) {
       console.error('Save names failed:', err);
-      toast.error('เกิดข้อผิดพลาดในการบันทึก');
+      toast.error('เกิดข้อผิดพลาดในการบันทึก — กดบันทึกอีกครั้งเพื่อทำต่อจากที่ค้างไว้');
     } finally {
       setSaving(false);
     }
@@ -217,8 +250,8 @@ export default function NamesPage() {
             <Save size={17} />
             {saving
               ? 'กำลังบันทึก…'
-              : renameCount > 0
-                ? `บันทึก (แก้ ${renameCount} ชื่อ)`
+              : changeCount > 0
+                ? `บันทึก (แก้ ${changeCount} ชื่อ)`
                 : 'บันทึกการเปลี่ยนแปลง'}
           </button>
         </div>
@@ -255,6 +288,7 @@ export default function NamesPage() {
             items={authors}
             onChange={setAuthors}
             onRename={trackRename('authors')}
+            onDelete={trackDelete('authors')}
           />
         )}
         
@@ -266,6 +300,7 @@ export default function NamesPage() {
             items={translators}
             onChange={setTranslators}
             onRename={trackRename('translators')}
+            onDelete={trackDelete('translators')}
           />
         )}
         
@@ -277,6 +312,7 @@ export default function NamesPage() {
             items={publishers}
             onChange={setPublishers}
             onRename={trackRename('publishers')}
+            onDelete={trackDelete('publishers')}
           />
         )}
       </div>

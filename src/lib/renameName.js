@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, doc, deleteField } from 'firebase/firestore';
 import { db } from './firebase';
 import { asList } from './people';
 
@@ -36,10 +36,35 @@ export async function renameInBooks({ field, from, to, isMulti }) {
   const batch = writeBatch(db);
   for (const [id, data] of found) {
     // A book already crediting both spellings must not end up crediting the
-    // surviving name twice.
+    // surviving name twice — which is exactly what merging two duplicate
+    // entries into one does.
     const next = isMulti
       ? [...new Set(asList(data[field]).map((v) => (v === from ? to : v)))]
       : to;
+    batch.update(doc(db, 'books', id), { [field]: next });
+  }
+  await batch.commit();
+  return found.size;
+}
+
+/**
+ * Strips a name from every book crediting it, for a name being deleted from
+ * the list outright — the junk the enrich pass harvested out of PDF metadata,
+ * which is not a person and so has no correct spelling to rename it to.
+ *
+ * A book left with no author at all is the honest outcome here: it says
+ * nothing rather than crediting a laptop, and needsEnrich picks the book back
+ * up as missing an author, which is true.
+ */
+export async function removeFromBooks({ field, name, isMulti }) {
+  const found = await booksUsing(field, name, isMulti);
+  if (found.size === 0) return 0;
+
+  const batch = writeBatch(db);
+  for (const [id, data] of found) {
+    const next = isMulti
+      ? asList(data[field]).filter((v) => v !== name)
+      : deleteField();
     batch.update(doc(db, 'books', id), { [field]: next });
   }
   await batch.commit();
