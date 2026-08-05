@@ -22,6 +22,55 @@ const PAGE_SIZE = 20;
 /** Books fetched per Firestore round trip while the shelf fills in. */
 const FETCH_CHUNK = 150;
 
+/**
+ * Search and filters run client-side over the whole shelf, so every visit
+ * used to re-read every book from Firestore — on a Spark-tier daily quota,
+ * a couple hundred ordinary page loads was enough to exhaust it with no bug
+ * involved at all. The cache below keeps last visit's list in localStorage
+ * and, on return, only asks Firestore for books created since then. Edits or
+ * deletes to already-cached books lag until CACHE_TTL_MS forces a full
+ * re-read, which is the trade-off for cutting reads to near zero on repeat
+ * visits within that window.
+ */
+const CACHE_VERSION = 1;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+const cacheKey = (scope) => `al-maktabah:books:${scope}:v${CACHE_VERSION}`;
+
+function readBookCache(scope) {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(cacheKey(scope));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed.books) || typeof parsed.fetchedAt !== 'number') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeBookCache(scope, books) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(
+      cacheKey(scope),
+      JSON.stringify({ books, fetchedAt: Date.now(), newest: books[0]?.createdAt ?? 0 })
+    );
+  } catch {
+    // Quota exceeded or storage disabled (private browsing) — caching is an
+    // optimization, not a requirement, so just skip it.
+  }
+}
+
+/** Normalizes the Timestamp to millis so cached books are plain JSON. */
+function toBook(doc) {
+  const data = doc.data();
+  const createdAt =
+    typeof data.createdAt?.toMillis === 'function' ? data.createdAt.toMillis() : Date.now();
+  return { id: doc.id, ...data, createdAt };
+}
+
 const FILTER_LABELS = {
   category: 'หมวดหมู่',
   type: 'ประเภท',
@@ -129,37 +178,49 @@ export default function Home() {
   const canSeeAll = approved || isAdmin;
 
   /**
-   * Fills the shelf in chunks, painting after each one.
+   * Fills the shelf in chunks, painting after each one — and, when last
+   * visit's list is still cached and fresh, paints instantly from that and
+   * only asks Firestore for what's new since then.
    *
-   * Two reasons this is not a single getDocs any more. The first page now
-   * appears without waiting for the whole collection, and — since the security
-   * rules judge a query by every document it could return — a reader who is
-   * not approved has to ASK only for public titles. Requesting everything
-   * would be refused outright rather than quietly filtered.
+   * Two reasons the cold-start fetch is not a single getDocs. The first page
+   * now appears without waiting for the whole collection, and — since the
+   * security rules judge a query by every document it could return — a
+   * reader who is not approved has to ASK only for public titles. Requesting
+   * everything would be refused outright rather than quietly filtered.
    */
   const load = useCallback(async () => {
-    setLoading(true);
     setLoadError(false);
     setFullyLoaded(false);
 
+    const scope = canSeeAll ? 'full' : 'public';
+    const cached = readBookCache(scope);
+    if (cached) {
+      setBooks(cached.books);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     const base = collection(db, 'books');
 
-    const fetchAll = async (filterRestricted) => {
-      const scoped = (...extra) =>
-        filterRestricted
-          ? query(base, where('restricted', '==', false), orderBy('createdAt', 'desc'), ...extra)
-          : query(base, orderBy('createdAt', 'desc'), ...extra);
+    const scoped = (filterRestricted, ...extra) =>
+      filterRestricted
+        ? query(base, where('restricted', '==', false), orderBy('createdAt', 'desc'), ...extra)
+        : query(base, orderBy('createdAt', 'desc'), ...extra);
 
+    const fetchAll = async (filterRestricted) => {
       const collected = [];
       let cursor = null;
 
       for (;;) {
         const snapshot = await getDocs(
-          cursor ? scoped(startAfter(cursor), limit(FETCH_CHUNK)) : scoped(limit(FETCH_CHUNK))
+          cursor
+            ? scoped(filterRestricted, startAfter(cursor), limit(FETCH_CHUNK))
+            : scoped(filterRestricted, limit(FETCH_CHUNK))
         );
         if (snapshot.empty) break;
 
-        snapshot.forEach((d) => collected.push({ id: d.id, ...d.data() }));
+        snapshot.forEach((d) => collected.push(toBook(d)));
         setBooks([...collected]);
         setLoading(false);
 
@@ -169,8 +230,38 @@ export default function Home() {
       return collected;
     };
 
+    const fetchNewSince = async (filterRestricted, sinceMillis) => {
+      const collected = [];
+      let cursor = null;
+
+      for (;;) {
+        const extra = cursor
+          ? [startAfter(cursor), limit(FETCH_CHUNK)]
+          : [limit(FETCH_CHUNK)];
+        const snapshot = await getDocs(
+          scoped(filterRestricted, where('createdAt', '>', new Date(sinceMillis)), ...extra)
+        );
+        if (snapshot.empty) break;
+
+        snapshot.forEach((d) => collected.push(toBook(d)));
+        if (snapshot.size < FETCH_CHUNK) break;
+        cursor = snapshot.docs[snapshot.docs.length - 1];
+      }
+      return collected;
+    };
+
     try {
-      await fetchAll(!canSeeAll);
+      if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+        const additions = await fetchNewSince(!canSeeAll, cached.newest);
+        const cachedIds = new Set(cached.books.map((b) => b.id));
+        const fresh = additions.filter((b) => !cachedIds.has(b.id));
+        const merged = fresh.length ? [...fresh, ...cached.books] : cached.books;
+        setBooks(merged);
+        writeBookCache(scope, merged);
+      } else {
+        const fetched = await fetchAll(!canSeeAll);
+        writeBookCache(scope, fetched);
+      }
       setFullyLoaded(true);
     } catch (error) {
       // The narrowed query needs a composite index and the new rules. Until
@@ -179,11 +270,12 @@ export default function Home() {
       // is refused for a guest, and the error path below takes over.
       console.warn('Filtered query failed, retrying unfiltered:', error);
       try {
-        await fetchAll(false);
+        const fetched = await fetchAll(false);
+        writeBookCache(scope, fetched);
         setFullyLoaded(true);
       } catch (retryError) {
         console.error('Error loading library:', retryError);
-        setLoadError(true);
+        if (!cached) setLoadError(true);
       }
     } finally {
       setLoading(false);
