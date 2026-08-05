@@ -15,6 +15,7 @@ import { getNextBookId } from '@/lib/sequentialId';
 import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
 import { uploadPdfToDrive, driveIdFrom, pickDriveFile, shareWithAnyone } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror, bookSizeBytes } from '@/lib/mirror';
+import { bumpCatalogRev } from '@/lib/catalogRev';
 import { makeCover } from '@/lib/pdfCover';
 import { extractPdfInfo } from '@/lib/pdfInfo';
 import { toCE } from '@/lib/thaiYear';
@@ -636,6 +637,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
       }
 
       await rememberNewValues(payload);
+      await bumpCatalogRev();
 
       if (onSaved) onSaved({ id: finalId, ...payload });
       onClose();

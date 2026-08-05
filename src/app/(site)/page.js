@@ -10,6 +10,7 @@ import BookCover from '@/components/BookCover';
 import { useAuth } from '@/context/AuthContext';
 import { collection, getDocs, query, orderBy, where, limit, startAfter } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { readCatalogRev } from '@/lib/catalogRev';
 import { getLangPath } from '@/lib/langPath';
 import AuthorSidebar from '@/components/AuthorSidebar';
 import { asList, joinPeople, hasPerson } from '@/lib/people';
@@ -26,13 +27,18 @@ const FETCH_CHUNK = 150;
  * Search and filters run client-side over the whole shelf, so every visit
  * used to re-read every book from Firestore — on a Spark-tier daily quota,
  * a couple hundred ordinary page loads was enough to exhaust it with no bug
- * involved at all. The cache below keeps last visit's list in localStorage
- * and, on return, only asks Firestore for books created since then. Edits or
- * deletes to already-cached books lag until CACHE_TTL_MS forces a full
- * re-read, which is the trade-off for cutting reads to near zero on repeat
- * visits within that window.
+ * involved at all. The cache below keeps last visit's list in localStorage.
+ *
+ * Whether that copy is still good is settled by ONE document read: the
+ * catalogue revision, bumped by every admin write. Same number, and the
+ * shelf paints from the cache having read nothing else; different, and it
+ * refetches. So a quiet day costs 1 read per visit instead of 432, and an
+ * edit still reaches everyone on their next visit rather than a day later.
+ *
+ * The expiry below is now only a backstop for the case where a bump was
+ * lost, or where the revision itself could not be read.
  */
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const cacheKey = (scope) => `al-maktabah:books:${scope}:v${CACHE_VERSION}`;
@@ -50,12 +56,12 @@ function readBookCache(scope) {
   }
 }
 
-function writeBookCache(scope, books) {
+function writeBookCache(scope, books, rev) {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(
       cacheKey(scope),
-      JSON.stringify({ books, fetchedAt: Date.now(), newest: books[0]?.createdAt ?? 0 })
+      JSON.stringify({ books, rev, fetchedAt: Date.now() })
     );
   } catch {
     // Quota exceeded or storage disabled (private browsing) — caching is an
@@ -178,9 +184,9 @@ export default function Home() {
   const canSeeAll = approved || isAdmin;
 
   /**
-   * Fills the shelf in chunks, painting after each one — and, when last
-   * visit's list is still cached and fresh, paints instantly from that and
-   * only asks Firestore for what's new since then.
+   * Fills the shelf in chunks, painting after each one — or, when the
+   * catalogue has not changed since this browser last looked, straight from
+   * the cache without reading a single book document.
    *
    * Two reasons the cold-start fetch is not a single getDocs. The first page
    * now appears without waiting for the whole collection, and — since the
@@ -199,6 +205,25 @@ export default function Home() {
       setLoading(false);
     } else {
       setLoading(true);
+    }
+
+    // One document. Everything below hangs on whether it still matches.
+    const rev = await readCatalogRev();
+
+    // Same revision means no book has been added, edited or removed since
+    // this list was cached, so there is nothing to ask for.
+    if (cached && rev !== null && cached.rev === rev) {
+      setFullyLoaded(true);
+      setLoading(false);
+      return;
+    }
+
+    // The revision was unreadable, but the cache is recent — better to show
+    // a slightly old shelf than to spend 400 reads proving it was fine.
+    if (cached && rev === null && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+      setFullyLoaded(true);
+      setLoading(false);
+      return;
     }
 
     const base = collection(db, 'books');
@@ -230,38 +255,9 @@ export default function Home() {
       return collected;
     };
 
-    const fetchNewSince = async (filterRestricted, sinceMillis) => {
-      const collected = [];
-      let cursor = null;
-
-      for (;;) {
-        const extra = cursor
-          ? [startAfter(cursor), limit(FETCH_CHUNK)]
-          : [limit(FETCH_CHUNK)];
-        const snapshot = await getDocs(
-          scoped(filterRestricted, where('createdAt', '>', new Date(sinceMillis)), ...extra)
-        );
-        if (snapshot.empty) break;
-
-        snapshot.forEach((d) => collected.push(toBook(d)));
-        if (snapshot.size < FETCH_CHUNK) break;
-        cursor = snapshot.docs[snapshot.docs.length - 1];
-      }
-      return collected;
-    };
-
     try {
-      if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
-        const additions = await fetchNewSince(!canSeeAll, cached.newest);
-        const cachedIds = new Set(cached.books.map((b) => b.id));
-        const fresh = additions.filter((b) => !cachedIds.has(b.id));
-        const merged = fresh.length ? [...fresh, ...cached.books] : cached.books;
-        setBooks(merged);
-        writeBookCache(scope, merged);
-      } else {
-        const fetched = await fetchAll(!canSeeAll);
-        writeBookCache(scope, fetched);
-      }
+      const fetched = await fetchAll(!canSeeAll);
+      writeBookCache(scope, fetched, rev);
       setFullyLoaded(true);
     } catch (error) {
       // The narrowed query needs a composite index and the new rules. Until
@@ -271,7 +267,7 @@ export default function Home() {
       console.warn('Filtered query failed, retrying unfiltered:', error);
       try {
         const fetched = await fetchAll(false);
-        writeBookCache(scope, fetched);
+        writeBookCache(scope, fetched, rev);
         setFullyLoaded(true);
       } catch (retryError) {
         console.error('Error loading library:', retryError);

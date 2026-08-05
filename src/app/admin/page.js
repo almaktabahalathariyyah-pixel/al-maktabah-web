@@ -28,6 +28,7 @@ import {
 import { makeCover } from '@/lib/pdfCover';
 import { extractPdfInfo } from '@/lib/pdfInfo';
 import { canMirror, bookSizeBytes } from '@/lib/mirror';
+import { bumpCatalogRev } from '@/lib/catalogRev';
 import { useTabLock } from '@/lib/tabLock';
 import { asList, joinPeople, hasPerson, splitPeople } from '@/lib/people';
 import BookFormPanel from '@/components/BookFormPanel';
@@ -313,6 +314,7 @@ export default function AdminPage() {
       const batch = writeBatch(db);
       targets.forEach((b) => batch.delete(doc(db, 'books', b.id)));
       await batch.commit();
+      await bumpCatalogRev();
 
       setBooks((prev) => prev.filter((b) => !selectedBooks.has(b.id)));
       setSelectedBooks(new Set());
@@ -344,6 +346,7 @@ export default function AdminPage() {
     try {
       await removeDriveCopies([book], token);
       await deleteDoc(doc(db, 'books', id));
+      await bumpCatalogRev();
 
       setBooks((prev) => prev.filter((b) => b.id !== id));
       setSelectedBooks((prev) => {
@@ -408,6 +411,7 @@ export default function AdminPage() {
         batch.update(doc(db, 'books', id), updates);
       });
       await batch.commit();
+      await bumpCatalogRev();
 
       // Same rule as the single-book form: what is set here joins the lists.
       // The two selects offer values harvested from the books as well as the
@@ -511,6 +515,7 @@ export default function AdminPage() {
       }
 
       if (updates.length > 0) {
+        await bumpCatalogRev();
         const byId = new Map(updates.map((item) => [item.id, item.patch]));
         setBooks((prev) => prev.map((book) => (
           byId.has(book.id) ? { ...book, ...byId.get(book.id) } : book
@@ -712,6 +717,10 @@ export default function AdminPage() {
     if (seenAuthors.size > 0 || seenTranslators.size > 0) {
       await rememberDropdowns({ authors: [...seenAuthors], translators: [...seenTranslators] });
     }
+
+    // Once for the whole pass, not once per book: the shelf only needs to
+    // know that it changed, and this run may have touched hundreds of them.
+    if (updated > 0) await bumpCatalogRev();
 
     const FIELD_LABELS = {
       coverUrl: 'ปก', pages: 'หน้า', year: 'ปี', language: 'ภาษา', author: 'ผู้แต่ง', translator: 'ผู้แปล',

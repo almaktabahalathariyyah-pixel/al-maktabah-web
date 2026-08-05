@@ -14,6 +14,7 @@ import { rememberDropdowns } from '@/lib/settings';
 import { canMirror } from '@/lib/mirror';
 import { makeCover } from '@/lib/pdfCover';
 import { useTabLock } from '@/lib/tabLock';
+import { bumpCatalogRev } from '@/lib/catalogRev';
 import {
   X, UploadCloud, CheckCircle, AlertCircle, Loader2, FileSpreadsheet,
   FolderOpen, Play, Pause, SkipForward,
@@ -281,6 +282,8 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
     await rememberDropdowns(
       Object.fromEntries(Object.entries(seen).map(([key, values]) => [key, [...values]]))
     );
+    // Same reasoning: a cancelled run still changed the shelf.
+    if (ok > 0) await bumpCatalogRev();
 
     if (cancelled.current) return;
 

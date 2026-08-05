@@ -1,6 +1,7 @@
 import { collection, query, where, getDocs, writeBatch, doc, deleteField } from 'firebase/firestore';
 import { db } from './firebase';
 import { asList } from './people';
+import { bumpCatalogRev } from './catalogRev';
 
 /**
  * Rewrites one name across every book crediting it.
@@ -44,6 +45,7 @@ export async function renameInBooks({ field, from, to, isMulti }) {
     batch.update(doc(db, 'books', id), { [field]: next });
   }
   await batch.commit();
+  await bumpCatalogRev();
   return found.size;
 }
 
@@ -68,5 +70,6 @@ export async function removeFromBooks({ field, name, isMulti }) {
     batch.update(doc(db, 'books', id), { [field]: next });
   }
   await batch.commit();
+  await bumpCatalogRev();
   return found.size;
 }
