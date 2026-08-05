@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { getDropdownSettings, saveDropdownSettings } from '@/lib/settings';
@@ -9,10 +9,18 @@ import { useConfirm } from '@/context/ConfirmContext';
 import { Save } from 'lucide-react';
 import SearchableListEditor from '@/components/SearchableListEditor';
 import { asList } from '@/lib/people';
+import { renameInBooks } from '@/lib/renameName';
 import styles from '../settings/page.module.css'; // We can reuse settings styles for layout
 
 /** Thai collation, so ก comes before ข and an English name sorts sensibly. */
 const sortNames = (list) => [...(list || [])].sort((a, b) => String(a).localeCompare(String(b), 'th'));
+
+/** Which book field each list on this page governs. */
+const BOOK_FIELD = {
+  authors: { field: 'author', isMulti: true },
+  translators: { field: 'translator', isMulti: true },
+  publishers: { field: 'publisher', isMulti: false },
+};
 
 export default function NamesPage() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -28,6 +36,32 @@ export default function NamesPage() {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState('authors'); // 'authors', 'translators', 'publishers'
+
+  /**
+   * Per list, the name each entry started as: current spelling → original.
+   *
+   * Renaming twice before saving (a typo, then a fix) has to reach the books
+   * as ONE rewrite from the original — chaining through the intermediate
+   * spelling would query for a name no book ever held.
+   */
+  const originalOf = useRef({ authors: new Map(), translators: new Map(), publishers: new Map() });
+
+  const trackRename = useCallback(
+    (listKey) => (from, to) => {
+      const map = originalOf.current[listKey];
+      map.set(to, map.get(from) ?? from);
+      map.delete(from);
+    },
+    []
+  );
+
+  const pendingRenames = (listKey) =>
+    [...originalOf.current[listKey]].filter(([current, original]) => current !== original);
+
+  const renameCount = Object.keys(BOOK_FIELD).reduce(
+    (total, key) => total + pendingRenames(key).length,
+    0
+  );
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -62,6 +96,21 @@ export default function NamesPage() {
   }, [isAdmin, toast]);
 
   const handleSave = async () => {
+    // Renaming here rewrites real books, so it is not something to discover
+    // after the fact — say how many names and let the owner back out.
+    if (renameCount > 0) {
+      const lines = Object.keys(BOOK_FIELD).flatMap((key) =>
+        pendingRenames(key).map(([current, original]) => `“${original}” → “${current}”`)
+      );
+      const agreed = await confirm({
+        title: `แก้ชื่อในหนังสือด้วย? (${renameCount} ชื่อ)`,
+        message:
+          `หนังสือทุกเล่มที่ใช้ชื่อเดิมจะถูกแก้ให้ตรงกับชื่อใหม่:\n\n${lines.join('\n')}`,
+        confirmLabel: 'บันทึกและแก้หนังสือ',
+      });
+      if (!agreed) return;
+    }
+
     setSaving(true);
     try {
       const payload = {
@@ -71,12 +120,29 @@ export default function NamesPage() {
       };
       // saveDropdownSettings now uses merge: true, so it won't overwrite categories/languages
       const success = await saveDropdownSettings(payload);
-      if (success) {
-        toast.success('บันทึกการตั้งค่าสำเร็จ');
-      } else {
+      if (!success) {
         toast.error('บันทึกไม่สำเร็จ');
+        return;
       }
+
+      let booksTouched = 0;
+      for (const [listKey, { field, isMulti }] of Object.entries(BOOK_FIELD)) {
+        for (const [current, original] of pendingRenames(listKey)) {
+          booksTouched += await renameInBooks({ field, from: original, to: current, isMulti });
+          // Cleared as each one lands, so a failure part-way through leaves
+          // only the renames still owed — pressing save again finishes them
+          // rather than redoing what already worked.
+          originalOf.current[listKey].set(current, current);
+        }
+      }
+
+      toast.success(
+        booksTouched > 0
+          ? `บันทึกแล้ว และแก้ชื่อในหนังสือ ${booksTouched} เล่ม`
+          : 'บันทึกการตั้งค่าสำเร็จ'
+      );
     } catch (err) {
+      console.error('Save names failed:', err);
       toast.error('เกิดข้อผิดพลาดในการบันทึก');
     } finally {
       setSaving(false);
@@ -138,6 +204,8 @@ export default function NamesPage() {
             จัดการผู้แต่ง ผู้แปล และสำนักพิมพ์สำหรับตัวเลือกในระบบ
             <br />
             ชื่อที่พิมพ์ใหม่ตอนเพิ่มหรือแก้ไขหนังสือจะมาขึ้นที่นี่เอง ไม่ต้องกดดึง
+            <br />
+            แก้ชื่อที่นี่แล้วกดบันทึก หนังสือทุกเล่มที่ใช้ชื่อเดิมจะถูกแก้ตามให้อัตโนมัติ
           </p>
         </div>
 
@@ -147,7 +215,11 @@ export default function NamesPage() {
           </button>
           <button className="btn btn-solid" onClick={handleSave} disabled={saving || syncing}>
             <Save size={17} />
-            {saving ? 'กำลังบันทึก…' : 'บันทึกการเปลี่ยนแปลง'}
+            {saving
+              ? 'กำลังบันทึก…'
+              : renameCount > 0
+                ? `บันทึก (แก้ ${renameCount} ชื่อ)`
+                : 'บันทึกการเปลี่ยนแปลง'}
           </button>
         </div>
       </header>
@@ -182,6 +254,7 @@ export default function NamesPage() {
             placeholder="ค้นหาชื่อผู้แต่ง..."
             items={authors}
             onChange={setAuthors}
+            onRename={trackRename('authors')}
           />
         )}
         
@@ -192,6 +265,7 @@ export default function NamesPage() {
             placeholder="ค้นหาชื่อผู้แปล..."
             items={translators}
             onChange={setTranslators}
+            onRename={trackRename('translators')}
           />
         )}
         
@@ -202,6 +276,7 @@ export default function NamesPage() {
             placeholder="ค้นหาชื่อสำนักพิมพ์..."
             items={publishers}
             onChange={setPublishers}
+            onRename={trackRename('publishers')}
           />
         )}
       </div>

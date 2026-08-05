@@ -1,12 +1,55 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Plus, Trash2, Search, X } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import styles from '@/app/admin/settings/page.module.css';
 
-export default function SearchableListEditor({ title, description, placeholder, items, onChange }) {
+/**
+ * One name, committed when the field is left rather than on every keystroke.
+ *
+ * Typing "กวิน" into a controlled input used to fire four separate renames,
+ * one per character — invisible when the list only lived in this component,
+ * but the parent now records each rename so it can rewrite the books using
+ * that name, and four half-typed names are four wrong rewrites.
+ */
+function EditableRow({ value, onCommit, onRemove }) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+
+  const commit = () => {
+    const next = draft.trim();
+    if (!next || next === value) setDraft(value);
+    else onCommit(value, next);
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <input
+        type="text"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+          if (e.key === 'Escape') setDraft(value);
+        }}
+        style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '0.9rem' }}
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        title="ลบ"
+        style={{ padding: '0.5rem', border: 'none', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer', color: 'var(--hot)' }}
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
+}
+
+export default function SearchableListEditor({ title, description, placeholder, items, onChange, onRename }) {
   const [query, setQuery] = useState('');
   const [newItem, setNewItem] = useState('');
   const { toast } = useToast();
@@ -51,6 +94,7 @@ export default function SearchableListEditor({ title, description, placeholder, 
       return;
     }
     onChange(items.map(i => i === oldItem ? val : i));
+    if (onRename) onRename(oldItem, val);
   };
 
   return (
@@ -98,23 +142,13 @@ export default function SearchableListEditor({ title, description, placeholder, 
             ไม่พบรายชื่อที่ค้นหา
           </div>
         ) : (
-          filteredItems.map((item, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input 
-                type="text"
-                value={item}
-                onChange={(e) => handleUpdate(item, e.target.value)}
-                style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface-2)', fontSize: '0.9rem' }}
-              />
-              <button 
-                type="button" 
-                onClick={() => handleRemove(item)} 
-                title="ลบ" 
-                style={{ padding: '0.5rem', border: 'none', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer', color: 'var(--hot)' }}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
+          filteredItems.map((item) => (
+            <EditableRow
+              key={item}
+              value={item}
+              onCommit={handleUpdate}
+              onRemove={() => handleRemove(item)}
+            />
           ))
         )}
         {items.length > 50 && !query && (
