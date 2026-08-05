@@ -166,7 +166,16 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.bookId is string;
-      allow read: if isAdmin();
+
+      // Fetching one event you wrote yourself.
+      allow get: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+
+      // A query is judged against every document it could return, so this
+      // permits "my own history" and refuses anything wider — the account
+      // page asks with where('userId','==', uid), which is exactly the shape
+      // this allows. Only the owner may read across readers.
+      allow list: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+
       allow update, delete: if false;
     }
 

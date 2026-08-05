@@ -103,6 +103,42 @@
   color: var(--accent);
 }
 
+/* ---------------- Recently opened ---------------- */
+.recentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 0.9rem;
+}
+
+.recentItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.recentCover {
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+/* Two lines, then ellipsis: a long Thai title must not make one cover taller
+   than its neighbours and stagger the row. */
+.recentTitle {
+  font-size: var(--t-micro);
+  line-height: 1.5;
+  color: var(--fg-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recentItem:hover .recentTitle { color: var(--accent); }
+
 /* ---------------- Access request ---------------- */
 .statusLine {
   display: flex;

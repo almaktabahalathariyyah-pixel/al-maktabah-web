@@ -8,6 +8,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/firebase';
 import { VERIFY_CHANNELS } from '@/lib/verifyChannels';
+import { recentlyOpened } from '@/lib/stats';
+import { getLangPath } from '@/lib/langPath';
+import BookCover from '@/components/BookCover';
 import styles from './page.module.css';
 
 const toMillis = (ts) => ts?.toMillis?.() ?? 0;
@@ -19,6 +22,7 @@ export default function AccountPage() {
   const [social, setSocial] = useState('');
   const [note, setNote] = useState('');
   const [sending, setSending] = useState(false);
+  const [recent, setRecent] = useState([]);
   // Mirrors what was just saved, so the card switches to "รออนุมัติ" without
   // waiting for the profile to be re-read.
   const [justSent, setJustSent] = useState(false);
@@ -39,6 +43,20 @@ export default function AccountPage() {
     };
     fetchChannels();
   }, []);
+
+  // Costs two queries and only for a signed-in reader, so it is kept off the
+  // shelf itself and lives here, where someone has already asked about their
+  // own account. A failure leaves the section absent rather than erroring.
+  useEffect(() => {
+    if (!user) { setRecent([]); return; }
+    let alive = true;
+
+    recentlyOpened(user.uid)
+      .then((books) => { if (alive) setRecent(books); })
+      .catch((err) => console.warn('Could not load reading history:', err));
+
+    return () => { alive = false; };
+  }, [user]);
 
   // Start the form from whatever was sent last time, so a reader editing a
   // request does not have to retype it.
@@ -127,6 +145,26 @@ export default function AccountPage() {
             <LogOut size={15} /> ออกจากระบบ
           </button>
         </section>
+
+        {recent.length > 0 && (
+          <section className={styles.card}>
+            <h2 className={styles.sectionTitle}>เปิดอ่านล่าสุด</h2>
+            <div className={styles.recentGrid}>
+              {recent.map((book) => (
+                <Link
+                  key={book.id}
+                  href={`/book/${getLangPath(book.language)}/${book.id}`}
+                  className={styles.recentItem}
+                >
+                  <div className={styles.recentCover}>
+                    <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+                  </div>
+                  <span className={styles.recentTitle}>{book.title}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Access to the restricted shelf: where it stands, and how to ask. */}
         <section className={styles.card}>
