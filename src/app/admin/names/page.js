@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { getDropdownSettings, saveDropdownSettings } from '@/lib/settings';
+import {
+  getDropdownSettings, saveDropdownSettings, categoryEntries, groupCategories,
+} from '@/lib/settings';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { Save } from 'lucide-react';
@@ -20,6 +22,7 @@ const BOOK_FIELD = {
   authors: { field: 'author', isMulti: true },
   translators: { field: 'translator', isMulti: true },
   publishers: { field: 'publisher', isMulti: false },
+  categories: { field: 'category', isMulti: false },
 };
 
 export default function NamesPage() {
@@ -31,6 +34,15 @@ export default function NamesPage() {
   const [authors, setAuthors] = useState([]);
   const [translators, setTranslators] = useState([]);
   const [publishers, setPublishers] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  // Categories are stored as groups of options, not a flat array. The editor
+  // works on the values alone — merging two spellings of one subject is the
+  // job, and which group each sits in is beside the point — so the shape is
+  // taken apart on load and put back on save. `groupOf` is what remembers
+  // where each value belongs across a rename.
+  const categoryGroups = useRef([]);
+  const groupOf = useRef(new Map());
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,6 +62,7 @@ export default function NamesPage() {
     authors: { renames: [], deletes: [] },
     translators: { renames: [], deletes: [] },
     publishers: { renames: [], deletes: [] },
+    categories: { renames: [], deletes: [] },
   });
 
   const trackRename = useCallback(
@@ -80,6 +93,28 @@ export default function NamesPage() {
     []
   );
 
+  // A renamed category has to carry its group across with it, or saving would
+  // file it under "นำเข้าจากหนังสือ" as though it were new.
+  const renameCategory = useCallback(
+    (from, to) => {
+      const map = groupOf.current;
+      if (map.has(from)) {
+        map.set(to, map.get(from));
+        map.delete(from);
+      }
+      trackRename('categories')(from, to);
+    },
+    [trackRename]
+  );
+
+  const deleteCategory = useCallback(
+    (name) => {
+      groupOf.current.delete(name);
+      trackDelete('categories')(name);
+    },
+    [trackDelete]
+  );
+
   const changeCount = Object.keys(BOOK_FIELD).reduce(
     (total, key) => total + pending.current[key].renames.length + pending.current[key].deletes.length,
     0
@@ -104,6 +139,11 @@ export default function NamesPage() {
         setAuthors(sortNames(settings.authors));
         setTranslators(sortNames(settings.translators));
         setPublishers(sortNames(settings.publishers));
+
+        categoryGroups.current = settings.categories;
+        const entries = categoryEntries(settings.categories);
+        groupOf.current = new Map(entries.map((e) => [e.value, e.group]));
+        setCategories(sortNames(entries.map((e) => e.value)));
       } catch (err) {
         if (isMounted) toast.error('โหลดข้อมูลการตั้งค่าไม่สำเร็จ');
       } finally {
@@ -142,6 +182,11 @@ export default function NamesPage() {
         authors: authors.filter(Boolean),
         translators: translators.filter(Boolean),
         publishers: publishers.filter(Boolean),
+        categories: groupCategories(
+          categoryGroups.current,
+          categories.filter(Boolean),
+          groupOf.current
+        ),
       };
       // saveDropdownSettings now uses merge: true, so it won't overwrite categories/languages
       const success = await saveDropdownSettings(payload);
@@ -202,11 +247,13 @@ export default function NamesPage() {
       const newAuthors = sortNames(new Set([...authors, ...books.flatMap(b => asList(b.author))]));
       const newTranslators = sortNames(new Set([...translators, ...books.flatMap(b => asList(b.translator))]));
       const newPublishers = sortNames(new Set([...publishers, ...books.map(b => b.publisher).filter(Boolean)]));
-      
+      const newCategories = sortNames(new Set([...categories, ...books.map(b => b.category).filter(Boolean)]));
+
       setAuthors(newAuthors);
       setTranslators(newTranslators);
       setPublishers(newPublishers);
-      
+      setCategories(newCategories);
+
       toast.success('ดึงข้อมูลสำเร็จ! กรุณากด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน');
     } catch (err) {
       console.error(err);
@@ -234,7 +281,7 @@ export default function NamesPage() {
           <p className="eyebrow" style={{ display: 'block', marginBottom: '0.7rem' }}>ผู้ดูแลระบบ</p>
           <h1 className={styles.pageTitle}>จัดการรายชื่อ</h1>
           <p className="lede" style={{ marginTop: '0.5rem' }}>
-            จัดการผู้แต่ง ผู้แปล และสำนักพิมพ์สำหรับตัวเลือกในระบบ
+            จัดการผู้แต่ง ผู้แปล สำนักพิมพ์ และหมวดหมู่สำหรับตัวเลือกในระบบ
             <br />
             ชื่อที่พิมพ์ใหม่ตอนเพิ่มหรือแก้ไขหนังสือจะมาขึ้นที่นี่เอง ไม่ต้องกดดึง
             <br />
@@ -277,6 +324,12 @@ export default function NamesPage() {
         >
           สำนักพิมพ์ <span className={styles.tabEn}>(Publishers)</span>
         </button>
+        <button
+          className={`btn ${activeTab === 'categories' ? 'btn-solid' : ''} ${styles.tab}`}
+          onClick={() => setActiveTab('categories')}
+        >
+          หมวดหมู่ <span className={styles.tabEn}>(Categories)</span>
+        </button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -313,6 +366,19 @@ export default function NamesPage() {
             onChange={setPublishers}
             onRename={trackRename('publishers')}
             onDelete={trackDelete('publishers')}
+          />
+        )}
+
+        {activeTab === 'categories' && (
+          <SearchableListEditor
+            title="หมวดหมู่ (Categories)"
+            description="พิมพ์ชื่อหมวดหนึ่งทับอีกหมวดเพื่อรวมเข้าด้วยกัน — หนังสือจะย้ายตามให้เอง"
+            placeholder="ค้นหาชื่อหมวดหมู่..."
+            items={categories}
+            onChange={setCategories}
+            onRename={renameCategory}
+            onDelete={deleteCategory}
+            reviewable={false}
           />
         )}
       </div>

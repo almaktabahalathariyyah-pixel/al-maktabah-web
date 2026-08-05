@@ -52,6 +52,46 @@ const langValue = (entry) => String(entry?.value ?? entry ?? '').trim();
 const categoryValues = (groups) =>
   groups.flatMap((group) => (group?.options || []).map((opt) => opt?.value)).filter(Boolean);
 
+/**
+ * Every category value paired with the group holding it.
+ *
+ * The manage-lists page edits categories as one flat list, because merging
+ * two spellings of the same subject is the job and which group each sits in
+ * is beside the point. This and `groupCategories` are the two halves of
+ * flattening for editing and putting the structure back afterwards.
+ */
+export function categoryEntries(groups) {
+  return (groups || []).flatMap((group) =>
+    (group?.options || [])
+      .map((opt) => opt?.value)
+      .filter(Boolean)
+      .map((value) => ({ value, group: group?.label || AUTO_GROUP }))
+  );
+}
+
+/**
+ * Rebuilds the group structure from an edited flat list, keeping every
+ * category in the group it came from and sending anything new to the auto
+ * group. A group left with nothing in it is dropped rather than kept as an
+ * empty heading.
+ */
+export function groupCategories(groups, values, groupOf) {
+  const labelOf = (group) => group?.label || AUTO_GROUP;
+
+  const rebuilt = (groups || [])
+    .map((group) => ({
+      ...group,
+      options: values
+        .filter((value) => (groupOf.get(value) || AUTO_GROUP) === labelOf(group))
+        .map((value) => ({ value, label: value })),
+    }))
+    .filter((group) => group.options.length > 0);
+
+  const placed = new Set(rebuilt.flatMap((group) => group.options.map((opt) => opt.value)));
+  const orphans = values.filter((value) => !placed.has(value));
+  return orphans.length === 0 ? rebuilt : withCategories(rebuilt, orphans);
+}
+
 /** Adds categories to the auto group, creating it only if it is not there yet. */
 function withCategories(groups, additions) {
   const options = additions.map((value) => ({ value, label: value }));

@@ -70,7 +70,14 @@ function EditableRow({ value, problem, checkable, checked, onToggle, onCommit, o
   );
 }
 
-export default function SearchableListEditor({ title, description, placeholder, items, onChange, onRename, onDelete }) {
+export default function SearchableListEditor({
+  title, description, placeholder, items, onChange, onRename, onDelete,
+  // The junk heuristic judges PERSON names — "looks like a computer account",
+  // "reads as a sentence". Those verdicts mean nothing about a subject
+  // heading, so lists that are not names opt out rather than be told their
+  // categories look suspicious.
+  reviewable = true,
+}) {
   const [query, setQuery] = useState('');
   const [newItem, setNewItem] = useState('');
   // Review mode: show only what the heuristic doubts, with a checkbox each.
@@ -82,12 +89,13 @@ export default function SearchableListEditor({ title, description, placeholder, 
   /** Entry → why it does not look like a name, for the ones that do not. */
   const problems = useMemo(() => {
     const map = new Map();
+    if (!reviewable) return map;
     for (const item of items) {
       const reason = nameProblem(item);
       if (reason) map.set(item, reason);
     }
     return map;
-  }, [items]);
+  }, [items, reviewable]);
 
   // Filter items based on search query
   const filteredItems = useMemo(() => {
