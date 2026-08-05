@@ -152,6 +152,16 @@
   .said { grid-column: 1 / -1; }
 }
 
+/* Four glyphs beside the name is one too many for a phone: measured at 375px
+   they claim 163px of a 308px row, leaving 74px for a name and address that
+   want 157px, so the email was cut to less than half. They get their own row
+   instead, which also buys them a full 44px touch target. */
+@media (max-width: 560px) {
+  .row { grid-template-columns: 1fr; }
+  .acts { grid-column: 1 / -1; justify-content: flex-start; }
+  .act { width: 44px; height: 44px; }
+}
+
 /* What the reader said about themselves: the link (or LINE id) and the note
    they wrote when asking to be let in. Kept in one cell so the note sits
    under its own link rather than in the actions column. */

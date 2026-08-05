@@ -116,7 +116,8 @@
 }
 
 @media (max-width: 560px) {
-  /* Three tabs still fit across once the English gloss steps aside. */
+  /* Four tabs still fit across once the English gloss steps aside: measured
+     at 375px they want 246px of a 343px row. */
   .tabEn { display: none; }
   .tabs { gap: 0.35rem; }
   .tab { padding-inline: 0.5rem; font-size: var(--t-micro); }
