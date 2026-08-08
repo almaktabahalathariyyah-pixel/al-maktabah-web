@@ -26,11 +26,27 @@
 }
 .titleIcon { color: var(--accent); flex: none; }
 
-.lede {
+.headActs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* The list of books with no cover at all — folded away, because it can run to
+   hundreds, and it is the one thing on this card the owner can act on. */
+.missing { margin-top: 1rem; }
+.missingHead {
+  cursor: pointer;
   font-size: var(--t-small);
-  line-height: var(--lh-body);
-  color: var(--fg-3);
-  max-width: 58ch;
+  font-weight: 600;
+  color: var(--hot);
+  padding: 0.5rem 0;
+  list-style: none;
+}
+.missingHead::-webkit-details-marker { display: none; }
+.missingHead::before { content: '▸ '; }
+.missing[open] .missingHead::before { content: '▾ '; }
+.missing[open] .rows { max-height: 280px; overflow-y: auto; padding-top: 0.4rem; }
+
+@media (max-width: 560px) {
+  .headActs { width: 100%; }
+  .headActs > :global(.btn) { flex: 1 1 0; justify-content: center; min-width: 0; }
 }
 
 .result { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed var(--border); }

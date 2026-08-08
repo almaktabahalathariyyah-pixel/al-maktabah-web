@@ -24,7 +24,6 @@ export default function SettingsPanel({ isOpen, onClose }) {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
 
   /**
    * Everything this panel owns, as it was loaded. Renaming a category group
@@ -138,58 +137,10 @@ export default function SettingsPanel({ isOpen, onClose }) {
     }
   };
 
-  const handleSyncFromBooks = async () => {
-    const agreed = await confirm({
-      title: 'ดึงข้อมูลจากหนังสือทั้งหมด?',
-      message:
-        'ปกติไม่ต้องใช้แล้ว — หมวดหมู่ ประเภท และภาษาที่พิมพ์ใหม่จะเข้ามาเองตอนบันทึกหนังสือ\nปุ่มนี้ไว้เก็บตกจากเล่มเก่าที่บันทึกไว้ก่อนหน้านี้\nข้อมูลเดิมจะไม่หายไป',
-      confirmLabel: 'ดึงข้อมูล',
-    });
-    if (!agreed) return;
-    setSyncing(true);
-    try {
-      const { collection, getDocs } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase');
-      const booksSnap = await getDocs(collection(db, 'books'));
-      const books = booksSnap.docs.map(d => d.data());
-      
-      const uniqueLanguages = Array.from(new Set(books.map(b => b.language).filter(Boolean)));
-      const uniqueTypes = Array.from(new Set(books.map(b => b.type).filter(Boolean)));
-      const uniqueCats = Array.from(new Set(books.map(b => b.category).filter(Boolean)));
-
-      // A language is a { value, label } pair. This used to push the bare
-      // string from the book, which then rendered as an empty row here — the
-      // input reads `lang.value`, and a string has none.
-      const knownLangs = new Set(languages.map(l => l?.value ?? l));
-      setLanguages([
-        ...languages,
-        ...uniqueLanguages.filter(v => !knownLangs.has(v)).map(v => ({ value: v, label: v })),
-      ]);
-      setTypes(Array.from(new Set([...types, ...uniqueTypes])).sort());
-      
-      // For categories, we add them to a "นำเข้าอัตโนมัติ" group if they don't exist
-      const existingCatSet = new Set();
-      categories.forEach(group => group.options.forEach(opt => existingCatSet.add(opt.value)));
-      
-      const newCats = uniqueCats.filter(c => !existingCatSet.has(c));
-      if (newCats.length > 0) {
-        setCategories([
-          ...categories, 
-          { 
-            label: 'นำเข้าจากหนังสือ', 
-            options: newCats.map(c => ({ value: c, label: c }))
-          }
-        ]);
-      }
-      
-      toast.success('ดึงข้อมูลสำเร็จ! กรุณากด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน');
-    } catch (err) {
-      console.error(err);
-      toast.error('เกิดข้อผิดพลาดในการดึงข้อมูล');
-    } finally {
-      setSyncing(false);
-    }
-  };
+  /* "ดึงจากหนังสือ" was removed. It read every book in the collection to
+     recover categories, types and languages that saving a book has recorded
+     by itself since rememberDropdowns; a one-time back-fill, already done,
+     costing 432 Firestore reads a press. In git if it is ever needed. */
 
   // --- Category Handlers ---
   const addCategoryGroup = () => {
@@ -278,19 +229,14 @@ export default function SettingsPanel({ isOpen, onClose }) {
         <div className={panelStyles.header}>
             <div className={styles.headerRow}>
               <h2 className={styles.title}>ตั้งค่าหมวดหมู่</h2>
+              {/* One save button in this panel, and it is the one in the
+                  footer, which is always on screen. A second copy up here
+                  meant the same job offered twice on one screen.
+                  "ดึงจากหนังสือ" went with it: categories, types and
+                  languages have arrived by themselves on every book save
+                  since rememberDropdowns, and the button read the whole
+                  books collection to find what was already there. */}
               <div className={styles.headerActs}>
-                <button className="btn" onClick={handleSyncFromBooks} disabled={syncing || saving}>
-                  {syncing ? 'กำลังดึง…' : 'ดึงจากหนังสือ'}
-                </button>
-                <button
-                  className="btn btn-solid"
-                  onClick={handleSave}
-                  disabled={saving || syncing || !dirty}
-                  title={dirty ? undefined : 'ยังไม่มีการแก้ไขที่ต้องบันทึก'}
-                >
-                  <Save size={16} />
-                  <span>{saving ? 'กำลังบันทึก…' : 'บันทึกการเปลี่ยนแปลง'}</span>
-                </button>
                 {/* panelStyles.closeButton never existed — the class in that
                     file is .closeBtn — so this button had been rendering with
                     no styling at all. */}

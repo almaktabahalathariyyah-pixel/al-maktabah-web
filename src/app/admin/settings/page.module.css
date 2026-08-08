@@ -61,6 +61,14 @@
   }
 }
 
+/* The add-a-name row, once it has been opened. Wraps rather than squeezing —
+   at 375px the field, "เพิ่ม" and "ยกเลิก" cannot share one line. */
+.addRow { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+@media (max-width: 480px) {
+  .addRow > input { flex: 1 1 100%; }
+  .addRow > :global(.btn) { flex: 1 1 0; justify-content: center; }
+}
+
 /* ---------------- Page header (จัดการรายชื่อ) ---------------- */
 .pageHead {
   display: flex;

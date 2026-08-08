@@ -703,8 +703,14 @@ export default function Home() {
           <div />
         )}
         
-        <div className={styles.sortFilter}>
-          <select 
+        {/* sortFilterDesktop, not sortFilter — the latter is not a class in
+            this stylesheet, so it resolved to undefined and the wrapper went
+            out with no class at all. The rule that hides this control below
+            560px never fired, which is why the sort dropdown sat alone on its
+            own row on a phone while a second copy of it waited inside the
+            filter panel. */}
+        <div className={styles.sortFilterDesktop}>
+          <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
             className={styles.sortSelect}

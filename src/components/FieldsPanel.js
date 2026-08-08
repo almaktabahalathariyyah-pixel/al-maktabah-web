@@ -186,12 +186,18 @@ export default function FieldsPanel({ isOpen, onClose }) {
                       ))}
                     </select>
 
+                    {/* The column headings are the only thing naming these two
+                        checkboxes, and the heading row is hidden below 900px —
+                        so on a phone the row ended in two identical unlabelled
+                        boxes and nothing said which was which. The label
+                        travels with the box and shows once the heading goes. */}
                     <label className={styles.check}>
                       <input
                         type="checkbox"
                         checked={!!field.form}
                         onChange={(e) => update(i, { form: e.target.checked })}
                       />
+                      <span className={styles.checkText}>แสดงในฟอร์ม</span>
                     </label>
                     <label className={styles.check}>
                       <input
@@ -199,6 +205,7 @@ export default function FieldsPanel({ isOpen, onClose }) {
                         checked={!!field.filter}
                         onChange={(e) => update(i, { filter: e.target.checked })}
                       />
+                      <span className={styles.checkText}>ใช้เป็นตัวกรอง</span>
                     </label>
 
                     <div className={styles.rowActs}>

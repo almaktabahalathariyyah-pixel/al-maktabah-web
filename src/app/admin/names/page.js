@@ -8,11 +8,9 @@ import {
 } from '@/lib/settings';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import { Save } from 'lucide-react';
 import SearchableListEditor from '@/components/SearchableListEditor';
 import UnsavedBar from '@/components/UnsavedBar';
 import { useUnsavedGuard } from '@/lib/useUnsavedGuard';
-import { asList } from '@/lib/people';
 import { renameInBooks, removeFromBooks } from '@/lib/renameName';
 import styles from '../settings/page.module.css'; // We can reuse settings styles for layout
 
@@ -61,7 +59,6 @@ export default function NamesPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState('authors'); // 'authors', 'translators', 'publishers'
 
   /**
@@ -311,41 +308,12 @@ export default function NamesPage() {
     pending.current = emptyQueue();
   };
 
-  const handleSyncFromBooks = async () => {
-    const agreed = await confirm({
-      title: 'ดึงรายชื่อจากหนังสือทั้งหมด?',
-      message:
-        'ปกติไม่ต้องใช้แล้ว — ชื่อใหม่จะเข้ามาเองตอนบันทึกหนังสือ\nปุ่มนี้ไว้เก็บตกชื่อจากเล่มเก่าที่บันทึกไว้ก่อนหน้านี้\nรายชื่อเดิมจะไม่หายไป',
-      confirmLabel: 'ดึงรายชื่อ',
-    });
-    if (!agreed) return;
-    setSyncing(true);
-    try {
-      const { collection, getDocs } = await import('firebase/firestore');
-      const { db } = await import('@/lib/firebase');
-      const booksSnap = await getDocs(collection(db, 'books'));
-      const books = booksSnap.docs.map(d => d.data());
-      
-      // flatMap: a book crediting two people contributes both names, where
-      // map would have added the array itself as one unusable "name".
-      const newAuthors = sortNames(new Set([...authors, ...books.flatMap(b => asList(b.author))]));
-      const newTranslators = sortNames(new Set([...translators, ...books.flatMap(b => asList(b.translator))]));
-      const newPublishers = sortNames(new Set([...publishers, ...books.map(b => b.publisher).filter(Boolean)]));
-      const newCategories = sortNames(new Set([...categories, ...books.map(b => b.category).filter(Boolean)]));
-
-      setAuthors(newAuthors);
-      setTranslators(newTranslators);
-      setPublishers(newPublishers);
-      setCategories(newCategories);
-
-      toast.success('ดึงข้อมูลสำเร็จ! กรุณากด "บันทึกการเปลี่ยนแปลง" เพื่อยืนยัน');
-    } catch (err) {
-      console.error(err);
-      toast.error('เกิดข้อผิดพลาดในการดึงข้อมูล');
-    } finally {
-      setSyncing(false);
-    }
-  };
+  /* "ดึงรายชื่อจากหนังสือ" was removed here.
+     It read every book in the collection — 432 documents against a Spark-tier
+     daily quota — to recover names that saving a book has recorded by itself
+     since rememberNewValues was added. It was a one-time back-fill for books
+     entered before that, and it had been done. Its own dialog said so.
+     Recoverable from git if a rebuild ever needs it. */
 
   if (authLoading || loading) {
     return <div className="container" style={{paddingTop: '4rem'}}>กำลังโหลดข้อมูล...</div>;
@@ -369,33 +337,17 @@ export default function NamesPage() {
           <p className="lede" style={{ marginTop: '0.5rem' }}>
             จัดการผู้แต่ง ผู้แปล สำนักพิมพ์ และหมวดหมู่สำหรับตัวเลือกในระบบ
             <br />
-            ชื่อที่พิมพ์ใหม่ตอนเพิ่มหรือแก้ไขหนังสือจะมาขึ้นที่นี่เอง ไม่ต้องกดดึง
+            ชื่อที่พิมพ์ใหม่ตอนเพิ่มหรือแก้ไขหนังสือจะมาขึ้นที่นี่เอง
             <br />
             แก้ชื่อที่นี่แล้วกดบันทึก หนังสือทุกเล่มที่ใช้ชื่อเดิมจะถูกแก้ตามให้อัตโนมัติ
           </p>
         </div>
 
-        <div className={styles.pageHeadActs}>
-          <button className="btn" onClick={handleSyncFromBooks} disabled={syncing || saving}>
-            {syncing ? 'กำลังดึงข้อมูล…' : 'ดึงรายชื่อจากหนังสือ'}
-          </button>
-          {/* Disabled when there is nothing owed, so the button's state is
-              itself the answer to "did that save?" — a live button here has
-              always meant work is still sitting in the browser. */}
-          <button
-            className="btn btn-solid"
-            onClick={handleSave}
-            disabled={saving || syncing || !dirty}
-            title={dirty ? undefined : 'ยังไม่มีการแก้ไขที่ต้องบันทึก'}
-          >
-            <Save size={17} />
-            {saving
-              ? 'กำลังบันทึก…'
-              : changeCount > 0
-                ? `บันทึก (แก้ ${changeCount} ชื่อ)`
-                : 'บันทึกการเปลี่ยนแปลง'}
-          </button>
-        </div>
+        {/* No save button here.
+            Saving lives in one place — the tray that appears at the bottom
+            once there is something to save. A header copy meant two buttons
+            doing one job, and the header one is the copy that scrolls out of
+            reach the moment the owner starts editing. */}
       </header>
 
       {/* Tabs */}

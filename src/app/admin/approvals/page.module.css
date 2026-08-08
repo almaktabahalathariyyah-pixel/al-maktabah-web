@@ -148,7 +148,11 @@
    instead; the 44px touch target now comes from .icon-btn's own breakpoint. */
 @media (max-width: 560px) {
   .row { grid-template-columns: 1fr; }
-  .acts { grid-column: 1 / -1; justify-content: flex-start; }
+  /* The four verdict buttons take the row in equal quarters. Bunched at one
+     end of a full-width row they read as leftovers rather than as a set of
+     choices — and an equal quarter is a wider target than 44px besides. */
+  .acts { grid-column: 1 / -1; }
+  .acts > :global(.icon-btn) { flex: 1 1 0; width: auto; }
 }
 
 /* What the reader said about themselves: the link (or LINE id) and the note

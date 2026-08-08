@@ -75,6 +75,7 @@ export default function SearchableListEditor({
 }) {
   const [query, setQuery] = useState('');
   const [newItem, setNewItem] = useState('');
+  const [adding, setAdding] = useState(false);
   // Review mode: show only what the heuristic doubts, with a checkbox each.
   const [reviewing, setReviewing] = useState(false);
   const [checked, setChecked] = useState(() => new Set());
@@ -148,6 +149,7 @@ export default function SearchableListEditor({
     }
     onChange([...items, val]);
     setNewItem('');
+    setAdding(false);
     setQuery(val); // show the newly added item
   };
 
@@ -200,19 +202,33 @@ export default function SearchableListEditor({
         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--fg-2)' }}>{description}</p>
       </div>
 
-      {/* Add new item form */}
-      <form onSubmit={handleAdd} style={{ display: 'flex', gap: '0.5rem' }}>
-        <input
-          type="text"
-          value={newItem}
-          onChange={(e) => setNewItem(e.target.value)}
-          placeholder={`+ เพิ่ม${title}ใหม่`}
-          style={{ flex: 1, padding: '0.5rem 0.75rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface-2)' }}
-        />
-        <button type="submit" className="btn btn-solid" disabled={!newItem.trim()}>
-          <Plus size={16} /> เพิ่ม
+      {/* Adding used to sit directly above searching, two identical-looking
+          text fields a few pixels apart, and typing a name to look for it
+          into the top one created it instead. Adding is now behind a button:
+          it is the rarer job here — names arrive by themselves when a book is
+          saved — and it cannot be done by accident. */}
+      {adding ? (
+        <form onSubmit={handleAdd} className={styles.addRow}>
+          <input
+            type="text"
+            value={newItem}
+            autoFocus
+            onChange={(e) => setNewItem(e.target.value)}
+            placeholder={`ชื่อ${title}ที่จะเพิ่ม`}
+            style={{ flex: 1, minWidth: 0, padding: '0.5rem 0.75rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--accent)', background: 'var(--surface-2)' }}
+          />
+          <button type="submit" className="btn btn-solid" disabled={!newItem.trim()}>
+            <Plus size={16} /> เพิ่ม
+          </button>
+          <button type="button" className="btn" onClick={() => { setAdding(false); setNewItem(''); }}>
+            ยกเลิก
+          </button>
+        </form>
+      ) : (
+        <button type="button" className="btn" onClick={() => setAdding(true)} style={{ alignSelf: 'flex-start' }}>
+          <Plus size={16} /> เพิ่ม{title}ใหม่
         </button>
-      </form>
+      )}
 
       {/* Junk review. Only offered when there is something to review. */}
       {problems.size > 0 && (

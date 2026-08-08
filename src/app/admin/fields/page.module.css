@@ -63,8 +63,10 @@
 .input:disabled { opacity: 0.55; cursor: not-allowed; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; }
 
-.check { display: grid; place-items: center; }
+.check { display: grid; place-items: center; margin-bottom: 0; }
 .check input { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; }
+/* Named by the column heading on a wide screen, by itself on a narrow one. */
+.checkText { display: none; }
 
 /* The buttons themselves are .icon-btn .icon-btn-quiet (globals.css); this
    only spaces them. They were a tenth private size — 30px, square corners —
@@ -83,12 +85,29 @@
 .spacer { flex: 1; }
 .note { font-size: var(--t-small); color: var(--fg-2); }
 
+/* Below 900px the heading row is gone, so a two-column grid auto-placed six
+   controls into three ragged rows with the two checkboxes landing wherever
+   there was space — the "สะเปะสะปะ" of it. One column instead: each control
+   on its own line, in the order it is read, and the checkboxes carry their
+   own names. */
 @media (max-width: 900px) {
   .tableHead { display: none; }
   .row {
-    grid-template-columns: 1fr 1fr;
-    row-gap: 0.5rem;
-    padding: 0.85rem;
+    grid-template-columns: 1fr;
+    row-gap: 0.6rem;
+    padding: 0.95rem;
   }
-  .rowActs { grid-column: 1 / -1; justify-content: flex-start; }
+  .check {
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .checkText { display: block; font-size: var(--t-small); color: var(--fg-2); }
+  .rowActs {
+    justify-content: flex-start;
+    gap: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px dashed var(--border);
+  }
 }

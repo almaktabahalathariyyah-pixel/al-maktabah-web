@@ -31,16 +31,26 @@ const REASONS = {
 };
 
 const SAMPLE_SIZE = 12;
+/** Covers fetched at once. All 400 in parallel is what stalls the tab. */
+const BATCH = 8;
 
 export default function CoverCheck({ books }) {
   const { toast } = useToast();
   const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [result, setResult] = useState(null);
 
   const withCover = books.filter((b) => b.coverUrl);
-  const withoutCover = books.length - withCover.length;
+  /**
+   * The books this check can say nothing about, because there is no cover to
+   * fetch. They were counted in one line of prose and never listed, so the
+   * one question the owner actually has here — WHICH books need a cover —
+   * had no answer on the page that exists to answer it.
+   */
+  const missing = books.filter((b) => !b.coverUrl);
 
-  const run = async () => {
+  /** `all` checks every cover in the library; otherwise a spread of twelve. */
+  const run = async (all = false) => {
     if (withCover.length === 0) {
       toast.info('ยังไม่มีเล่มไหนบันทึกลิงก์ปกไว้เลย — ปัญหาอยู่ที่ตอนสร้างปก ไม่ใช่ตอนแสดง');
       return;
@@ -49,38 +59,50 @@ export default function CoverCheck({ books }) {
     setRunning(true);
     setResult(null);
 
-    // A spread across the library, not the newest 12: a token change breaks old
-    // covers while new ones still work, and sampling one end hides that.
-    const step = Math.max(1, Math.floor(withCover.length / SAMPLE_SIZE));
-    const sample = [];
-    for (let i = 0; i < withCover.length && sample.length < SAMPLE_SIZE; i += step) {
-      sample.push(withCover[i]);
+    let queue;
+    if (all) {
+      queue = withCover;
+    } else {
+      // A spread across the library, not the newest 12: a token change breaks
+      // old covers while new ones still work, and sampling one end hides that.
+      const step = Math.max(1, Math.floor(withCover.length / SAMPLE_SIZE));
+      queue = [];
+      for (let i = 0; i < withCover.length && queue.length < SAMPLE_SIZE; i += step) {
+        queue.push(withCover[i]);
+      }
     }
 
-    const checked = await Promise.all(
-      sample.map(async (book) => {
-        try {
-          // HEAD would be cheaper, but the proxies only implement GET.
-          const res = await fetch(book.coverUrl, { cache: 'no-store' });
-          return {
-            id: book.id,
-            title: book.title,
-            ok: res.ok,
-            reason: res.ok ? '' : res.headers.get('X-Cover-Error') || 'http-error',
-            status: res.status,
-          };
-        } catch {
-          return { id: book.id, title: book.title, ok: false, reason: 'proxy-threw', status: 0 };
-        }
-      })
-    );
+    setProgress({ done: 0, total: queue.length });
+
+    const one = async (book) => {
+      try {
+        // HEAD would be cheaper, but the proxies only implement GET.
+        const res = await fetch(book.coverUrl, { cache: 'no-store' });
+        return {
+          id: book.id,
+          title: book.title,
+          ok: res.ok,
+          reason: res.ok ? '' : res.headers.get('X-Cover-Error') || 'http-error',
+          status: res.status,
+        };
+      } catch {
+        return { id: book.id, title: book.title, ok: false, reason: 'proxy-threw', status: 0 };
+      }
+    };
+
+    // In batches, so checking all 400 does not open 400 sockets at once.
+    const checked = [];
+    for (let i = 0; i < queue.length; i += BATCH) {
+      checked.push(...(await Promise.all(queue.slice(i, i + BATCH).map(one))));
+      setProgress({ done: Math.min(i + BATCH, queue.length), total: queue.length });
+    }
 
     const failures = checked.filter((c) => !c.ok);
-    setResult({ checked, failures });
+    setResult({ checked, failures, all });
     setRunning(false);
 
     if (failures.length === 0) toast.success(`ตรวจ ${checked.length} เล่ม — ปกโหลดได้ปกติทั้งหมด`);
-    else toast.error(`ปกโหลดไม่ได้ ${failures.length} จาก ${checked.length} เล่มที่สุ่มตรวจ`);
+    else toast.error(`ปกโหลดไม่ได้ ${failures.length} จาก ${checked.length} เล่ม`);
   };
 
   // The dominant failure is the one worth acting on first.
@@ -98,16 +120,39 @@ export default function CoverCheck({ books }) {
             <Stethoscope size={16} className={styles.titleIcon} />
             ตรวจรูปหน้าปก
           </h2>
-          <p className={styles.lede}>
-            สุ่มโหลดปกจริงจากคลัง แล้วบอกว่าติดที่ขั้นไหน
-            {withoutCover > 0 && ` · มี ${withoutCover.toLocaleString('th-TH')} เล่มที่ยังไม่มีลิงก์ปกเลย`}
-          </p>
         </div>
 
-        <button className="btn" onClick={run} disabled={running}>
-          {running ? <><Loader2 size={15} className={styles.spin} /> กำลังตรวจ…</> : 'ตรวจเลย'}
-        </button>
+        <div className={styles.headActs}>
+          <button className="btn" onClick={() => run(false)} disabled={running}>
+            {running
+              ? <><Loader2 size={15} className={styles.spin} /> {progress.done}/{progress.total}</>
+              : `สุ่ม ${SAMPLE_SIZE} เล่ม`}
+          </button>
+          <button className="btn btn-solid" onClick={() => run(true)} disabled={running}>
+            ตรวจทั้งหมด ({withCover.length.toLocaleString('th-TH')})
+          </button>
+        </div>
       </div>
+
+      {/* The actionable half of this page: not "12 books are missing covers"
+          but which twelve. Listed first, because it is the list the owner can
+          do something about — every other result here is a server problem. */}
+      {missing.length > 0 && (
+        <details className={styles.missing}>
+          <summary className={styles.missingHead}>
+            ยังไม่มีปก {missing.length.toLocaleString('th-TH')} เล่ม — กดดูรายชื่อ
+          </summary>
+          <ul className={styles.rows}>
+            {missing.map((b) => (
+              <li key={b.id} className={styles.row}>
+                <CircleX size={14} className={styles.bad} />
+                <span className={styles.rowTitle} dir="auto">{b.title}</span>
+                <span className={styles.rowNote}>ไม่มีลิงก์ปก</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       {result && (
         <div className={styles.result}>

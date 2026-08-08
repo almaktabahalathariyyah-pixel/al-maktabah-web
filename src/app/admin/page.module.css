@@ -565,23 +565,26 @@ input[type='text'].searchInput {
     padding: 0.65rem 0.85rem;
   }
 
+  /* The view toggle is hidden below 600px, so this row is exactly the four
+     action buttons. They used to be pushed to the right edge with the rest of
+     the row left empty, which reads as a layout that slipped rather than one
+     that was placed. They now share the row equally — the same thing the
+     panel footers and the manage-lists header already do. */
   .actionButtons {
     display: flex;
-    flex: 1 1 auto;
+    flex: 1 1 100%;
     gap: 0.5rem;
-    width: auto;
+    width: 100%;
     margin-left: 0;
     align-items: center;
-    justify-content: flex-end;
   }
 
-  /* Glyph only. Sized as a square touch target rather than a shrunken pill,
-     and allowed to widen only for the progress count. */
+  /* Glyph only, and each button takes an equal quarter of the row. */
   .actionButtons > :global(.btn) {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     min-width: 44px;
     height: 44px;
-    padding: 0 0.7rem;
+    padding: 0 0.5rem;
     justify-content: center;
     font-size: 0.8rem;
   }
