@@ -516,7 +516,13 @@
     padding: 0 0.7rem;
     justify-content: center;
   }
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem 0.75rem; }
+  /* The row gap stays generous. The base rule gives rows 22–32px and columns
+     14–22px on purpose — a title may run to one line or two, so rows only
+     read as rows when the space between them beats the space inside a card.
+     This override had flattened both to 16px/12px, which is why the phone
+     grid read as a block of text with pictures in it. Kutub, the reference,
+     runs 32px rows against 16px columns on a phone for the same reason. */
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 1.75rem 0.75rem; }
 }
 
 /* ---------------- Filter Styles ---------------- */

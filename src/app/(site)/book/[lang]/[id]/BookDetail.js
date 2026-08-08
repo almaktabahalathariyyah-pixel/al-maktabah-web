@@ -319,7 +319,7 @@ export default function BookDetail({ lang, id }) {
         <div className={styles.main}>
           <header className={styles.header}>
             {book.category && <p className="eyebrow">{book.category}</p>}
-            <h1 className={styles.title}>{book.title}</h1>
+            <h1 className={styles.title} dir="auto">{book.title}</h1>
             {asList(book.author).length > 0 && (
               /* Each author is its own link into the shelf's person filter —
                  with two names on a book, one combined link would be a lie
@@ -338,7 +338,7 @@ export default function BookDetail({ lang, id }) {
             )}
           </header>
 
-          {book.description && <p className={styles.description}>{book.description}</p>}
+          {book.description && <p className={styles.description} dir="auto">{book.description}</p>}
 
           {specs.length > 0 && (
             <dl className={styles.specs}>
@@ -366,7 +366,7 @@ export default function BookDetail({ lang, id }) {
               >
                 <BookCover src={b.coverUrl} title={b.title} author={b.author} />
                 <div className={styles.relatedMeta}>
-                  <div className={styles.relatedBookTitle}>{b.title}</div>
+                  <div className={styles.relatedBookTitle} dir="auto">{b.title}</div>
                 </div>
               </Link>
             ))}

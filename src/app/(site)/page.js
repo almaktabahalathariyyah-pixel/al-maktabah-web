@@ -151,9 +151,9 @@ function BookCard({ book }) {
         <BookCover src={book.coverUrl} title={book.title} author={book.author} />
       </div>
       <div className={styles.meta}>
-        <h3 className={styles.bookTitle}>{book.title}</h3>
+        <h3 className={styles.bookTitle} dir="auto">{book.title}</h3>
         {joinPeople(book.author) && (
-          <p className={styles.author}>
+          <p className={styles.author} dir="auto">
             <User size={12} className={styles.authorIcon} /> {joinPeople(book.author)}
           </p>
         )}

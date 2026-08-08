@@ -139,8 +139,8 @@ export default function SavedPage() {
                 <BookCover src={book.coverUrl} title={book.title} author={book.author} />
               </div>
               <div className={styles.meta}>
-                <h3 className={styles.bookTitle}>{book.title}</h3>
-                <p className={styles.bookAuthor}>{joinPeople(book.author)}</p>
+                <h3 className={styles.bookTitle} dir="auto">{book.title}</h3>
+                <p className={styles.bookAuthor} dir="auto">{joinPeople(book.author)}</p>
               </div>
             </Link>
           ))}

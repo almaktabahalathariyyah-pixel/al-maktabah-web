@@ -47,14 +47,20 @@ export default function BookCover({ src, title, author, className = '' }) {
         />
       ) : (
         <div className={`${styles.fallback} ${styles[getVariant(title)]}`}>
-          <span className={styles.fallbackTitle}>{title}</span>
+          {/* dir="auto" lets the browser take the direction from the first
+              strong character in the title itself. Without it an Arabic title
+              is laid out inside an LTR paragraph, so its digits, dashes and
+              brackets land on the wrong side — measured, the same string
+              starts 179px further left than it should. Kutub marks its
+              Arabic lines rtl for the same reason. */}
+          <span className={styles.fallbackTitle} dir="auto">{title}</span>
           <span className={styles.fallbackRule} />
           {/* One name only: this is the strip of text on a generated cover,
               and a list of three would not fit however it wrapped. A book with
               no author rendered this empty, which still drew the 0.4rem gap
               above it as dead space under the rule. */}
           {firstPerson(author) && (
-            <span className={styles.fallbackAuthor}>{firstPerson(author)}</span>
+            <span className={styles.fallbackAuthor} dir="auto">{firstPerson(author)}</span>
           )}
         </div>
       )}

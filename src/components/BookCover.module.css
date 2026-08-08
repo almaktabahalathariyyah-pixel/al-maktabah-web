@@ -4,6 +4,14 @@
   overflow: hidden;
   border-radius: var(--r-md);
   background: var(--surface-2);
+  /* A hairline inset edge, drawn over the image rather than beside it so it
+     costs no layout. Scanned covers arrive with every possible edge colour —
+     some white, some black, some torn — and without a common border the grid
+     reads as a pile of loose pictures. Kutub rings every cover for this. */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+:root[data-theme='light'] .cover {
+  box-shadow: inset 0 0 0 1px rgba(12, 19, 16, 0.1);
 }
 
 .img {

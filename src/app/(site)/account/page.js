@@ -159,7 +159,7 @@ export default function AccountPage() {
                   <div className={styles.recentCover}>
                     <BookCover src={book.coverUrl} title={book.title} author={book.author} />
                   </div>
-                  <span className={styles.recentTitle}>{book.title}</span>
+                  <span className={styles.recentTitle} dir="auto">{book.title}</span>
                 </Link>
               ))}
             </div>
