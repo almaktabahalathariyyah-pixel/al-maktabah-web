@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ArrowUp, ArrowDown, Plus, Trash2, RotateCcw, X } from 'lucide-react';
 import { DEFAULT_FIELDS, loadBookFields, saveBookFields } from '@/lib/bookFields';
 import { useToast } from '@/context/ToastContext';
+import { useConfirm } from '@/context/ConfirmContext';
 import panelStyles from './BookFormPanel.module.css';
 import styles from '@/app/admin/fields/page.module.css';
 
@@ -18,10 +19,33 @@ const TYPES = [
 
 export default function FieldsPanel({ isOpen, onClose }) {
   const { toast } = useToast();
+  const { confirm } = useConfirm();
   const [fields, setFields] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState('');
+
+  /** The schema as it was loaded, so closing can tell edits from a look. */
+  const [baseline, setBaseline] = useState('');
+  const dirty = !loading && !!fields && JSON.stringify(fields) !== baseline;
+
+  /**
+   * Tapping the backdrop used to throw the whole schema away without a word.
+   * On a phone the backdrop is the strip of screen a thumb rests on.
+   */
+  const requestClose = async () => {
+    if (dirty) {
+      const agreed = await confirm({
+        title: 'ปิดโดยไม่บันทึก?',
+        message: 'การตั้งค่าฟิลด์ที่แก้ไว้จะหายไป — แผงนี้ไม่บันทึกอัตโนมัติ',
+        confirmLabel: 'ปิดโดยไม่บันทึก',
+        cancelLabel: 'กลับไปบันทึก',
+        tone: 'danger',
+      });
+      if (!agreed) return;
+    }
+    onClose();
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -40,7 +64,10 @@ export default function FieldsPanel({ isOpen, onClose }) {
       setLoading(true);
       try {
         const f = await loadBookFields();
-        if (isMounted) setFields(f);
+        if (isMounted) {
+          setFields(f);
+          setBaseline(JSON.stringify(f));
+        }
       } catch (err) {
         if (isMounted) toast.error('โหลดการตั้งค่าฟิลด์ไม่สำเร็จ');
       } finally {
@@ -87,7 +114,9 @@ export default function FieldsPanel({ isOpen, onClose }) {
     setSaving(true);
     setNote('');
     try {
-      await saveBookFields(fields.map((f) => ({ ...f, key: f.key.trim() })));
+      const cleaned = fields.map((f) => ({ ...f, key: f.key.trim() }));
+      await saveBookFields(cleaned);
+      setBaseline(JSON.stringify(cleaned));
       toast.success('บันทึกการตั้งค่าฟิลด์สำเร็จ');
       onClose();
     } catch (error) {
@@ -102,7 +131,7 @@ export default function FieldsPanel({ isOpen, onClose }) {
 
   return (
     <>
-      <div className={panelStyles.backdrop} onClick={onClose} />
+      <div className={panelStyles.backdrop} onClick={requestClose} />
       <div className={panelStyles.panel}>
         <div className={panelStyles.header}>
           <div>
@@ -111,7 +140,7 @@ export default function FieldsPanel({ isOpen, onClose }) {
               กำหนดว่าฟิลด์ไหนแสดงในฟอร์มเพิ่มหนังสือ และเปิดให้ใช้ตัวกรอง
             </p>
           </div>
-          <button className={panelStyles.closeBtn} onClick={onClose} aria-label="Close">
+          <button className={panelStyles.closeBtn} onClick={requestClose} aria-label="Close">
             <X size={20} />
           </button>
         </div>
@@ -212,7 +241,8 @@ export default function FieldsPanel({ isOpen, onClose }) {
         </div>
 
         <div className={panelStyles.footer}>
-          <button type="button" className="btn" onClick={onClose} disabled={saving}>ยกเลิก</button>
+          {dirty && <span className={panelStyles.footerDirty}>ยังไม่ได้บันทึก</span>}
+          <button type="button" className="btn" onClick={requestClose} disabled={saving}>ยกเลิก</button>
           <button type="button" className="btn btn-solid" onClick={save} disabled={saving || loading}>
             {saving ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่า'}
           </button>

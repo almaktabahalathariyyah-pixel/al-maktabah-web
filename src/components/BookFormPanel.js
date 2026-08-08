@@ -26,6 +26,26 @@ import styles from './BookFormPanel.module.css';
 /** Fields the form owns directly; everything else comes from the schema. */
 const RESERVED = ['coverUrl', 'telegramUrl', 'telegramFileId', 'driveUrl', 'driveOwner', 'restricted', 'createdAt'];
 
+/**
+ * The whole form as one comparable string, for "is any of this unsaved?".
+ *
+ * Keys are sorted because `values` grows by spread — a field the owner fills
+ * in lands at the end while the same field loaded from Firestore sits wherever
+ * the document put it, and two identical forms would otherwise print
+ * differently and report an edit that never happened.
+ */
+const formPrint = (s) =>
+  JSON.stringify({
+    values: Object.keys(s.values || {}).sort().map((k) => [k, s.values[k]]),
+    coverUrl: s.coverUrl || '',
+    telegramUrl: s.telegramUrl || '',
+    telegramFileId: s.telegramFileId || '',
+    driveUrl: s.driveUrl || '',
+    driveOwner: s.driveOwner || '',
+    restricted: !!s.restricted,
+    pdf: s.pdf || '',
+  });
+
 export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved }) {
   const { toast } = useToast();
   const { confirm } = useConfirm();
@@ -104,6 +124,35 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   const onCloseRef = useRef(onClose);
   useEffect(() => { toastRef.current = toast; }, [toast]);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
+  /** The book as it stood when this panel opened. */
+  const [baseline, setBaseline] = useState('');
+  const dirty =
+    !loading &&
+    !!fields &&
+    formPrint({ values, coverUrl, telegramUrl, telegramFileId, driveUrl, driveOwner, restricted, pdf: pdfFile?.name })
+      !== baseline;
+
+  /**
+   * A whole book form is the most expensive thing in this admin to retype,
+   * and until now the backdrop — the strip of screen a thumb rests on when
+   * scrolling a phone — threw it away on one tap with nothing asked.
+   */
+  const requestClose = async () => {
+    if (dirty && !saving) {
+      const agreed = await confirm({
+        title: bookId ? 'ปิดโดยไม่บันทึกการแก้ไข?' : 'ทิ้งหนังสือเล่มนี้?',
+        message: bookId
+          ? 'สิ่งที่แก้ไว้จะหายไป — ฟอร์มนี้ไม่บันทึกอัตโนมัติ'
+          : 'ข้อมูลที่กรอกไว้จะหายไปทั้งหมด — ฟอร์มนี้ไม่บันทึกอัตโนมัติ',
+        confirmLabel: 'ปิดโดยไม่บันทึก',
+        cancelLabel: 'กลับไปบันทึก',
+        tone: 'danger',
+      });
+      if (!agreed) return;
+    }
+    onClose();
+  };
 
   // analyzeFile reads this after an `await`, by which point the owner may
   // already have typed something — a plain closure over `values` would see
@@ -213,6 +262,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
               if (!RESERVED.includes(key)) vals[key] = data[key];
             }
             setValues(vals);
+            setBaseline(formPrint({ values: vals, ...data }));
           } else if (isMounted) {
             toastRef.current.error('ไม่พบข้อมูลหนังสือ');
             onCloseRef.current();
@@ -231,6 +281,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
           setDriveProgress(0);
           setSizeBytes(0);
           setMirrorNote('');
+          setBaseline(formPrint({ values: {} }));
         }
         setAutoFilled(new Set());
       } catch (err) {
@@ -718,11 +769,11 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
 
   return (
     <>
-      <div className={styles.backdrop} onClick={onClose} />
+      <div className={styles.backdrop} onClick={requestClose} />
       <div className={styles.panel}>
         <div className={styles.header}>
           <h2 className={styles.title}>{bookId ? 'แก้ไขหนังสือ' : 'เพิ่มหนังสือใหม่'}</h2>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="ปิด">
+          <button className={styles.closeBtn} onClick={requestClose} aria-label="ปิด">
             <X size={20} />
           </button>
         </div>
@@ -1043,7 +1094,8 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         </div>
 
         <div className={styles.footer}>
-          <button type="button" className="btn" onClick={onClose} disabled={saving}>ยกเลิก</button>
+          {dirty && <span className={styles.footerDirty}>ยังไม่ได้บันทึก</span>}
+          <button type="button" className="btn" onClick={requestClose} disabled={saving}>ยกเลิก</button>
           <button type="button" className="btn btn-solid" onClick={submit} disabled={saving || loading || !fields}>
             {saving ? 'กำลังบันทึก...' : 'บันทึกข้อมูล'}
           </button>

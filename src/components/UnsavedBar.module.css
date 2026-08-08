@@ -1,0 +1,99 @@
+/* Same tray as the book list's bulk bar and the settings action bar: bounded
+   so it cannot run off either edge, and full-width below 700px where a pill
+   that has wrapped to two lines is no longer a pill.
+
+   Centred by `left:0; right:0` and auto margins rather than the usual
+   `left:50%; translateX(-50%)`. With left at 50% the space a fixed box gets
+   to size itself in is only the half of the screen to its right, so the pill
+   was capped at half the viewport and wrapped to two lines on a wide desktop
+   while 300px sat empty on either side of it. Measured at a 750px viewport:
+   375px wide, two rows. */
+.bar {
+  position: fixed;
+  bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  width: fit-content;
+  margin-inline: auto;
+  max-width: calc(100vw - 2rem);
+  background: var(--surface-3);
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  z-index: 100;
+  animation: slideInUp 0.3s var(--ease);
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.detail {
+  font-weight: 400;
+  color: var(--fg-2);
+}
+
+/* The one thing on screen that says "this is not saved yet". It pulses, so
+   it is noticed from the corner of the eye while the owner is still typing
+   somewhere else on the page. */
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-dim);
+  animation: pulse 2s var(--ease) infinite;
+}
+
+.acts {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: auto;
+}
+
+/* A flex child with nothing to give shrinks to nothing: at 375px the save
+   icon was measured at 0px wide while the label spilled past the button. */
+.icon { flex: none; }
+
+.narrow { display: none; }
+
+.acts > .quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--fg-2);
+}
+.acts > .quiet:hover { background: var(--surface-2); color: var(--fg); }
+
+@media (max-width: 700px) {
+  .bar {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: none;
+    border-radius: var(--r-lg);
+    padding: 0.85rem 1rem;
+    gap: 0.6rem;
+  }
+  /* The message takes its own row and the buttons split the next one: at
+     375px "ยังไม่ได้บันทึก" and "บันทึกการเปลี่ยนแปลง" cannot share a line
+     without one of them being cut. */
+  .note { width: 100%; }
+  .acts { width: 100%; margin-left: 0; }
+  .acts > :global(.btn) { flex: 1 1 0; justify-content: center; min-width: 0; padding-inline: 1rem; }
+  .wide { display: none; }
+  .narrow { display: inline; }
+}

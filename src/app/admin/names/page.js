@@ -10,12 +10,27 @@ import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { Save } from 'lucide-react';
 import SearchableListEditor from '@/components/SearchableListEditor';
+import UnsavedBar from '@/components/UnsavedBar';
+import { useUnsavedGuard } from '@/lib/useUnsavedGuard';
 import { asList } from '@/lib/people';
 import { renameInBooks, removeFromBooks } from '@/lib/renameName';
 import styles from '../settings/page.module.css'; // We can reuse settings styles for layout
 
 /** Thai collation, so ก comes before ข and an English name sorts sensibly. */
 const sortNames = (list) => [...(list || [])].sort((a, b) => String(a).localeCompare(String(b), 'th'));
+
+const LIST_KEYS = ['authors', 'translators', 'publishers', 'categories'];
+
+/** The four lists as one comparable string, for "has anything moved?". */
+const fingerprint = (lists) =>
+  LIST_KEYS.map((key) => (lists[key] || []).join('␟')).join('␞');
+
+const emptyQueue = () => ({
+  authors: { renames: [], deletes: [] },
+  translators: { renames: [], deletes: [] },
+  publishers: { renames: [], deletes: [] },
+  categories: { renames: [], deletes: [] },
+});
 
 /** Which book field each list on this page governs. */
 const BOOK_FIELD = {
@@ -58,12 +73,16 @@ export default function NamesPage() {
    * against the name the books actually hold — chaining through a spelling
    * that only ever existed on this screen would query for nothing.
    */
-  const pending = useRef({
-    authors: { renames: [], deletes: [] },
-    translators: { renames: [], deletes: [] },
-    publishers: { renames: [], deletes: [] },
-    categories: { renames: [], deletes: [] },
-  });
+  const pending = useRef(emptyQueue());
+
+  /**
+   * The four lists as they last stood in Firestore — on load, and again after
+   * every save that lands. Renames and deletes announce themselves through
+   * `pending`, but a name that was merely ADDED leaves no trace there, so
+   * "is there unsaved work?" is answered by comparing against this rather
+   * than by trusting the queue.
+   */
+  const [baseline, setBaseline] = useState({ lists: {}, groupOf: new Map() });
 
   const trackRename = useCallback(
     (listKey) => (from, to) => {
@@ -120,6 +139,30 @@ export default function NamesPage() {
     0
   );
 
+  const lists = { authors, translators, publishers, categories };
+  const dirty = !loading && fingerprint(lists) !== fingerprint(baseline.lists);
+
+  /**
+   * The sidebar is one tap from here, and in the App Router a Link never
+   * reaches the browser's own "leave site?" prompt — so the page has to ask
+   * for itself or the edits simply vanish mid-click.
+   */
+  const leave = useCallback(
+    async (href) => {
+      const agreed = await confirm({
+        title: 'ออกจากหน้านี้โดยไม่บันทึก?',
+        message: 'การแก้ไขรายชื่อที่ทำไว้จะหายไปทั้งหมด — หน้านี้ไม่ได้บันทึกอัตโนมัติ',
+        confirmLabel: 'ออกโดยไม่บันทึก',
+        cancelLabel: 'อยู่ต่อเพื่อบันทึก',
+        tone: 'danger',
+      });
+      if (agreed) router.push(href);
+    },
+    [confirm, router]
+  );
+
+  useUnsavedGuard(dirty, leave);
+
   useEffect(() => {
     if (!authLoading && !isAdmin) {
       router.push('/');
@@ -136,14 +179,23 @@ export default function NamesPage() {
         // Names now arrive on their own as books are saved, appended in the
         // order they were first used. Sorted here so a list of 300 stays
         // findable and a name never moves once it is in place.
-        setAuthors(sortNames(settings.authors));
-        setTranslators(sortNames(settings.translators));
-        setPublishers(sortNames(settings.publishers));
+        const loaded = {
+          authors: sortNames(settings.authors),
+          translators: sortNames(settings.translators),
+          publishers: sortNames(settings.publishers),
+          categories: [],
+        };
 
         categoryGroups.current = settings.categories;
         const entries = categoryEntries(settings.categories);
         groupOf.current = new Map(entries.map((e) => [e.value, e.group]));
-        setCategories(sortNames(entries.map((e) => e.value)));
+        loaded.categories = sortNames(entries.map((e) => e.value));
+
+        setAuthors(loaded.authors);
+        setTranslators(loaded.translators);
+        setPublishers(loaded.publishers);
+        setCategories(loaded.categories);
+        setBaseline({ lists: loaded, groupOf: new Map(groupOf.current) });
       } catch (err) {
         if (isMounted) toast.error('โหลดข้อมูลการตั้งค่าไม่สำเร็จ');
       } finally {
@@ -178,15 +230,18 @@ export default function NamesPage() {
 
     setSaving(true);
     try {
-      const payload = {
+      // Blank rows never reach Firestore, and the page is put back in step
+      // with what was actually written — otherwise the bar would still read
+      // "ยังไม่ได้บันทึก" over a difference nobody can see or fix.
+      const saved = {
         authors: authors.filter(Boolean),
         translators: translators.filter(Boolean),
         publishers: publishers.filter(Boolean),
-        categories: groupCategories(
-          categoryGroups.current,
-          categories.filter(Boolean),
-          groupOf.current
-        ),
+        categories: categories.filter(Boolean),
+      };
+      const payload = {
+        ...saved,
+        categories: groupCategories(categoryGroups.current, saved.categories, groupOf.current),
       };
       // saveDropdownSettings now uses merge: true, so it won't overwrite categories/languages
       const success = await saveDropdownSettings(payload);
@@ -214,6 +269,12 @@ export default function NamesPage() {
         }
       }
 
+      setAuthors(saved.authors);
+      setTranslators(saved.translators);
+      setPublishers(saved.publishers);
+      setCategories(saved.categories);
+      setBaseline({ lists: saved, groupOf: new Map(groupOf.current) });
+
       toast.success(
         booksTouched > 0
           ? `บันทึกแล้ว และแก้ข้อมูลในหนังสือ ${booksTouched} เล่ม`
@@ -225,6 +286,29 @@ export default function NamesPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  /**
+   * Back to the last saved state. Nothing here has touched Firestore yet, so
+   * this is a matter of putting the lists — and the category→group map the
+   * renames edited in place — back the way they were found.
+   */
+  const handleDiscard = async () => {
+    const agreed = await confirm({
+      title: 'ทิ้งการแก้ไขทั้งหมด?',
+      message: 'รายชื่อจะกลับไปเป็นเหมือนตอนบันทึกครั้งล่าสุด',
+      confirmLabel: 'ทิ้งการแก้ไข',
+      tone: 'danger',
+    });
+    if (!agreed) return;
+
+    const { lists: saved, groupOf: savedGroups } = baseline;
+    setAuthors(saved.authors || []);
+    setTranslators(saved.translators || []);
+    setPublishers(saved.publishers || []);
+    setCategories(saved.categories || []);
+    groupOf.current = new Map(savedGroups);
+    pending.current = emptyQueue();
   };
 
   const handleSyncFromBooks = async () => {
@@ -272,7 +356,9 @@ export default function NamesPage() {
   }
 
   return (
-    <div className="container" style={{ maxWidth: '1000px', paddingBottom: '5rem' }}>
+    /* The unsaved tray is fixed to the bottom, so the last list row needs room
+       to clear it — otherwise the name being edited sits under the bar. */
+    <div className="container" style={{ maxWidth: '1000px', paddingBottom: dirty ? '11rem' : '5rem' }}>
       {/* Classes, not inline styles: this header has to reflow under 700px and
           an inline style cannot carry a media query, which is why the buttons
           were climbing into the heading on a phone. */}
@@ -293,7 +379,15 @@ export default function NamesPage() {
           <button className="btn" onClick={handleSyncFromBooks} disabled={syncing || saving}>
             {syncing ? 'กำลังดึงข้อมูล…' : 'ดึงรายชื่อจากหนังสือ'}
           </button>
-          <button className="btn btn-solid" onClick={handleSave} disabled={saving || syncing}>
+          {/* Disabled when there is nothing owed, so the button's state is
+              itself the answer to "did that save?" — a live button here has
+              always meant work is still sitting in the browser. */}
+          <button
+            className="btn btn-solid"
+            onClick={handleSave}
+            disabled={saving || syncing || !dirty}
+            title={dirty ? undefined : 'ยังไม่มีการแก้ไขที่ต้องบันทึก'}
+          >
             <Save size={17} />
             {saving
               ? 'กำลังบันทึก…'
@@ -382,8 +476,14 @@ export default function NamesPage() {
           />
         )}
       </div>
-      
 
+      <UnsavedBar
+        show={dirty}
+        saving={saving}
+        detail={changeCount > 0 ? `แก้ ${changeCount} ชื่อในหนังสือด้วย` : 'หน้านี้ไม่บันทึกอัตโนมัติ'}
+        onSave={handleSave}
+        onDiscard={handleDiscard}
+      />
     </div>
   );
 }

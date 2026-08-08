@@ -424,8 +424,34 @@ details[open] > summary.blockTitle .chevron { transform: rotate(180deg); }
   border-top: 1px solid var(--border);
   background: var(--surface);
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 1rem;
+}
+
+/* Says out loud what the footer only ever implied: the panel is holding work
+   that Firestore has not seen. Pushed to the left so the buttons keep the
+   position the hand already knows. */
+.footerDirty {
+  margin-right: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--r-pill);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.footerDirty::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  animation: pulse 2s var(--ease) infinite;
 }
 
 @media (max-width: 560px) {
@@ -433,8 +459,11 @@ details[open] > summary.blockTitle .chevron { transform: rotate(180deg); }
   .footer {
     padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
     gap: 0.75rem;
+    flex-wrap: wrap;
   }
   .footer > :global(.btn) { flex: 1 1 auto; min-width: 0; }
+  /* Its own row: sharing one with two buttons left nothing for either. */
+  .footerDirty { width: 100%; margin-right: 0; justify-content: center; }
 }
 
 @media (max-width: 768px) {

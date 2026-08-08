@@ -26,6 +26,34 @@ export default function SettingsPanel({ isOpen, onClose }) {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
+  /**
+   * Everything this panel owns, as it was loaded. Renaming a category group
+   * mutates the array in place, so a shallow reference check would call the
+   * panel clean while the screen shows the new name — the comparison has to
+   * be on the content.
+   */
+  const [baseline, setBaseline] = useState('');
+  const snapshot = () => JSON.stringify({ categories, languages, types, contactChannels });
+  const dirty = !loading && snapshot() !== baseline;
+
+  /**
+   * The backdrop is the whole left edge of the screen on a phone, and it used
+   * to discard an afternoon of category work on one stray tap.
+   */
+  const requestClose = async () => {
+    if (dirty) {
+      const agreed = await confirm({
+        title: 'ปิดโดยไม่บันทึก?',
+        message: 'หมวดหมู่ ประเภท ภาษา และช่องทางติดต่อที่แก้ไว้จะหายไป — แผงนี้ไม่บันทึกอัตโนมัติ',
+        confirmLabel: 'ปิดโดยไม่บันทึก',
+        cancelLabel: 'กลับไปบันทึก',
+        tone: 'danger',
+      });
+      if (!agreed) return;
+    }
+    onClose();
+  };
+
   // Lock body scroll when open
   useEffect(() => {
     if (isOpen) {
@@ -48,14 +76,25 @@ export default function SettingsPanel({ isOpen, onClose }) {
           getDoc(doc(db, 'config', 'siteSettings')),
         ]);
         if (!isMounted) return;
-        setContactChannels(
-          siteSnap.exists() && Array.isArray(siteSnap.data().contactChannels)
-            ? siteSnap.data().contactChannels
-            : []
-        );
-        setCategories(settings.categories || []);
-        setLanguages(settings.languages || []);
-        setTypes(settings.types || ['หนังสือ', 'ไฟล์ออนไลน์', 'รายงาน', 'แผ่นพับ', 'วารสาร', 'งานวิจัย', 'วิทยานิพนธ์']);
+        const loaded = {
+          contactChannels:
+            siteSnap.exists() && Array.isArray(siteSnap.data().contactChannels)
+              ? siteSnap.data().contactChannels
+              : [],
+          categories: settings.categories || [],
+          languages: settings.languages || [],
+          types: settings.types || ['หนังสือ', 'ไฟล์ออนไลน์', 'รายงาน', 'แผ่นพับ', 'วารสาร', 'งานวิจัย', 'วิทยานิพนธ์'],
+        };
+        setContactChannels(loaded.contactChannels);
+        setCategories(loaded.categories);
+        setLanguages(loaded.languages);
+        setTypes(loaded.types);
+        setBaseline(JSON.stringify({
+          categories: loaded.categories,
+          languages: loaded.languages,
+          types: loaded.types,
+          contactChannels: loaded.contactChannels,
+        }));
       } catch (err) {
         if (isMounted) toast.error('โหลดข้อมูลการตั้งค่าไม่สำเร็จ');
       } finally {
@@ -86,6 +125,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
       );
 
       if (success) {
+        setBaseline(snapshot());
         toast.success('บันทึกการตั้งค่าสำเร็จ');
         onClose();
       } else {
@@ -233,7 +273,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
 
   return (
     <>
-      <div className={panelStyles.backdrop} onClick={onClose} />
+      <div className={panelStyles.backdrop} onClick={requestClose} />
       <div className={panelStyles.panel}>
         <div className={panelStyles.header}>
             <div className={styles.headerRow}>
@@ -245,14 +285,15 @@ export default function SettingsPanel({ isOpen, onClose }) {
                 <button
                   className="btn btn-solid"
                   onClick={handleSave}
-                  disabled={saving || syncing}
+                  disabled={saving || syncing || !dirty}
+                  title={dirty ? undefined : 'ยังไม่มีการแก้ไขที่ต้องบันทึก'}
                 >
                   <Save size={16} />
                   <span>{saving ? 'กำลังบันทึก…' : 'บันทึกการเปลี่ยนแปลง'}</span>
                 </button>
                 <button
                   className={`${panelStyles.closeButton} ${styles.headerClose}`}
-                  onClick={onClose}
+                  onClick={requestClose}
                   aria-label="ปิด"
                 >
                   <X size={20} />
@@ -414,7 +455,8 @@ export default function SettingsPanel({ isOpen, onClose }) {
         </div>
 
         <div className={panelStyles.footer}>
-          <button type="button" className="btn" onClick={onClose} disabled={saving}>ยกเลิก</button>
+          {dirty && <span className={panelStyles.footerDirty}>ยังไม่ได้บันทึก</span>}
+          <button type="button" className="btn" onClick={requestClose} disabled={saving}>ยกเลิก</button>
           <button type="button" className="btn btn-solid" onClick={handleSave} disabled={saving || loading}>
             {saving ? 'กำลังบันทึก...' : <><Save size={16} style={{marginRight: '0.5rem'}} /> บันทึกการตั้งค่า</>}
           </button>
