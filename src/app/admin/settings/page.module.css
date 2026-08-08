@@ -61,10 +61,27 @@
   }
 }
 
-/* Full width. A lone pill hugging the left edge of a card reads as something
-   left behind rather than as the card's one action — same reason the panel
-   footers and the book-list toolbar stretch theirs. */
+/* Full width, at every width. A lone pill hugging the left edge of a card
+   reads as something left behind rather than as the card's one action, and
+   that is as true on a laptop as on a phone — the first pass only fixed the
+   phone, which is why the desktop still looked unsettled. */
 .addOpen { width: 100%; }
+
+/* The suspicious-names review. Buttons share their own row equally; the
+   explanation goes underneath rather than beside them, where it left the row
+   half button and half grey prose, aligned to neither. */
+.reviewBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+.reviewActs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.reviewActs > :global(.btn) { flex: 1 1 0; justify-content: center; min-width: 0; }
+.reviewHint { font-size: var(--t-micro); line-height: 1.6; color: var(--fg-3); }
 
 /* The add-a-name row, once it has been opened. Wraps rather than squeezing —
    at 375px the field, "เพิ่ม" and "ยกเลิก" cannot share one line. */

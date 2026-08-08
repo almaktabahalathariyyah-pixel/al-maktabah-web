@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Plus, Trash2, Search, X, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Search, X, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import { nameProblem } from '@/lib/nameQuality';
@@ -72,6 +72,12 @@ export default function SearchableListEditor({
   // heading, so lists that are not names opt out rather than be told their
   // categories look suspicious.
   reviewable = true,
+  // Names the owner has already confirmed are real. The heuristic never
+  // flags these again — without it, the same eight genuine publishers get
+  // reported as suspicious on every single visit and the warning becomes
+  // something to ignore rather than something to act on.
+  verified = new Set(),
+  onVerify,
 }) {
   const [query, setQuery] = useState('');
   const [newItem, setNewItem] = useState('');
@@ -82,23 +88,35 @@ export default function SearchableListEditor({
   const { toast } = useToast();
   const { confirm } = useConfirm();
 
-  /** Entry → why it does not look like a name, for the ones that do not. */
+  /**
+   * Entry → why it does not look like a name, for the ones that do not and
+   * that the owner has not already vouched for.
+   */
   const problems = useMemo(() => {
     const map = new Map();
     if (!reviewable) return map;
     for (const item of items) {
+      if (verified.has(item)) continue;
       const reason = nameProblem(item);
       if (reason) map.set(item, reason);
     }
     return map;
-  }, [items, reviewable]);
+  }, [items, reviewable, verified]);
 
-  // Filter items based on search query
+  /**
+   * The whole list, not the first fifty.
+   *
+   * The cap was there to keep a few hundred rows from feeling slow, and it
+   * cost more than it saved: with 201 authors the screen showed 50 and a line
+   * of small print explaining that the rest existed but could only be reached
+   * by guessing at a search term. The rows scroll inside their own box, so
+   * the browser only paints what is on screen anyway.
+   */
   const filteredItems = useMemo(() => {
     if (reviewing) return items.filter((item) => problems.has(item));
     const q = query.trim().toLowerCase();
-    if (!q) return items.slice(0, 50); // Show max 50 to avoid lagging if no query
-    return items.filter(item => item.toLowerCase().includes(q)).slice(0, 100);
+    if (!q) return items;
+    return items.filter((item) => item.toLowerCase().includes(q));
   }, [items, query, reviewing, problems]);
 
   // Everything flagged starts ticked: the owner is here to clear junk, so the
@@ -137,6 +155,30 @@ export default function SearchableListEditor({
     if (onDelete) names.forEach((name) => onDelete(name));
     setChecked(new Set());
     setReviewing(false);
+  };
+
+  /**
+   * The other half of the review, which did not exist: the heuristic was
+   * wrong and these are real names. Nothing is deleted — they are recorded as
+   * checked, so the warning stops and stays stopped.
+   */
+  const keepChecked = () => {
+    const names = [...checked].filter((name) => items.includes(name));
+    if (names.length === 0 || !onVerify) return;
+    onVerify(names);
+    setChecked(new Set());
+    setReviewing(false);
+    toast.success(`เก็บไว้ ${names.length} ชื่อ — จะไม่ถูกทักอีก`);
+  };
+
+  /** Everything flagged is fine. The common answer, so it gets one press. */
+  const keepAll = () => {
+    const names = [...problems.keys()];
+    if (names.length === 0 || !onVerify) return;
+    onVerify(names);
+    setChecked(new Set());
+    setReviewing(false);
+    toast.success(`เก็บไว้ทั้ง ${names.length} ชื่อ — จะไม่ถูกทักอีก`);
   };
 
   const handleAdd = (e) => {
@@ -230,34 +272,56 @@ export default function SearchableListEditor({
         </button>
       )}
 
-      {/* Junk review. Only offered when there is something to review. */}
+      {/* Junk review. Only offered when there is something to review.
+          Buttons in their own row sharing it equally, hint on the line below —
+          a button beside a sentence of grey text left the row half button,
+          half prose, aligned to neither. */}
       {problems.size > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+        <div className={styles.reviewBox}>
           {!reviewing ? (
             <>
-              <button type="button" className="btn" onClick={startReview}>
-                <AlertTriangle size={15} /> ตรวจชื่อที่น่าสงสัย ({problems.size})
-              </button>
-              <span style={{ fontSize: '0.8rem', color: 'var(--fg-3)' }}>
+              <div className={styles.reviewActs}>
+                <button type="button" className="btn" onClick={startReview}>
+                  <AlertTriangle size={15} /> ตรวจ {problems.size} ชื่อที่น่าสงสัย
+                </button>
+                {onVerify && (
+                  <button type="button" className="btn" onClick={keepAll}>
+                    <ShieldCheck size={15} /> ถูกต้องหมด ไม่ต้องทักอีก
+                  </button>
+                )}
+              </div>
+              <span className={styles.reviewHint}>
                 ชื่อที่น่าจะมาจากข้อมูลในไฟล์ PDF มากกว่าจะเป็นชื่อคนจริง
               </span>
             </>
           ) : (
             <>
-              <button
-                type="button"
-                className="btn"
-                onClick={removeChecked}
-                disabled={checked.size === 0}
-                style={{ color: 'var(--hot)' }}
-              >
-                <Trash2 size={15} /> ลบที่เลือก ({checked.size})
-              </button>
-              <button type="button" className="btn" onClick={() => { setReviewing(false); setChecked(new Set()); }}>
-                ยกเลิก
-              </button>
-              <span style={{ fontSize: '0.8rem', color: 'var(--fg-3)' }}>
-                ติ๊กไว้ให้แล้วทุกชื่อ — เอาติ๊กออกจากชื่อที่เป็นคนจริง แล้วค่อยกดลบ
+              <div className={styles.reviewActs}>
+                {onVerify && (
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={keepChecked}
+                    disabled={checked.size === 0}
+                  >
+                    <ShieldCheck size={15} /> เก็บไว้ ({checked.size})
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={removeChecked}
+                  disabled={checked.size === 0}
+                  style={{ color: 'var(--hot)' }}
+                >
+                  <Trash2 size={15} /> ลบ ({checked.size})
+                </button>
+                <button type="button" className="btn" onClick={() => { setReviewing(false); setChecked(new Set()); }}>
+                  ยกเลิก
+                </button>
+              </div>
+              <span className={styles.reviewHint}>
+                ติ๊กไว้ให้แล้วทุกชื่อ — เอาติ๊กออกจากชื่อที่ไม่ต้องการ แล้วเลือกว่าจะเก็บไว้หรือลบ
               </span>
             </>
           )}
@@ -300,11 +364,6 @@ export default function SearchableListEditor({
               onRemove={() => handleRemove(item)}
             />
           ))
-        )}
-        {items.length > 50 && !query && !reviewing && (
-          <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--fg-3)', marginTop: '0.5rem' }}>
-            แสดงเฉพาะ 50 รายการแรก (พิมพ์ค้นหาเพื่อดูรายชื่ออื่นๆ)
-          </div>
         )}
       </div>
     </section>

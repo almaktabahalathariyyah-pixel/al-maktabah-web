@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import {
@@ -59,6 +59,14 @@ export default function NamesPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  /**
+   * Names the owner has looked at and vouched for. The junk heuristic is a
+   * guess about what a PDF put in an author field, so it is wrong sometimes —
+   * and with nowhere to record "I checked, this is a real publisher" it
+   * flagged the same eight names on every visit until the warning meant
+   * nothing. Saved with the lists.
+   */
+  const [nameOk, setNameOk] = useState([]);
   const [activeTab, setActiveTab] = useState('authors'); // 'authors', 'translators', 'publishers'
 
   /**
@@ -137,7 +145,17 @@ export default function NamesPage() {
   );
 
   const lists = { authors, translators, publishers, categories };
-  const dirty = !loading && fingerprint(lists) !== fingerprint(baseline.lists);
+  const dirty =
+    !loading &&
+    (fingerprint(lists) !== fingerprint(baseline.lists) ||
+      nameOk.join('␟') !== (baseline.nameOk || []).join('␟'));
+
+  /** Vouching for a name is an edit like any other — it waits for save. */
+  const verify = useCallback(
+    (names) => setNameOk((prev) => [...new Set([...prev, ...names])]),
+    []
+  );
+  const verified = useMemo(() => new Set(nameOk), [nameOk]);
 
   /**
    * The sidebar is one tap from here, and in the App Router a Link never
@@ -192,7 +210,12 @@ export default function NamesPage() {
         setTranslators(loaded.translators);
         setPublishers(loaded.publishers);
         setCategories(loaded.categories);
-        setBaseline({ lists: loaded, groupOf: new Map(groupOf.current) });
+        setNameOk(settings.nameOk || []);
+        setBaseline({
+          lists: loaded,
+          groupOf: new Map(groupOf.current),
+          nameOk: settings.nameOk || [],
+        });
       } catch (err) {
         if (isMounted) toast.error('โหลดข้อมูลการตั้งค่าไม่สำเร็จ');
       } finally {
@@ -239,6 +262,11 @@ export default function NamesPage() {
       const payload = {
         ...saved,
         categories: groupCategories(categoryGroups.current, saved.categories, groupOf.current),
+        // Only names still on a list: a vouched-for name that was later
+        // deleted has no reason to keep a row in the document.
+        nameOk: nameOk.filter((n) =>
+          saved.authors.includes(n) || saved.translators.includes(n) || saved.publishers.includes(n)
+        ),
       };
       // saveDropdownSettings now uses merge: true, so it won't overwrite categories/languages
       const success = await saveDropdownSettings(payload);
@@ -270,7 +298,8 @@ export default function NamesPage() {
       setTranslators(saved.translators);
       setPublishers(saved.publishers);
       setCategories(saved.categories);
-      setBaseline({ lists: saved, groupOf: new Map(groupOf.current) });
+      setNameOk(payload.nameOk);
+      setBaseline({ lists: saved, groupOf: new Map(groupOf.current), nameOk: payload.nameOk });
 
       toast.success(
         booksTouched > 0
@@ -388,6 +417,8 @@ export default function NamesPage() {
             onChange={setAuthors}
             onRename={trackRename('authors')}
             onDelete={trackDelete('authors')}
+            verified={verified}
+            onVerify={verify}
           />
         )}
         
@@ -400,6 +431,8 @@ export default function NamesPage() {
             onChange={setTranslators}
             onRename={trackRename('translators')}
             onDelete={trackDelete('translators')}
+            verified={verified}
+            onVerify={verify}
           />
         )}
         
@@ -412,6 +445,8 @@ export default function NamesPage() {
             onChange={setPublishers}
             onRename={trackRename('publishers')}
             onDelete={trackDelete('publishers')}
+            verified={verified}
+            onVerify={verify}
           />
         )}
 

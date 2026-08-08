@@ -13,6 +13,14 @@ const EMPTY_SETTINGS = {
   authors: [],
   translators: [],
   publishers: [],
+  /**
+   * Names the owner has looked at and confirmed are real, despite the junk
+   * heuristic doubting them. The heuristic is deliberately blunt — it is
+   * guessing at what a PDF handed over in place of an author — so it will
+   * keep flagging the same genuine names on every visit unless it is told.
+   * Anything listed here is never flagged again.
+   */
+  nameOk: [],
 };
 
 /** Normalises whatever is in Firestore into the shape above. */

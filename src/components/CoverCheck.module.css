@@ -39,6 +39,7 @@
 
 .good { color: var(--accent); flex: none; }
 .bad { color: var(--hot); flex: none; }
+.pendingIcon { color: var(--fg-3); flex: none; }
 
 /* One fold per cause. The heading is the fix and the count; the books inside
    are only there for whoever wants to see which ones. */
@@ -98,8 +99,11 @@
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.headActs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
 @media (max-width: 560px) {
-  /* The button takes its own full-width row rather than hanging off one end
-     of the title's line. */
-  .head > :global(.btn) { width: 100%; }
+  /* The buttons take their own row and share it, rather than hanging off one
+     end of the title's line. */
+  .headActs { width: 100%; }
+  .headActs > :global(.btn) { flex: 1 1 0; justify-content: center; min-width: 0; }
 }

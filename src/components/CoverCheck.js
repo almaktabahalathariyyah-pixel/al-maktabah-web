@@ -1,18 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Stethoscope, Loader2, CircleCheck, CircleX } from 'lucide-react';
+import { Stethoscope, Loader2, CircleCheck, CircleX, RotateCcw } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import styles from './CoverCheck.module.css';
 
 /**
  * Answers one question — which books will not show a cover, and why.
  *
- * It used to answer two at once, badly: a twelve-book "sample" beside a
- * check-everything button, with no way to tell from the screen what a sample
- * was for. There is one button now. Every cover gets fetched, and the books
- * that have no cover recorded at all are listed without needing a run, since
- * fetching nothing proves nothing about them.
+ * Every verdict is remembered, so a second visit only fetches what has no
+ * answer yet. Checking four hundred covers takes minutes; doing it again from
+ * scratch to find the one book added since is the kind of thing that stops
+ * the check from being run at all.
  *
  * "ทำไมรูปปกไม่แสดง" has at least six causes that all look identical in the
  * grid — no coverUrl, a bot token that no longer matches the bot that sent
@@ -34,71 +33,120 @@ const REASONS = {
   'http-error': 'เรียกไม่สำเร็จ',
 };
 
-/** Covers fetched at once. All 400 in parallel is what stalls the tab. */
+/** Covers fetched at once. All four hundred in parallel is what stalls a tab. */
 const BATCH = 8;
+/** Where the verdicts live between visits. */
+const STORE = 'coverCheck.v1';
+
+/**
+ * What has been checked, as `{ [bookId]: { url, ok, reason, status } }`.
+ *
+ * The url is stored beside the verdict so that replacing one book's cover
+ * puts that book back in the queue and leaves the other four hundred alone.
+ * Kept in localStorage on purpose: it is a cache of an HTTP result, not
+ * library data, and it must not cost a Firestore write.
+ */
+function loadStore() {
+  try {
+    return JSON.parse(localStorage.getItem(STORE) || '{}');
+  } catch {
+    return {};
+  }
+}
 
 export default function CoverCheck({ books }) {
   const { toast } = useToast();
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
-  const [result, setResult] = useState(null);
+  // Read once, lazily. The guard is what makes that safe: AdminShell renders
+  // its permission gate instead of this until auth resolves, so there is no
+  // server pass to mismatch — but a bare localStorage read in a render body
+  // is a crash waiting for the day that changes.
+  const [seen, setSeen] = useState(() =>
+    typeof window === 'undefined' ? {} : loadStore()
+  );
 
   const withCover = books.filter((b) => b.coverUrl);
   // Nothing to fetch, so nothing to wait for — these are known the moment the
-  // page loads and are shown without a run.
+  // page loads and are listed without a run.
   const missing = books.filter((b) => !b.coverUrl);
 
-  const run = async () => {
-    if (withCover.length === 0) {
-      toast.info('ยังไม่มีเล่มไหนบันทึกลิงก์ปกไว้เลย');
+  /** Already answered, for the cover this book currently has. */
+  const isChecked = (b) => seen[b.id] && seen[b.id].url === b.coverUrl;
+  const unchecked = withCover.filter((b) => !isChecked(b));
+  const failures = withCover
+    .filter((b) => isChecked(b) && !seen[b.id].ok)
+    .map((b) => ({ id: b.id, title: b.title, ...seen[b.id] }));
+
+  /** `again` re-tests everything; otherwise only what has no verdict yet. */
+  const run = async (again = false) => {
+    const queue = again ? withCover : unchecked;
+    if (queue.length === 0) {
+      toast.info('ตรวจครบทุกเล่มแล้ว');
       return;
     }
 
     setRunning(true);
-    setResult(null);
-    setProgress({ done: 0, total: withCover.length });
+    setProgress({ done: 0, total: queue.length });
 
     const one = async (book) => {
       try {
         // HEAD would be cheaper, but the proxies only implement GET.
         const res = await fetch(book.coverUrl, { cache: 'no-store' });
         return {
-          id: book.id,
-          title: book.title,
+          url: book.coverUrl,
           ok: res.ok,
           reason: res.ok ? '' : res.headers.get('X-Cover-Error') || 'http-error',
           status: res.status,
         };
       } catch {
-        return { id: book.id, title: book.title, ok: false, reason: 'proxy-threw', status: 0 };
+        return { url: book.coverUrl, ok: false, reason: 'proxy-threw', status: 0 };
       }
     };
 
-    // In batches, so this does not open four hundred sockets at once.
-    const checked = [];
-    for (let i = 0; i < withCover.length; i += BATCH) {
-      checked.push(...(await Promise.all(withCover.slice(i, i + BATCH).map(one))));
-      setProgress({ done: Math.min(i + BATCH, withCover.length), total: withCover.length });
+    // Written away batch by batch, so stopping half way through — closing the
+    // tab, losing the network — still banks what has been answered so far.
+    let store = again ? {} : { ...seen };
+    for (let i = 0; i < queue.length; i += BATCH) {
+      const slice = queue.slice(i, i + BATCH);
+      const verdicts = await Promise.all(slice.map(one));
+      slice.forEach((book, n) => { store[book.id] = verdicts[n]; });
+      try {
+        localStorage.setItem(STORE, JSON.stringify(store));
+      } catch {
+        /* quota or private mode — the check still works, it just forgets */
+      }
+      setSeen(store);
+      setProgress({ done: Math.min(i + BATCH, queue.length), total: queue.length });
     }
 
-    const failures = checked.filter((c) => !c.ok);
-    setResult({ total: checked.length, failures });
     setRunning(false);
 
-    if (failures.length === 0) toast.success(`ปกโหลดได้ครบทั้ง ${checked.length} เล่ม`);
-    else toast.error(`ปกเสีย ${failures.length} เล่ม`);
+    const bad = queue.filter((b) => store[b.id] && !store[b.id].ok).length;
+    if (bad === 0) toast.success(`ตรวจ ${queue.length} เล่ม — ปกโหลดได้ทั้งหมด`);
+    else toast.error(`ตรวจ ${queue.length} เล่ม — ปกเสีย ${bad}`);
   };
 
-  // Only the failures are listed. A wall of four hundred "โหลดได้" rows is
-  // not a report, and the owner cannot act on a single one of them.
-  const byReason = result
-    ? Object.entries(
-        result.failures.reduce((acc, f) => {
-          (acc[f.reason] ||= []).push(f);
-          return acc;
-        }, {})
-      ).sort((a, b) => b[1].length - a[1].length)
-    : [];
+  const forget = () => {
+    try {
+      localStorage.removeItem(STORE);
+    } catch {
+      /* nothing to clear */
+    }
+    setSeen({});
+  };
+
+  // Only failures are listed, grouped by cause: one heading per fix. A wall of
+  // four hundred "โหลดได้" rows is not a report — there is nothing to do with
+  // a single one of them.
+  const byReason = Object.entries(
+    failures.reduce((acc, f) => {
+      (acc[f.reason] ||= []).push(f);
+      return acc;
+    }, {})
+  ).sort((a, b) => b[1].length - a[1].length);
+
+  const checkedCount = withCover.length - unchecked.length;
 
   return (
     <section className={styles.box}>
@@ -107,30 +155,47 @@ export default function CoverCheck({ books }) {
           <Stethoscope size={16} className={styles.titleIcon} />
           ตรวจรูปหน้าปก
         </h2>
-        <button className="btn btn-solid" onClick={run} disabled={running}>
-          {running
-            ? <><Loader2 size={15} className={styles.spin} /> {progress.done}/{progress.total}</>
-            : `ตรวจ ${withCover.length.toLocaleString('th-TH')} เล่ม`}
-        </button>
+        <div className={styles.headActs}>
+          {checkedCount > 0 && !running && (
+            <button className="btn" onClick={forget} title="ลืมผลเดิม แล้วเริ่มนับใหม่">
+              <RotateCcw size={15} /> ตรวจใหม่หมด
+            </button>
+          )}
+          <button
+            className="btn btn-solid"
+            onClick={() => run(false)}
+            disabled={running || unchecked.length === 0}
+          >
+            {running
+              ? <><Loader2 size={15} className={styles.spin} /> {progress.done}/{progress.total}</>
+              : unchecked.length === 0
+                ? 'ตรวจครบแล้ว'
+                : `ตรวจ ${unchecked.length.toLocaleString('th-TH')} เล่มที่เหลือ`}
+          </button>
+        </div>
       </div>
 
-      {/* Two counts, no prose. */}
+      {/* Counts, in place of the paragraph that used to explain them. */}
       <div className={styles.tallies}>
         <span className={styles.tally}>
           <CircleCheck size={14} className={styles.good} />
-          มีลิงก์ปก {withCover.length.toLocaleString('th-TH')}
+          ตรวจแล้ว {checkedCount.toLocaleString('th-TH')} / {withCover.length.toLocaleString('th-TH')}
+        </span>
+        {unchecked.length > 0 && (
+          <span className={styles.tally}>
+            <RotateCcw size={14} className={styles.pendingIcon} />
+            ยังไม่ตรวจ {unchecked.length.toLocaleString('th-TH')}
+          </span>
+        )}
+        <span className={styles.tally}>
+          {failures.length === 0
+            ? <><CircleCheck size={14} className={styles.good} /> ปกเสีย 0</>
+            : <><CircleX size={14} className={styles.bad} /> ปกเสีย {failures.length.toLocaleString('th-TH')}</>}
         </span>
         {missing.length > 0 && (
           <span className={styles.tally}>
             <CircleX size={14} className={styles.bad} />
             ยังไม่มีปก {missing.length.toLocaleString('th-TH')}
-          </span>
-        )}
-        {result && (
-          <span className={styles.tally}>
-            {result.failures.length === 0
-              ? <><CircleCheck size={14} className={styles.good} /> ปกเสีย 0</>
-              : <><CircleX size={14} className={styles.bad} /> ปกเสีย {result.failures.length}</>}
           </span>
         )}
       </div>
@@ -151,7 +216,6 @@ export default function CoverCheck({ books }) {
         </details>
       )}
 
-      {/* Failures grouped by cause: one heading per fix, not one row per book. */}
       {byReason.map(([reason, list]) => (
         <details key={reason} className={styles.group}>
           <summary className={styles.groupHead}>
@@ -169,7 +233,7 @@ export default function CoverCheck({ books }) {
         </details>
       ))}
 
-      {result && result.failures.length === 0 && (
+      {checkedCount === withCover.length && failures.length === 0 && withCover.length > 0 && (
         <p className={styles.allGood}>
           <CircleCheck size={15} className={styles.good} />
           ปกโหลดได้ครบทุกเล่ม
