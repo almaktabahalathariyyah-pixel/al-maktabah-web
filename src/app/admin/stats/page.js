@@ -180,11 +180,8 @@ export default function StatsPage() {
         </div>
 
 
-        <p className={styles.subNote}>
-          {summary.noCover > 0
-            ? `${summary.noCover} เล่มยังไม่มีภาพหน้าปก (ระบบแสดงปกตัวอักษรแทน)`
-            : 'ทุกเล่มมีภาพหน้าปกแล้ว'}
-        </p>
+        {/* The cover count moved out. It said the same thing as the tallies in
+            the ตรวจรูปหน้าปก card directly below, one section earlier. */}
       </section>
 
       {/* A record HAVING a coverUrl and that cover actually LOADING are two

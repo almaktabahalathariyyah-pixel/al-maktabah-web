@@ -6,31 +6,34 @@ import { useToast } from '@/context/ToastContext';
 import styles from './CoverCheck.module.css';
 
 /**
- * Actually fetches a sample of cover URLs and reports what came back.
+ * Answers one question — which books will not show a cover, and why.
+ *
+ * It used to answer two at once, badly: a twelve-book "sample" beside a
+ * check-everything button, with no way to tell from the screen what a sample
+ * was for. There is one button now. Every cover gets fetched, and the books
+ * that have no cover recorded at all are listed without needing a run, since
+ * fetching nothing proves nothing about them.
  *
  * "ทำไมรูปปกไม่แสดง" has at least six causes that all look identical in the
- * grid — the record has no coverUrl, the bot token no longer matches the bot
- * that sent the photo, Telegram cannot find the file, the Drive copy was never
- * shared publicly, and so on. Guessing between them from the outside wasted a
- * round trip, so the proxies now name the failing stage in an X-Cover-Error
- * header and this reads it back.
+ * grid — no coverUrl, a bot token that no longer matches the bot that sent
+ * the photo, a Drive copy that was never shared, and so on. The proxies name
+ * the failing stage in an X-Cover-Error header and this reads it back.
  */
 
 /** Header value → what the owner should do about it. */
 const REASONS = {
-  'bad-id': 'รหัสไฟล์ในระบบผิดรูปแบบ — ต้องอัปโหลดปกใหม่',
-  'no-token': 'เซิร์ฟเวอร์ไม่มี TELEGRAM_BOT_TOKEN — ตั้งค่าใน Vercel แล้ว deploy ใหม่',
-  'bad-token': 'TELEGRAM_BOT_TOKEN ไม่ใช่บอทตัวที่ส่งรูปนี้ — ปกเก่าจะอ่านไม่ได้ทั้งหมด',
-  'getfile-failed': 'Telegram หาไฟล์นี้ไม่เจอ (อาจถูกลบ หรือคนละบอท/คนละแชนแนล)',
-  'download-failed': 'Telegram รู้จักไฟล์ แต่ดาวน์โหลดไม่ได้',
-  'not-an-image': 'ไฟล์ที่เก็บไว้ไม่ใช่นามสกุลรูปภาพที่รองรับ',
-  'not-shared': 'ไฟล์ใน Drive ยังไม่ได้ตั้งเป็น “ใครมีลิงก์ก็เปิดได้”',
-  'too-large': 'ไฟล์รูปใหญ่เกินกำหนด',
+  'bad-id': 'รหัสไฟล์ผิดรูปแบบ — ต้องอัปโหลดปกใหม่',
+  'no-token': 'เซิร์ฟเวอร์ไม่มี TELEGRAM_BOT_TOKEN',
+  'bad-token': 'TELEGRAM_BOT_TOKEN คนละบอทกับที่ส่งรูปนี้',
+  'getfile-failed': 'Telegram หาไฟล์ไม่เจอ',
+  'download-failed': 'Telegram โหลดไฟล์ไม่ได้',
+  'not-an-image': 'ไม่ใช่ไฟล์รูปภาพ',
+  'not-shared': 'ไฟล์ใน Drive ยังไม่ได้ตั้งเป็นสาธารณะ',
+  'too-large': 'ไฟล์ใหญ่เกินกำหนด',
   'proxy-threw': 'ตัวกลางโหลดรูปมีข้อผิดพลาด',
   'http-error': 'เรียกไม่สำเร็จ',
 };
 
-const SAMPLE_SIZE = 12;
 /** Covers fetched at once. All 400 in parallel is what stalls the tab. */
 const BATCH = 8;
 
@@ -41,38 +44,19 @@ export default function CoverCheck({ books }) {
   const [result, setResult] = useState(null);
 
   const withCover = books.filter((b) => b.coverUrl);
-  /**
-   * The books this check can say nothing about, because there is no cover to
-   * fetch. They were counted in one line of prose and never listed, so the
-   * one question the owner actually has here — WHICH books need a cover —
-   * had no answer on the page that exists to answer it.
-   */
+  // Nothing to fetch, so nothing to wait for — these are known the moment the
+  // page loads and are shown without a run.
   const missing = books.filter((b) => !b.coverUrl);
 
-  /** `all` checks every cover in the library; otherwise a spread of twelve. */
-  const run = async (all = false) => {
+  const run = async () => {
     if (withCover.length === 0) {
-      toast.info('ยังไม่มีเล่มไหนบันทึกลิงก์ปกไว้เลย — ปัญหาอยู่ที่ตอนสร้างปก ไม่ใช่ตอนแสดง');
+      toast.info('ยังไม่มีเล่มไหนบันทึกลิงก์ปกไว้เลย');
       return;
     }
 
     setRunning(true);
     setResult(null);
-
-    let queue;
-    if (all) {
-      queue = withCover;
-    } else {
-      // A spread across the library, not the newest 12: a token change breaks
-      // old covers while new ones still work, and sampling one end hides that.
-      const step = Math.max(1, Math.floor(withCover.length / SAMPLE_SIZE));
-      queue = [];
-      for (let i = 0; i < withCover.length && queue.length < SAMPLE_SIZE; i += step) {
-        queue.push(withCover[i]);
-      }
-    }
-
-    setProgress({ done: 0, total: queue.length });
+    setProgress({ done: 0, total: withCover.length });
 
     const one = async (book) => {
       try {
@@ -90,101 +74,106 @@ export default function CoverCheck({ books }) {
       }
     };
 
-    // In batches, so checking all 400 does not open 400 sockets at once.
+    // In batches, so this does not open four hundred sockets at once.
     const checked = [];
-    for (let i = 0; i < queue.length; i += BATCH) {
-      checked.push(...(await Promise.all(queue.slice(i, i + BATCH).map(one))));
-      setProgress({ done: Math.min(i + BATCH, queue.length), total: queue.length });
+    for (let i = 0; i < withCover.length; i += BATCH) {
+      checked.push(...(await Promise.all(withCover.slice(i, i + BATCH).map(one))));
+      setProgress({ done: Math.min(i + BATCH, withCover.length), total: withCover.length });
     }
 
     const failures = checked.filter((c) => !c.ok);
-    setResult({ checked, failures, all });
+    setResult({ total: checked.length, failures });
     setRunning(false);
 
-    if (failures.length === 0) toast.success(`ตรวจ ${checked.length} เล่ม — ปกโหลดได้ปกติทั้งหมด`);
-    else toast.error(`ปกโหลดไม่ได้ ${failures.length} จาก ${checked.length} เล่ม`);
+    if (failures.length === 0) toast.success(`ปกโหลดได้ครบทั้ง ${checked.length} เล่ม`);
+    else toast.error(`ปกเสีย ${failures.length} เล่ม`);
   };
 
-  // The dominant failure is the one worth acting on first.
-  const worst = result?.failures.length
+  // Only the failures are listed. A wall of four hundred "โหลดได้" rows is
+  // not a report, and the owner cannot act on a single one of them.
+  const byReason = result
     ? Object.entries(
-        result.failures.reduce((acc, f) => ({ ...acc, [f.reason]: (acc[f.reason] || 0) + 1 }), {})
-      ).sort((a, b) => b[1] - a[1])[0]
-    : null;
+        result.failures.reduce((acc, f) => {
+          (acc[f.reason] ||= []).push(f);
+          return acc;
+        }, {})
+      ).sort((a, b) => b[1].length - a[1].length)
+    : [];
 
   return (
     <section className={styles.box}>
       <div className={styles.head}>
-        <div>
-          <h2 className={styles.title}>
-            <Stethoscope size={16} className={styles.titleIcon} />
-            ตรวจรูปหน้าปก
-          </h2>
-        </div>
-
-        <div className={styles.headActs}>
-          <button className="btn" onClick={() => run(false)} disabled={running}>
-            {running
-              ? <><Loader2 size={15} className={styles.spin} /> {progress.done}/{progress.total}</>
-              : `สุ่ม ${SAMPLE_SIZE} เล่ม`}
-          </button>
-          <button className="btn btn-solid" onClick={() => run(true)} disabled={running}>
-            ตรวจทั้งหมด ({withCover.length.toLocaleString('th-TH')})
-          </button>
-        </div>
+        <h2 className={styles.title}>
+          <Stethoscope size={16} className={styles.titleIcon} />
+          ตรวจรูปหน้าปก
+        </h2>
+        <button className="btn btn-solid" onClick={run} disabled={running}>
+          {running
+            ? <><Loader2 size={15} className={styles.spin} /> {progress.done}/{progress.total}</>
+            : `ตรวจ ${withCover.length.toLocaleString('th-TH')} เล่ม`}
+        </button>
       </div>
 
-      {/* The actionable half of this page: not "12 books are missing covers"
-          but which twelve. Listed first, because it is the list the owner can
-          do something about — every other result here is a server problem. */}
+      {/* Two counts, no prose. */}
+      <div className={styles.tallies}>
+        <span className={styles.tally}>
+          <CircleCheck size={14} className={styles.good} />
+          มีลิงก์ปก {withCover.length.toLocaleString('th-TH')}
+        </span>
+        {missing.length > 0 && (
+          <span className={styles.tally}>
+            <CircleX size={14} className={styles.bad} />
+            ยังไม่มีปก {missing.length.toLocaleString('th-TH')}
+          </span>
+        )}
+        {result && (
+          <span className={styles.tally}>
+            {result.failures.length === 0
+              ? <><CircleCheck size={14} className={styles.good} /> ปกเสีย 0</>
+              : <><CircleX size={14} className={styles.bad} /> ปกเสีย {result.failures.length}</>}
+          </span>
+        )}
+      </div>
+
       {missing.length > 0 && (
-        <details className={styles.missing}>
-          <summary className={styles.missingHead}>
-            ยังไม่มีปก {missing.length.toLocaleString('th-TH')} เล่ม — กดดูรายชื่อ
+        <details className={styles.group}>
+          <summary className={styles.groupHead}>
+            ยังไม่มีปก — {missing.length.toLocaleString('th-TH')} เล่ม
           </summary>
           <ul className={styles.rows}>
             {missing.map((b) => (
               <li key={b.id} className={styles.row}>
-                <CircleX size={14} className={styles.bad} />
+                <CircleX size={13} className={styles.bad} />
                 <span className={styles.rowTitle} dir="auto">{b.title}</span>
-                <span className={styles.rowNote}>ไม่มีลิงก์ปก</span>
               </li>
             ))}
           </ul>
         </details>
       )}
 
-      {result && (
-        <div className={styles.result}>
-          {worst ? (
-            <p className={styles.verdict}>
-              <CircleX size={15} className={styles.bad} />
-              <span>
-                <strong>สาเหตุหลัก: {REASONS[worst[0]] || worst[0]}</strong>
-                {` (${worst[1]} จาก ${result.failures.length} เล่มที่พลาด)`}
-              </span>
-            </p>
-          ) : (
-            <p className={styles.verdict}>
-              <CircleCheck size={15} className={styles.good} />
-              <span>ปกที่สุ่มตรวจโหลดได้ทั้งหมด — ถ้ายังไม่เห็นปกในหน้าเว็บ ให้ล้างแคชเบราว์เซอร์แล้วลองใหม่</span>
-            </p>
-          )}
-
+      {/* Failures grouped by cause: one heading per fix, not one row per book. */}
+      {byReason.map(([reason, list]) => (
+        <details key={reason} className={styles.group}>
+          <summary className={styles.groupHead}>
+            {REASONS[reason] || reason} — {list.length.toLocaleString('th-TH')} เล่ม
+          </summary>
           <ul className={styles.rows}>
-            {result.checked.map((c) => (
+            {list.map((c) => (
               <li key={c.id} className={styles.row}>
-                {c.ok
-                  ? <CircleCheck size={14} className={styles.good} />
-                  : <CircleX size={14} className={styles.bad} />}
-                <span className={styles.rowTitle}>{c.title}</span>
-                <span className={styles.rowNote}>
-                  {c.ok ? 'โหลดได้' : `${c.status || '—'} · ${REASONS[c.reason] || c.reason}`}
-                </span>
+                <CircleX size={13} className={styles.bad} />
+                <span className={styles.rowTitle} dir="auto">{c.title}</span>
+                <span className={styles.rowNote}>{c.status || '—'}</span>
               </li>
             ))}
           </ul>
-        </div>
+        </details>
+      ))}
+
+      {result && result.failures.length === 0 && (
+        <p className={styles.allGood}>
+          <CircleCheck size={15} className={styles.good} />
+          ปกโหลดได้ครบทุกเล่ม
+        </p>
       )}
     </section>
   );

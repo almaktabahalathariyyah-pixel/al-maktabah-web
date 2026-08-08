@@ -225,7 +225,7 @@ export default function SearchableListEditor({
           </button>
         </form>
       ) : (
-        <button type="button" className="btn" onClick={() => setAdding(true)} style={{ alignSelf: 'flex-start' }}>
+        <button type="button" className={`btn ${styles.addOpen}`} onClick={() => setAdding(true)}>
           <Plus size={16} /> เพิ่ม{title}ใหม่
         </button>
       )}

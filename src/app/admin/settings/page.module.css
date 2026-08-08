@@ -61,13 +61,16 @@
   }
 }
 
+/* Full width. A lone pill hugging the left edge of a card reads as something
+   left behind rather than as the card's one action — same reason the panel
+   footers and the book-list toolbar stretch theirs. */
+.addOpen { width: 100%; }
+
 /* The add-a-name row, once it has been opened. Wraps rather than squeezing —
    at 375px the field, "เพิ่ม" and "ยกเลิก" cannot share one line. */
 .addRow { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-@media (max-width: 480px) {
-  .addRow > input { flex: 1 1 100%; }
-  .addRow > :global(.btn) { flex: 1 1 0; justify-content: center; }
-}
+.addRow > input { flex: 1 1 100%; }
+.addRow > :global(.btn) { flex: 1 1 0; justify-content: center; }
 
 /* ---------------- Page header (จัดการรายชื่อ) ---------------- */
 .pageHead {

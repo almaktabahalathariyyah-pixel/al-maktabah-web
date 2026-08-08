@@ -240,15 +240,15 @@ export default function MirrorRunner() {
       )}
 
       {tooBig > 0 && (
-        <p className={styles.note}>
-          อีก {tooBig} เล่มใหญ่เกิน 20MB จึงสำรองไปที่ Telegram ไม่ได้ — เล่มเหล่านี้พึ่ง Google Drive อย่างเดียว
-        </p>
+        <p className={styles.note}>อีก {tooBig} เล่มใหญ่เกิน 20MB สำรองไม่ได้</p>
       )}
 
-      <p className={styles.note}>
-        หยุดกลางคันได้ทุกเมื่อ กลับมากดต่อภายหลังได้ · เล่มที่ยังไม่มีสำเนายังเปิดอ่านได้ตามปกติ
-        สำเนานี้ใช้เมื่อ Drive ติดโควตาดาวน์โหลดรายวันเท่านั้น
-      </p>
+      {/* Only while there is a run to explain. When everything is backed up
+          this card said its piece in four lines that nobody needed to read
+          twice, on a page that is mostly numbers. */}
+      {pending.length > 0 && !running && (
+        <p className={styles.note}>หยุดกลางคันแล้วกดต่อทีหลังได้</p>
+      )}
     </section>
   );
 }

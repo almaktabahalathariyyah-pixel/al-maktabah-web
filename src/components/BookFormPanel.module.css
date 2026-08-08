@@ -76,6 +76,17 @@
   gap: 1.5rem;
 }
 
+/* .btn never wraps its own label, so two Thai labels in a non-wrapping row
+   pushed straight past the panel edge. `1 1 14rem` lets them share a line
+   when there is room for both and take one each when there is not. */
+.driveActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+.driveActions > :global(.btn) { flex: 1 1 14rem; min-width: 0; }
+
 .fieldGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;

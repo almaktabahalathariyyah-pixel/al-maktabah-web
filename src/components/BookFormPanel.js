@@ -928,12 +928,16 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                       onChange={(e) => setDriveUrl(e.target.value)}
                     />
                     <span className={styles.fieldHint}>
-                      ระบบกรอกให้เองหลังอัปโหลด วางเองได้ถ้าไฟล์อยู่ใน Drive อยู่แล้ว
+                      ระบบกรอกให้เองหลังอัปโหลด
                     </span>
                   </label>
 
                   {!pdfFile && (
-                    <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.75rem' }}>
+                    // A class, not an inline flex row: .btn never wraps its
+                    // label, so two Thai labels sharing one un-wrapping row
+                    // ran straight off the panel on a narrow screen. Here they
+                    // take a second row instead once they stop fitting.
+                    <div className={styles.driveActions}>
                       {driveUrl && (
                         // Not gated on !googleToken — a disabled button here would
                         // look identical to a dead one. It stays clickable and the
@@ -941,7 +945,6 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                         <button
                           type="button"
                           className="btn"
-                          style={{ flex: 1 }}
                           onClick={analyzeFromDriveLink}
                           disabled={fetchingFromDrive}
                         >
@@ -955,7 +958,6 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                       <button
                         type="button"
                         className="btn"
-                        style={{ flex: 1 }}
                         onClick={pickFromDrive}
                         disabled={picking}
                       >
@@ -970,8 +972,8 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
                   {!pdfFile && (
                     <span className={styles.fieldHint}>
                       {driveUrl
-                        ? '“ดึงข้อมูลจากลิงก์นี้” ใช้ได้เฉพาะไฟล์ที่อัปโหลดผ่านปุ่มอัปโหลดของเว็บนี้ — ถ้าเป็นลิงก์จากที่อื่นจะอ่านไม่ได้ ให้ใช้ “เลือกไฟล์จาก Drive” แทน แล้วเลือกไฟล์เดียวกันในหน้าต่างที่เปิดขึ้น'
-                        : '“เลือกไฟล์จาก Drive” เปิดหน้าต่างเลือกไฟล์ของ Google ใช้ได้กับไฟล์ PDF ที่มีอยู่ใน Drive แล้ว ไม่ว่าจะอัปโหลดจากที่ไหนมาก็ตาม'}
+                        ? 'ลิงก์จากที่อื่นอ่านไม่ได้ — ใช้ “เลือกไฟล์จาก Drive” แทน'
+                        : 'เลือก PDF ที่มีอยู่ใน Drive แล้ว'}
                     </span>
                   )}
 

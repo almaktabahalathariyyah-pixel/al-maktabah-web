@@ -11,7 +11,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .title {
@@ -22,57 +22,58 @@
   font-size: 1.02rem;
   font-weight: 600;
   line-height: 1.45;
-  margin-bottom: 0.2rem;
 }
 .titleIcon { color: var(--accent); flex: none; }
 
-.headActs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+/* Counts in place of the paragraph that used to explain them. */
+.tallies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  margin-top: 0.85rem;
+  font-size: var(--t-small);
+  color: var(--fg-2);
+  font-variant-numeric: tabular-nums;
+}
+.tally { display: inline-flex; align-items: center; gap: 0.4rem; }
 
-/* The list of books with no cover at all — folded away, because it can run to
-   hundreds, and it is the one thing on this card the owner can act on. */
-.missing { margin-top: 1rem; }
-.missingHead {
+.good { color: var(--accent); flex: none; }
+.bad { color: var(--hot); flex: none; }
+
+/* One fold per cause. The heading is the fix and the count; the books inside
+   are only there for whoever wants to see which ones. */
+.group {
+  margin-top: 0.6rem;
+  border-top: 1px dashed var(--border);
+  padding-top: 0.6rem;
+}
+.groupHead {
   cursor: pointer;
+  list-style: none;
+  padding: 0.35rem 0;
   font-size: var(--t-small);
   font-weight: 600;
-  color: var(--hot);
-  padding: 0.5rem 0;
+  color: var(--fg);
+}
+.groupHead::-webkit-details-marker { display: none; }
+.groupHead::before { content: '▸ '; color: var(--fg-3); }
+.group[open] .groupHead::before { content: '▾ '; }
+
+.rows {
   list-style: none;
-}
-.missingHead::-webkit-details-marker { display: none; }
-.missingHead::before { content: '▸ '; }
-.missing[open] .missingHead::before { content: '▾ '; }
-.missing[open] .rows { max-height: 280px; overflow-y: auto; padding-top: 0.4rem; }
-
-@media (max-width: 560px) {
-  .headActs { width: 100%; }
-  .headActs > :global(.btn) { flex: 1 1 0; justify-content: center; min-width: 0; }
-}
-
-.result { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed var(--border); }
-
-.verdict {
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  font-size: var(--t-small);
-  line-height: var(--lh-body);
-  color: var(--fg-2);
-  margin-bottom: 0.9rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 0.35rem 0 0.15rem;
 }
-.verdict svg { flex: none; margin-top: 0.28rem; }
-.verdict strong { color: var(--fg); }
-
-.good { color: var(--accent); }
-.bad { color: var(--hot); }
-
-.rows { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
 
 .row {
   display: grid;
-  grid-template-columns: 14px minmax(0, 1fr) auto;
+  grid-template-columns: 13px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   font-size: var(--t-micro);
   line-height: 1.6;
 }
@@ -83,14 +84,22 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.rowNote { color: var(--fg-3); text-align: right; }
+.rowNote { color: var(--fg-3); text-align: right; font-variant-numeric: tabular-nums; }
+
+.allGood {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  font-size: var(--t-small);
+  color: var(--fg-2);
+}
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 600px) {
-  /* The reason is the point of the row, so it gets its own line rather than
-     being squeezed against an ellipsised title. */
-  .row { grid-template-columns: 14px minmax(0, 1fr); row-gap: 0.1rem; }
-  .rowNote { grid-column: 2; text-align: left; }
+@media (max-width: 560px) {
+  /* The button takes its own full-width row rather than hanging off one end
+     of the title's line. */
+  .head > :global(.btn) { width: 100%; }
 }

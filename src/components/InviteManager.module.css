@@ -43,6 +43,16 @@
   letter-spacing: var(--tr-label);
 }
 
+/* The two selects share a line and the button takes the one below, full
+   width. Left to itself it wrapped onto its own row anyway, but hugging the
+   left edge under two half-width selects — the ragged corner in the
+   screenshot. If it is going to have a row it may as well fill it. */
+@media (max-width: 620px) {
+  .maker { gap: 0.75rem; }
+  .makerField { flex: 1 1 0; min-width: 0; }
+  .maker > :global(.btn) { flex: 1 1 100%; }
+}
+
 .state {
   padding: 2rem 0;
   font-size: var(--t-small);

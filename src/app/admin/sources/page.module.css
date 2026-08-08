@@ -314,14 +314,24 @@
   .rowHost { display: none; }
 }
 
-@media (max-width: 600px) {
+/* 820px, not 600px. The admin sidebar takes a fixed 250px above 900px, so a
+   tablet at 768px leaves this column about as much room as a phone does —
+   and it was still being laid out as though it had a desktop's width. */
+@media (max-width: 820px) {
   .bar { position: static; }
   .barActs { width: 100%; }
-  .barActs > :global(.btn) { flex: 1; }
+  .barActs > :global(.btn) { flex: 1 1 0; justify-content: center; min-width: 0; }
   .expandBtn { flex: 1 1 100%; }
   .tagDup { display: none; }
   .summary { flex-wrap: wrap; }
   .toggle { flex: 1 1 100%; }
-  .rowActs { width: 100%; justify-content: flex-end; padding: 0 0.25rem 0.15rem; }
+  /* Four buttons bunched at the right of a full-width row, with the rest of
+     the row empty, is the "not placed, just landed" look. Equal quarters. */
+  .rowActs {
+    width: 100%;
+    gap: 0.4rem;
+    padding: 0 0.25rem 0.15rem;
+  }
+  .rowActs > :global(.icon-btn) { flex: 1 1 0; width: auto; }
   .fields { padding-left: 0.75rem; padding-right: 0.75rem; }
 }
