@@ -34,6 +34,8 @@ import { asList, joinPeople, hasPerson, splitPeople } from '@/lib/people';
 import BookFormPanel from '@/components/BookFormPanel';
 import BulkUploadPanel from '@/components/BulkUploadPanel';
 import BookCover from '@/components/BookCover';
+import BookPeek from '@/components/BookPeek';
+import { useLongPress } from '@/lib/useLongPress';
 import styles from './page.module.css';
 import { useAdmin } from '@/context/AdminContext';
 
@@ -91,6 +93,15 @@ function readInitialHealthFilter() {
   return ['nofile', 'telegram', 'unmirrored'].includes(health) ? health : '';
 }
 
+/**
+ * One book row, holdable. `useLongPress` is a hook, so it cannot be called
+ * per-row inside a map — the row has to be its own component to own one.
+ */
+function PeekableRow({ className, onPeek, children }) {
+  const press = useLongPress(onPeek);
+  return <li className={className} {...press}>{children}</li>;
+}
+
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -114,6 +125,13 @@ export default function AdminPage() {
   const [predefinedLanguages, setPredefinedLanguages] = useState([]);
   const [predefinedTypes, setPredefinedTypes] = useState([]);
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'card' | 'cover'
+  /**
+   * The book whose cover is being held up for a look. A title alone does not
+   * say which of four hundred books a row is — they run long, share their
+   * opening words, and come in three scripts — and the phone layout has no
+   * room for a thumbnail on every row.
+   */
+  const [peekId, setPeekId] = useState(null);
 
   // Form Panel State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -1226,6 +1244,10 @@ export default function AdminPage() {
           ))}
         </ul>
       ) : (
+        <>
+        {/* A gesture nobody is told about is a gesture nobody uses. Shown only
+            where the rows have no cover to go by. */}
+        <p className={styles.peekHint}>กดค้างที่รายการเพื่อดูปกและรายละเอียด</p>
         <ul className={`${viewMode === 'card' ? styles.rowsCard : styles.rows} stagger`}>
           {shownBooks.length === 0 && (
             <li style={{color: 'var(--fg-3)', padding: '2rem', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--r-md)', border: '1px solid var(--border)'}}>
@@ -1233,7 +1255,11 @@ export default function AdminPage() {
             </li>
           )}
           {shownBooks.map((book) => (
-            <li key={book.id} className={`${styles.bookRow} ${selectedBooks.has(book.id) ? styles.rowSelected : ''}`}>
+            <PeekableRow
+              key={book.id}
+              className={`${styles.bookRow} ${selectedBooks.has(book.id) ? styles.rowSelected : ''}`}
+              onPeek={() => setPeekId(book.id)}
+            >
               <div className={styles.checkboxWrap}>
                 <input
                   type="checkbox"
@@ -1279,9 +1305,10 @@ export default function AdminPage() {
                   <Trash2 size={16} />
                 </button>
               </div>
-            </li>
+            </PeekableRow>
           ))}
         </ul>
+        </>
       )}
 
       {pageCount > 1 && (
@@ -1426,6 +1453,16 @@ export default function AdminPage() {
         isOpen={isBulkUploadOpen}
         onClose={() => setIsBulkUploadOpen(false)}
         onSaved={handleBookSaved}
+      />
+
+      {/* Held-open row. Looked up rather than stored, so editing a book while
+          the sheet is open cannot leave a stale copy of it on screen. */}
+      <BookPeek
+        book={peekId ? books.find((b) => b.id === peekId) : null}
+        selected={selectedBooks.has(peekId)}
+        onToggleSelect={handleSelectBook}
+        onEdit={handleOpenEditBook}
+        onClose={() => setPeekId(null)}
       />
     </div>
   );

@@ -434,7 +434,11 @@ input[type='text'].searchInput {
   .bookRow:not(:global(.rowsCard) .bookRow) .downloads { display: none; }
 }
 @media (max-width: 600px) {
-  .viewToggle { display: none; } /* Hide view toggle on mobile, force card view */
+  /* The view toggle stays. Forcing card view on a phone also removed the
+     only layout that shows a cover, and a cover is how anyone actually
+     recognises a book — leaving four hundred rows to be told apart by title
+     alone, in three scripts, most of them starting the same way. */
+  .viewToggle { order: -1; }
   .tableHeader { display: none; }
   .bookRow { 
     display: flex;
@@ -478,6 +482,24 @@ input[type='text'].searchInput {
 /* Centring with translateX(-50%) and no width cap let this run off both edges
    as soon as the content was wider than the viewport — which two Thai button
    labels manage on any phone. It is now bounded, and wraps rather than spills. */
+
+/* Hidden on anything with a mouse — holding a row is a touch gesture, and the
+   table there already shows the category and the status the sheet would. */
+.peekHint { display: none; }
+
+/* iOS answers a long press on text with its own copy/share callout, which
+   would arrive on top of the sheet. */
+.bookRow { -webkit-touch-callout: none; }
+
+@media (max-width: 900px) {
+  .peekHint {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-size: var(--t-micro);
+    color: var(--fg-3);
+  }
+}
+
 .bulkActionBar {
   position: fixed;
   bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
@@ -565,19 +587,25 @@ input[type='text'].searchInput {
     padding: 0.65rem 0.85rem;
   }
 
-  /* The view toggle is hidden below 600px, so this row is exactly the four
-     action buttons. They used to be pushed to the right edge with the rest of
-     the row left empty, which reads as a layout that slipped rather than one
-     that was placed. They now share the row equally — the same thing the
-     panel footers and the manage-lists header already do. */
+  /* Two rows: the view switcher across the top, the four actions beneath it.
+     Both fill the width. Measured at 375px the switcher wants 105px and the
+     four buttons 176px before gaps, which does fit on one line — but only
+     just, and a five-control line at 44px each is a row of targets nobody can
+     hit cleanly. The actions used to be pushed to the right edge with the
+     rest of the row left empty, which reads as a layout that slipped rather
+     than one that was placed. */
   .actionButtons {
     display: flex;
+    flex-wrap: wrap;
     flex: 1 1 100%;
     gap: 0.5rem;
     width: 100%;
     margin-left: 0;
     align-items: center;
   }
+
+  .viewToggle { flex: 1 1 100%; }
+  .viewBtn { flex: 1 1 0; height: 40px; border-radius: var(--r-pill); }
 
   /* Glyph only, and each button takes an equal quarter of the row. */
   .actionButtons > :global(.btn) {

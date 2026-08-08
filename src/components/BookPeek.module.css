@@ -1,0 +1,111 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 300;
+  animation: fadeIn 0.16s var(--ease);
+}
+
+/* A sheet on a phone, a centred card on a laptop. It is opened by holding a
+   row, so it rises from the bottom where the thumb already is. */
+.sheet {
+  position: fixed;
+  z-index: 301;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  padding: 1.15rem;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  animation: peekUp 0.22s var(--ease-out);
+}
+
+@keyframes peekUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+.close { position: absolute; top: 0.6rem; right: 0.6rem; }
+
+.body {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  padding-right: 2.5rem;
+}
+
+.cover { width: 96px; }
+
+.meta { min-width: 0; }
+
+.title {
+  font-family: var(--display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: var(--lh-heading);
+  margin-bottom: 0.3rem;
+  /* Four lines is enough to tell two long titles apart; more turns the sheet
+     into the wall of text it exists to replace. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.author {
+  font-size: var(--t-small);
+  line-height: 1.55;
+  color: var(--fg-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.6rem; }
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--fg-2);
+  font-size: var(--t-micro);
+  line-height: 1.6;
+}
+.tagHot { background: var(--hot-dim); color: var(--hot); }
+
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.15rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+.acts > :global(.btn) { flex: 1 1 0; justify-content: center; min-width: 0; }
+
+@media (min-width: 620px) {
+  .sheet {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: 50%;
+    width: min(460px, calc(100vw - 2rem));
+    transform: translate(-50%, -50%);
+    animation: fadeIn 0.16s var(--ease);
+  }
+  .body { grid-template-columns: 120px minmax(0, 1fr); }
+  .cover { width: 120px; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
