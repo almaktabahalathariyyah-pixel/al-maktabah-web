@@ -50,8 +50,12 @@ export default function BookCover({ src, title, author, className = '' }) {
           <span className={styles.fallbackTitle}>{title}</span>
           <span className={styles.fallbackRule} />
           {/* One name only: this is the strip of text on a generated cover,
-              and a list of three would not fit however it wrapped. */}
-          <span className={styles.fallbackAuthor}>{firstPerson(author)}</span>
+              and a list of three would not fit however it wrapped. A book with
+              no author rendered this empty, which still drew the 0.4rem gap
+              above it as dead space under the rule. */}
+          {firstPerson(author) && (
+            <span className={styles.fallbackAuthor}>{firstPerson(author)}</span>
+          )}
         </div>
       )}
     </div>

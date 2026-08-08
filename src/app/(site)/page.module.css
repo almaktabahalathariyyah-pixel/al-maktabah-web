@@ -269,6 +269,11 @@
     /* Bleed to the edges so the row visibly continues past the gutter. */
     margin-inline: calc(-1 * clamp(1.15rem, 4vw, 2.5rem));
     padding-inline: clamp(1.15rem, 4vw, 2.5rem);
+    /* Measured at 375px the row is 480px wide, so a chip is always cut by the
+       viewport edge — and a hard cut through a Thai label reads as a broken
+       layout, not as "swipe for more". The fade says which one it is. */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 1.15rem, #000 calc(100% - 2.5rem), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 1.15rem, #000 calc(100% - 2.5rem), transparent 100%);
   }
   .chips::-webkit-scrollbar { display: none; }
   .chips > :global(.chip) { flex: none; }
@@ -493,8 +498,14 @@
      row instead of bleeding off the LEFT edge (the old bug). Shrinking the
      filter button to a glyph below means it usually does not even need to. */
   .barTools { flex: 1 1 100%; width: 100%; flex-wrap: wrap; gap: 0.6rem; }
-  .searchWrap { max-width: 100%; flex: 1 1 auto; min-width: 0; }
+  /* Matched to the 44px filter button beside it. At 40px the two sat at
+     different heights in the same row, and the search — the thing actually
+     being aimed at — was the smaller of the pair. */
+  .searchWrap { max-width: 100%; flex: 1 1 auto; min-width: 0; min-height: 44px; }
   .hideMobile { display: none; }
+  /* A phone has no "/" to press. The badge was taking 26px out of a field
+     whose placeholder was already being cut at "สำนักพิมพ์…". */
+  .kbd { display: none; }
   /* Glyph only, square touch target. "ตัวกรอง" next to the search box read as
      crowded — a button whose label has to fight the search box for room is
      worse than no label; the tooltip and aria-label carry the meaning instead. */
