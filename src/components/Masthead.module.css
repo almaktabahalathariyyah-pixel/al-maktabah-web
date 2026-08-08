@@ -74,21 +74,28 @@
 .signIn:hover { background: var(--accent-hover); }
 .signIn:active { transform: scale(0.96); }
 
-.menuBtn {
-  display: none;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--fg);
-  place-items: center;
-}
+/* Square, radius and hover come from .icon-btn; this only decides when the
+   button exists at all. `display: none` has to keep beating the primitive's
+   `display: grid`, hence the extra weight. */
+.menuBtn.menuBtn { display: none; }
 
 /* ---------- User Menu & Dropdown ---------- */
 .userMenu { position: relative; }
-.avatarBtn { display: flex; align-items: center; justify-content: center; border-radius: var(--r-pill); overflow: hidden; }
-.avatar { width: 34px; height: 34px; border-radius: var(--r-pill); object-fit: cover; }
-.avatarFallback { width: 34px; height: 34px; border-radius: var(--r-pill); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 600; font-size: 1rem; }
+/* The avatar fills its .icon-btn square rather than sitting 6px small inside
+   the row — three tools of three different sizes was most of what made the
+   masthead look unsettled. */
+.avatarBtn { overflow: hidden; padding: 0; }
+.avatar,
+.avatarFallback { width: 100%; height: 100%; border-radius: var(--r-pill); }
+.avatar { object-fit: cover; }
+.avatarFallback {
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 1rem;
+}
 
 .dropdown {
   position: absolute;
@@ -147,7 +154,7 @@
 }
 .drawerOpen { transform: translateX(0); }
 .drawerHeader { display: flex; justify-content: flex-end; padding: 1rem; }
-.drawerClose { width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--r-pill); background: var(--surface-2); color: var(--fg); }
+/* .drawerClose is now the bare .icon-btn — see globals.css */
 .drawerLink {
   display: block;
   padding: 0.85rem 0;
@@ -186,7 +193,7 @@
   .inner { gap: 1rem; }
   .nav { display: none; }
   .signIn { display: none; }
-  .menuBtn { display: grid; }
+  .menuBtn.menuBtn { display: grid; }
   .drawer { display: block; }
   .tools { margin-left: auto; }
   .wordmarkSub { display: none; }

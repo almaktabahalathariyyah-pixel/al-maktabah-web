@@ -380,7 +380,7 @@ export default function AdminSourcesPage() {
 
                   <div className={styles.rowActs}>
                     <button
-                      className={styles.iconBtn}
+                      className="icon-btn"
                       onClick={() => move(item.id, -1)}
                       disabled={index === 0 || filtering}
                       aria-label="เลื่อนขึ้น"
@@ -389,7 +389,7 @@ export default function AdminSourcesPage() {
                       <ArrowUp size={15} />
                     </button>
                     <button
-                      className={styles.iconBtn}
+                      className="icon-btn"
                       onClick={() => move(item.id, 1)}
                       disabled={index === items.length - 1 || filtering}
                       aria-label="เลื่อนลง"
@@ -400,7 +400,7 @@ export default function AdminSourcesPage() {
 
                     {isSafeUrl(item.url) && (
                       <a
-                        className={styles.iconBtn}
+                        className="icon-btn"
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -412,7 +412,7 @@ export default function AdminSourcesPage() {
                     )}
 
                     <button
-                      className={`${styles.iconBtn} ${styles.iconDanger}`}
+                      className="icon-btn icon-btn-danger"
                       onClick={() => remove(item.id)}
                       title="ลบแหล่งนี้"
                       aria-label="ลบแหล่งนี้"

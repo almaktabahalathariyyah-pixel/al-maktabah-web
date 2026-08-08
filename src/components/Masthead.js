@@ -87,7 +87,7 @@ export default function Masthead({ children }) {
             {user ? (
               <div className={styles.userMenu} ref={dropRef}>
                 <button
-                  className={styles.avatarBtn}
+                  className={`icon-btn ${styles.avatarBtn}`}
                   onClick={() => setDropOpen((v) => !v)}
                   aria-label="เมนูผู้ใช้"
                   aria-expanded={dropOpen}
@@ -126,7 +126,7 @@ export default function Masthead({ children }) {
             )}
 
             <button
-              className={styles.menuBtn}
+              className={`icon-btn ${styles.menuBtn}`}
               onClick={() => setOpen((v) => !v)}
               aria-label={open ? 'ปิดเมนู' : 'เปิดเมนู'}
               aria-expanded={open}
@@ -142,7 +142,7 @@ export default function Masthead({ children }) {
         {/* Mobile drawer */}
         <div className={`${styles.drawer} ${open ? styles.drawerOpen : ''}`}>
           <div className={styles.drawerHeader}>
-            <button onClick={() => setOpen(false)} className={styles.drawerClose} aria-label="ปิดเมนู">
+            <button onClick={() => setOpen(false)} className="icon-btn" aria-label="ปิดเมนู">
               <X size={20} />
             </button>
           </div>

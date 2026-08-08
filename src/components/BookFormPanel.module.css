@@ -48,22 +48,7 @@
   margin: 0;
 }
 
-.closeBtn {
-  background: none;
-  border: none;
-  color: var(--fg-3);
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: var(--r-pill);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--dur-fast);
-}
-.closeBtn:hover {
-  background: var(--surface-2);
-  color: var(--fg);
-}
+/* The close button is .icon-btn .icon-btn-quiet — see globals.css */
 
 .content {
   flex: 1;

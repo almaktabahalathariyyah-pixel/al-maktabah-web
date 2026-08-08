@@ -243,20 +243,7 @@
 
 .rowActs { display: flex; gap: 0.2rem; flex: none; }
 
-.iconBtn {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  color: var(--fg-2);
-  border: 1px solid transparent;
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.iconBtn:hover { background: var(--surface-3); color: var(--fg); }
-.iconBtn:disabled { opacity: 0.35; cursor: not-allowed; }
-.iconDanger:hover { background: var(--hot-dim); color: var(--hot); }
+/* .iconBtn / .iconDanger are now .icon-btn / .icon-btn-danger — globals.css */
 
 /* ---------------- Fields ---------------- */
 .fields {

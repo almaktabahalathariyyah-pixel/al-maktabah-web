@@ -329,7 +329,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
       <div className={styles.panel}>
         <div className={styles.header}>
           <h2 className={styles.title}>อัปโหลดหลายเล่ม</h2>
-          <button className={styles.closeBtn} onClick={handleClose} aria-label="ปิด">
+          <button className="icon-btn icon-btn-quiet" onClick={handleClose} aria-label="ปิด">
             <X size={20} />
           </button>
         </div>

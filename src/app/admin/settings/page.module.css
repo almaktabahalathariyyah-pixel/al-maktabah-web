@@ -7,23 +7,7 @@
   letter-spacing: 0;
   margin-bottom: 0.7rem;
 }
-.backBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--fg);
-  border: 1px solid var(--border);
-  transition: all var(--dur) var(--ease);
-}
-.backBtn:hover {
-  background: var(--surface-2);
-  border-color: var(--border-2);
-  color: var(--accent);
-}
+/* .backBtn is now .icon-btn .icon-btn-outline — see globals.css */
 
 .layout {
   display: flex;
@@ -169,22 +153,8 @@
   border-color: var(--accent);
 }
 
-.iconBtn {
-  background: none;
-  border: none;
-  color: var(--fg-3);
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: var(--r-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--dur-fast);
-}
-.iconBtn:hover {
-  color: var(--hot);
-  background: var(--surface-2);
-}
+/* .iconBtn is now .icon-btn .icon-btn-quiet (+ .icon-btn-danger where it
+   deletes) — see globals.css */
 
 .optionsList, .langList {
   display: flex;

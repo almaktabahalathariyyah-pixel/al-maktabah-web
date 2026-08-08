@@ -246,7 +246,7 @@ export default function ApprovalsPage() {
 
               <div className={styles.acts}>
                 <button
-                  className={`${styles.act} ${u.verifyRequest ? styles.actOn : ''}`}
+                  className={`icon-btn ${u.verifyRequest ? styles.actOn : ''}`}
                   onClick={() => openVerify(u)}
                   title="ขอข้อมูลยืนยันตัวตนเพิ่ม"
                   aria-label="ขอข้อมูลยืนยันตัวตนเพิ่ม"
@@ -254,7 +254,7 @@ export default function ApprovalsPage() {
                   <HelpCircle size={16} />
                 </button>
                 <button
-                  className={styles.act}
+                  className="icon-btn"
                   onClick={() => openDownloads(u.id)}
                   title="ประวัติการโหลด"
                   aria-label="ประวัติการโหลด"
@@ -263,7 +263,7 @@ export default function ApprovalsPage() {
                 </button>
                 {tab !== 'approved' && (
                   <button
-                    className={`${styles.act} ${styles.approve}`}
+                    className={`icon-btn ${styles.approve}`}
                     onClick={() => decide(u.id, 'approved')}
                     disabled={busy === u.id}
                     title="อนุมัติ"
@@ -273,7 +273,7 @@ export default function ApprovalsPage() {
                 )}
                 {tab === 'pending' && (
                   <button
-                    className={`${styles.act} ${styles.reject}`}
+                    className={`icon-btn ${styles.reject}`}
                     onClick={() => decide(u.id, 'rejected')}
                     disabled={busy === u.id}
                     title="ปฏิเสธ"
@@ -283,7 +283,7 @@ export default function ApprovalsPage() {
                 )}
                 {tab !== 'pending' && (
                   <button
-                    className={styles.act}
+                    className="icon-btn"
                     onClick={() => decide(u.id, 'pending')}
                     disabled={busy === u.id}
                     title="ย้ายกลับไปรอตรวจสอบ"

@@ -58,13 +58,8 @@ function EditableRow({ value, problem, checkable, checked, onToggle, onCommit, o
           </span>
         )}
       </div>
-      <button
-        type="button"
-        onClick={onRemove}
-        title="ลบ"
-        style={{ flex: 'none', padding: '0.5rem', border: 'none', background: 'var(--surface-2)', borderRadius: 'var(--r-sm)', cursor: 'pointer', color: 'var(--hot)' }}
-      >
-        <Trash2 size={14} />
+      <button type="button" onClick={onRemove} title="ลบ" className="icon-btn icon-btn-danger">
+        <Trash2 size={15} />
       </button>
     </div>
   );

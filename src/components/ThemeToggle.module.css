@@ -1,18 +1,6 @@
-.toggle {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-pill);
-  display: grid;
-  place-items: center;
-  background: var(--surface-2);
-  color: var(--fg-2);
-  transition: background-color var(--dur) var(--ease),
-              color var(--dur) var(--ease),
-              transform var(--dur-fast) var(--spring);
-}
-.toggle:hover { background: var(--surface-3); color: var(--fg); }
-.toggle:active { transform: scale(0.92); }
+/* Size, shape and hover come from the global .icon-btn. All this adds is the
+   stacking context the two crossfading glyphs need. */
+.toggle { position: relative; }
 
 .icon {
   position: absolute;

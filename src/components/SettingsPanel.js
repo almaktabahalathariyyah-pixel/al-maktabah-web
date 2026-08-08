@@ -291,8 +291,11 @@ export default function SettingsPanel({ isOpen, onClose }) {
                   <Save size={16} />
                   <span>{saving ? 'กำลังบันทึก…' : 'บันทึกการเปลี่ยนแปลง'}</span>
                 </button>
+                {/* panelStyles.closeButton never existed — the class in that
+                    file is .closeBtn — so this button had been rendering with
+                    no styling at all. */}
                 <button
-                  className={`${panelStyles.closeButton} ${styles.headerClose}`}
+                  className={`icon-btn icon-btn-quiet ${styles.headerClose}`}
                   onClick={requestClose}
                   aria-label="ปิด"
                 >
@@ -326,7 +329,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
                           placeholder="ชื่อกลุ่มหมวดหมู่"
                           style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                         />
-                        <button className={styles.iconBtn} onClick={() => removeCategoryGroup(gIdx)} style={{ color: 'var(--hot)', padding: '0.5rem', border: 'none', background: 'none', cursor: 'pointer' }}>
+                        <button className="icon-btn icon-btn-quiet icon-btn-danger" onClick={() => removeCategoryGroup(gIdx)} title="ลบกลุ่มนี้">
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -343,7 +346,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
                               placeholder="ชื่อหมวดหมู่ย่อย"
                               style={{ flex: 1, padding: '0.4rem 0.5rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)', fontSize: '0.9rem' }}
                             />
-                            <button className={styles.iconBtn} onClick={() => removeCategoryOption(gIdx, oIdx)} title="ลบหมวดหมู่ย่อย" style={{ padding: '0.4rem', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--fg-3)' }}>
+                            <button className="icon-btn icon-btn-quiet icon-btn-danger" onClick={() => removeCategoryOption(gIdx, oIdx)} title="ลบหมวดหมู่ย่อย">
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -377,7 +380,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
                         placeholder="เช่น หนังสือทั่วไป, ตำรา, บทความ"
                         style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                       />
-                      <button className={styles.iconBtn} onClick={() => removeType(tIdx)} title="ลบประเภท" style={{ padding: '0.5rem', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--fg-3)' }}>
+                      <button className="icon-btn icon-btn-quiet icon-btn-danger" onClick={() => removeType(tIdx)} title="ลบประเภท">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -414,7 +417,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
                         placeholder="https://lin.ee/xxxxxxx"
                         style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                       />
-                      <button className={styles.iconBtn} onClick={() => removeChannel(cIdx)} title="ลบช่องทาง" style={{ padding: '0.5rem', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--fg-3)' }}>
+                      <button className="icon-btn icon-btn-quiet icon-btn-danger" onClick={() => removeChannel(cIdx)} title="ลบช่องทาง">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -442,7 +445,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
                         placeholder="ชื่อภาษา (เช่น ไทย, อาหรับ)"
                         style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)', background: 'var(--surface)' }}
                       />
-                      <button className={styles.iconBtn} onClick={() => removeLanguage(lIdx)} title="ลบภาษา" style={{ padding: '0.5rem', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--fg-3)' }}>
+                      <button className="icon-btn icon-btn-quiet icon-btn-danger" onClick={() => removeLanguage(lIdx)} title="ลบภาษา">
                         <Trash2 size={14} />
                       </button>
                     </div>

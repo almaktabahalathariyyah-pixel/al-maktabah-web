@@ -45,7 +45,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className={styles.toggle}
+      className={`icon-btn ${styles.toggle}`}
       title={isDark ? 'Switch to light' : 'Switch to dark'}
       aria-label="Toggle colour theme"
     >

@@ -66,19 +66,10 @@
 .check { display: grid; place-items: center; }
 .check input { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; }
 
+/* The buttons themselves are .icon-btn .icon-btn-quiet (globals.css); this
+   only spaces them. They were a tenth private size — 30px, square corners —
+   in a set that already had nine. */
 .rowActs { display: flex; gap: 0.15rem; justify-content: flex-end; }
-.rowActs button {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-sm);
-  color: var(--fg-3);
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
-}
-.rowActs button:hover:not(:disabled) { background: var(--surface-2); color: var(--fg); }
-.rowActs button:disabled { opacity: 0.3; cursor: not-allowed; }
-.del:hover:not(:disabled) { color: var(--hot) !important; }
 
 .footer {
   display: flex;

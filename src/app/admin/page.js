@@ -988,7 +988,12 @@ export default function AdminPage() {
             </button>
             <button
               onClick={() => setIsBulkUploadOpen(true)}
-              className={`btn btn-solid ${styles.hotBtn}`}
+              // Neutral, not orange. This row holds four buttons; painting
+              // this one hot and the next one accent gave a row of four two
+              // competing "press me" colours and no hierarchy at all. Adding
+              // a book is the primary action here, and it is the only one
+              // that stays filled.
+              className="btn"
               title="อัปโหลดหลายเล่ม"
               aria-label="อัปโหลดหลายเล่ม"
             >
@@ -1199,7 +1204,7 @@ export default function AdminPage() {
               <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.coverWrap}>
                 <BookCover src={book.coverUrl} title={book.title} author={book.author} />
               </Link>
-              <span className={styles.name} title={book.title}>{book.title}</span>
+              <span className={styles.name} title={book.title} dir="auto">{book.title}</span>
               <span className={styles.smallMeta}>{joinPeople(book.author) || 'ไม่ระบุผู้แต่ง'}</span>
               <div className={styles.coverActions}>
                 <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.view}>
@@ -1238,7 +1243,7 @@ export default function AdminPage() {
                 />
               </div>
               <div className={styles.who}>
-                <span className={styles.name}>{book.title}</span>
+                <span className={styles.name} dir="auto">{book.title}</span>
                 <span className={styles.smallMeta}>
                   {joinPeople(book.author) || 'ไม่ระบุผู้แต่ง'}
                   {book.driveOwner && (

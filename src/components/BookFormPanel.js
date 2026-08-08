@@ -773,7 +773,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
       <div className={styles.panel}>
         <div className={styles.header}>
           <h2 className={styles.title}>{bookId ? 'แก้ไขหนังสือ' : 'เพิ่มหนังสือใหม่'}</h2>
-          <button className={styles.closeBtn} onClick={requestClose} aria-label="ปิด">
+          <button className="icon-btn icon-btn-quiet" onClick={requestClose} aria-label="ปิด">
             <X size={20} />
           </button>
         </div>

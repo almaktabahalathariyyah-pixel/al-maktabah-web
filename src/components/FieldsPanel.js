@@ -202,23 +202,24 @@ export default function FieldsPanel({ isOpen, onClose }) {
                     </label>
 
                     <div className={styles.rowActs}>
-                      <button onClick={() => move(i, -1)} disabled={i === 0} title="เลื่อนขึ้น">
-                        <ArrowUp size={14} />
+                      <button className="icon-btn icon-btn-quiet" onClick={() => move(i, -1)} disabled={i === 0} title="เลื่อนขึ้น">
+                        <ArrowUp size={15} />
                       </button>
                       <button
+                        className="icon-btn icon-btn-quiet"
                         onClick={() => move(i, 1)}
                         disabled={i === fields.length - 1}
                         title="เลื่อนลง"
                       >
-                        <ArrowDown size={14} />
+                        <ArrowDown size={15} />
                       </button>
                       <button
                         onClick={() => remove(i)}
                         disabled={field.locked}
                         title={field.locked ? 'ฟิลด์หลัก ลบไม่ได้' : 'ลบฟิลด์'}
-                        className={styles.del}
+                        className="icon-btn icon-btn-quiet icon-btn-danger"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </li>

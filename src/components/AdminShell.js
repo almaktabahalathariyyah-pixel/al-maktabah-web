@@ -68,7 +68,7 @@ export default function AdminShell({ children }) {
     <div className={styles.shell}>
       {/* Mobile Header */}
       <div className={styles.mobileHeader}>
-        <button onClick={toggleSidebar} className={styles.menuBtn}>
+        <button onClick={toggleSidebar} className={`icon-btn icon-btn-quiet ${styles.menuBtn}`} aria-label="เปิดเมนู">
           <Menu size={20} />
         </button>
         <div className={styles.brand}>
@@ -83,10 +83,14 @@ export default function AdminShell({ children }) {
             <span className={styles.badge}>ADMIN</span>
             <span className={styles.brandName}>แผงควบคุม</span>
           </div>
-          <button onClick={toggleSidebar} className={styles.closeBtnMobile}>
+          <button onClick={toggleSidebar} className={`icon-btn icon-btn-quiet ${styles.closeBtnMobile}`} aria-label="ปิดเมนู">
             <X size={20} />
           </button>
-          <button onClick={toggleSidebar} className={styles.toggleBtnDesktop} title={isSidebarOpen ? 'หุบเมนู' : 'ขยายเมนู'}>
+          <button
+            onClick={toggleSidebar}
+            className={`icon-btn icon-btn-quiet ${styles.toggleBtnDesktop}`}
+            title={isSidebarOpen ? 'หุบเมนู' : 'ขยายเมนู'}
+          >
             {isSidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
           </button>
         </div>

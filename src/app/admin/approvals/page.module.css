@@ -84,19 +84,9 @@
 .noSocial { font-size: var(--t-micro); color: var(--fg-3); }
 
 .acts { display: flex; gap: 0.4rem; justify-content: flex-end; }
-.act {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--fg-2);
-  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur-fast) var(--spring);
-}
-.act:hover:not(:disabled) { background: var(--surface-3); color: var(--fg); }
-.act:active:not(:disabled) { transform: scale(0.9); }
-.act:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Square, radius, hover and disabled all come from .icon-btn now — this was
+   a twelfth private size (36px) doing the same job. Only the two verdict
+   colours are local. */
 .approve:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); }
 .reject:hover:not(:disabled) { background: var(--hot); color: var(--bg); }
 .actOn { background: var(--accent-dim); color: var(--accent); }
@@ -155,11 +145,10 @@
 /* Four glyphs beside the name is one too many for a phone: measured at 375px
    they claim 163px of a 308px row, leaving 74px for a name and address that
    want 157px, so the email was cut to less than half. They get their own row
-   instead, which also buys them a full 44px touch target. */
+   instead; the 44px touch target now comes from .icon-btn's own breakpoint. */
 @media (max-width: 560px) {
   .row { grid-template-columns: 1fr; }
   .acts { grid-column: 1 / -1; justify-content: flex-start; }
-  .act { width: 44px; height: 44px; }
 }
 
 /* What the reader said about themselves: the link (or LINE id) and the note

@@ -25,16 +25,7 @@
   gap: 1rem;
 }
 
-.menuBtn {
-  background: none;
-  border: none;
-  color: var(--fg-2);
-  cursor: pointer;
-  padding: 0.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* .menuBtn is the bare .icon-btn-quiet — see globals.css */
 
 .sidebar {
   width: 250px;
@@ -88,29 +79,9 @@
   display: none;
 }
 
-.closeBtnMobile {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--fg-2);
-  cursor: pointer;
-}
-
-.toggleBtnDesktop {
-  background: none;
-  border: none;
-  color: var(--fg-2);
-  cursor: pointer;
-  padding: 0.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r-sm);
-}
-.toggleBtnDesktop:hover {
-  background: var(--surface-2);
-  color: var(--fg);
-}
+/* Both are .icon-btn-quiet; these rules only say when each one exists.
+   Doubled selector so `display: none` outweighs the primitive's grid. */
+.closeBtnMobile.closeBtnMobile { display: none; }
 
 .brand { display: flex; align-items: center; gap: 0.6rem; flex: none; }
 .badge {
@@ -218,8 +189,8 @@
   .sidebarClosed .sidebarHeader { justify-content: space-between; }
   .sidebarClosed .brand { display: flex; }
 
-  .closeBtnMobile { display: block; }
-  .toggleBtnDesktop { display: none; }
+  .closeBtnMobile.closeBtnMobile { display: grid; }
+  .toggleBtnDesktop.toggleBtnDesktop { display: none; }
   .backdrop { display: block; }
   .main { padding: 1.5rem 1rem; }
 }

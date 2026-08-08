@@ -249,6 +249,54 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .btn-quiet { background: transparent; border-color: transparent; color: var(--fg-2); }
 .btn-quiet:hover { background: var(--surface-2); color: var(--fg); }
 
+/* ---------- Icon buttons ----------
+   One square, one radius, one hover, everywhere.
+
+   These had grown into nine separate implementations — six sizes between
+   26px and 40px, three different corner radii, four background treatments —
+   because every screen declared its own. Nothing was wrong with any one of
+   them; what read as untidy was that no two agreed. They now all come from
+   here.
+
+   40px is the desktop square and 44px the phone one, matching the touch
+   target the shelf's filter button and the admin book list already use. */
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-pill);
+  color: var(--fg-2);
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  transition: background-color var(--dur) var(--ease),
+              color var(--dur) var(--ease),
+              border-color var(--dur) var(--ease),
+              transform var(--dur-fast) var(--spring);
+}
+.icon-btn:hover { background: var(--surface-3); color: var(--fg); }
+.icon-btn:active { transform: scale(0.92); }
+.icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.icon-btn:disabled:hover { background: var(--surface-2); color: var(--fg-2); }
+
+/* Sits on a surface that is already raised — a panel header, a toolbar —
+   where a second filled square would read as a second layer. */
+.icon-btn-quiet { background: transparent; color: var(--fg-3); }
+.icon-btn-quiet:hover { background: var(--surface-2); color: var(--fg); }
+.icon-btn-quiet:disabled:hover { background: transparent; color: var(--fg-3); }
+
+/* Delete, and nothing else. */
+.icon-btn-danger:hover { background: var(--hot-dim); color: var(--hot); }
+
+/* Outlined, for the one button that has to read as leaving the page. */
+.icon-btn-outline { background: var(--surface); border-color: var(--border); color: var(--fg); }
+.icon-btn-outline:hover { background: var(--surface-2); border-color: var(--border-2); color: var(--accent); }
+
+@media (max-width: 700px) {
+  .icon-btn { width: 44px; height: 44px; }
+}
+
 /* Pill chips for filters */
 .chip {
   padding: 0.45rem 0.95rem;
