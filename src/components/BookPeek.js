@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { X, Check, Pencil, Eye, Lock } from 'lucide-react';
 import BookCover from './BookCover';
@@ -23,6 +23,11 @@ import styles from './BookPeek.module.css';
  * to make possible.
  */
 export default function BookPeek({ book, selected, onToggleSelect, onEdit, onClose }) {
+  // How far the sheet has been dragged down, in pixels. Null when nothing is
+  // being dragged, so the sheet keeps its own transform on a laptop.
+  const [drag, setDrag] = useState(null);
+  const start = useRef(null);
+
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -36,10 +41,53 @@ export default function BookPeek({ book, selected, onToggleSelect, onEdit, onClo
 
   if (!book) return null;
 
+  /**
+   * Flick it down to dismiss. The sheet opened from a gesture at the bottom
+   * of the screen, and reaching the close button in its top corner means
+   * crossing the whole phone with a thumb that is already at the bottom.
+   * Dragging up does nothing — `Math.max(0, …)` — so the sheet cannot be
+   * pulled off the top of its own container.
+   */
+  const onPointerDown = (e) => {
+    // Touch and pen only. A mouse has the close button and Escape, and above
+    // 620px this is a centred card rather than a sheet to pull.
+    if (e.pointerType === 'mouse') return;
+    if (e.target.closest?.('button, a')) return;
+    start.current = e.clientY;
+    setDrag(0);
+  };
+  const onPointerMove = (e) => {
+    if (start.current == null) return;
+    setDrag(Math.max(0, e.clientY - start.current));
+  };
+  const onPointerUp = () => {
+    if (start.current == null) return;
+    const travelled = drag || 0;
+    start.current = null;
+    setDrag(null);
+    // 90px is far enough that it cannot be a mis-tap and near enough that it
+    // is one flick.
+    if (travelled > 90) onClose();
+  };
+
   return (
     <>
       <div className={styles.backdrop} onClick={onClose} />
-      <div className={styles.sheet} role="dialog" aria-modal="true" aria-label={book.title}>
+      <div
+        className={styles.sheet}
+        role="dialog"
+        aria-modal="true"
+        aria-label={book.title}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        // A custom property, not `transform` — the desktop rule composes its
+        // own centring translate, and an inline transform would wipe it out.
+        style={drag ? { '--drag': `${drag}px`, transition: 'none', opacity: 1 - drag / 420 } : undefined}
+      >
+        {/* The bar that says this can be pulled. Phone layout only. */}
+        <div className={styles.grabber} aria-hidden="true" />
         <button className={`icon-btn icon-btn-quiet ${styles.close}`} onClick={onClose} aria-label="ปิด">
           <X size={20} />
         </button>

@@ -31,6 +31,25 @@
 
 .close { position: absolute; top: 0.6rem; right: 0.6rem; }
 
+/* The handle that says "this pulls". Only where the sheet actually is one —
+   above 620px it is a centred card and there is nothing to pull. */
+.grabber {
+  width: 38px;
+  height: 4px;
+  margin: -0.35rem auto 0.7rem;
+  border-radius: var(--r-pill);
+  background: var(--border-2);
+}
+
+/* Dragging sets an inline transform; this is what makes the release spring
+   back rather than snap. */
+.sheet {
+  transform: translateY(var(--drag, 0px));
+  transition: transform 0.22s var(--ease-out), opacity 0.22s var(--ease-out);
+}
+/* A drag is a drag, not a scroll or a text selection. */
+.sheet { touch-action: none; -webkit-user-select: none; user-select: none; }
+
 .body {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr);
@@ -98,11 +117,14 @@
     bottom: auto;
     top: 50%;
     width: min(460px, calc(100vw - 2rem));
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) translateY(var(--drag, 0px));
     animation: fadeIn 0.16s var(--ease);
   }
   .body { grid-template-columns: 120px minmax(0, 1fr); }
   .cover { width: 120px; }
+  .grabber { display: none; }
+  /* Text is worth selecting on a laptop, and there is no drag to protect. */
+  .sheet { touch-action: auto; -webkit-user-select: auto; user-select: auto; }
 }
 
 @keyframes fadeIn {

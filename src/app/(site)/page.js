@@ -2,9 +2,10 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Search, Filter, X, User, Book, ArrowLeftRight, Building, Tag,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Dices,
 } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { useAuth } from '@/context/AuthContext';
@@ -13,7 +14,9 @@ import { db } from '@/lib/firebase';
 import { readCatalogRev } from '@/lib/catalogRev';
 import { getLangPath } from '@/lib/langPath';
 import AuthorSidebar from '@/components/AuthorSidebar';
+import BackToTop from '@/components/BackToTop';
 import { asList, joinPeople, hasPerson } from '@/lib/people';
+import { useCountUp } from '@/lib/useCountUp';
 import styles from './page.module.css';
 
 /** Filters that live in the URL, so a shelf can be linked to and bookmarked. */
@@ -145,7 +148,7 @@ function BookCard({ book }) {
   return (
     <Link
       href={`/book/${getLangPath(book.language)}/${book.id}`}
-      className={`${styles.item} hover-card`}
+      className={`${styles.item} hover-card reveal`}
     >
       <div className={styles.coverWrap}>
         <BookCover src={book.coverUrl} title={book.title} author={book.author} />
@@ -179,6 +182,7 @@ export default function Home() {
 
   const [fullyLoaded, setFullyLoaded] = useState(false);
   const searchRef = useRef(null);
+  const router = useRouter();
   const { approved, isAdmin, loading: authLoading } = useAuth();
 
   const canSeeAll = approved || isAdmin;
@@ -400,6 +404,22 @@ export default function Home() {
   const activeCount = activeFilters.length;
   const narrowed = activeCount > 0 || queryText.trim() !== '';
 
+  /**
+   * The tally rolls to its new value rather than swapping. The chip that was
+   * pressed is at the bottom of a phone screen and this line is at the top —
+   * counting is what says the press did something.
+   */
+  const shownTotal = useCountUp(visibleBooks.length);
+  const shownResults = useCountUp(results.length);
+
+  /** What "สุ่มเล่ม" draws from: whatever the filters currently allow. */
+  const pool = narrowed ? results : visibleBooks;
+  const openRandomBook = () => {
+    if (pool.length === 0) return;
+    const book = pool[Math.floor(Math.random() * pool.length)];
+    router.push(`/book/${getLangPath(book.language)}/${book.id}`);
+  };
+
   const uniqueSorted = useCallback(
     (key, sorter) =>
       // flatMap through asList: a two-author book puts both names in the rail,
@@ -522,11 +542,14 @@ export default function Home() {
 
       <header className={styles.bar}>
         <p className={styles.count} aria-live="polite">
-          {loading
-            ? 'กำลังโหลดรายการ…'
-            : narrowed
-              ? `พบ ${results.length.toLocaleString('th-TH')} จาก ${visibleBooks.length.toLocaleString('th-TH')} เล่ม`
-              : `${visibleBooks.length.toLocaleString('th-TH')} เล่มในคลัง`}
+          {loading ? (
+            'กำลังโหลดรายการ…'
+          ) : narrowed ? (
+            <>พบ <span className="tally-num">{shownResults.toLocaleString('th-TH')}</span>{' '}
+              จาก <span className="tally-num">{shownTotal.toLocaleString('th-TH')}</span> เล่ม</>
+          ) : (
+            <><span className="tally-num">{shownTotal.toLocaleString('th-TH')}</span> เล่มในคลัง</>
+          )}
           {!loading && !fullyLoaded && !loadError && (
             <span className={styles.stillLoading}> · กำลังโหลดเพิ่ม…</span>
           )}
@@ -614,6 +637,21 @@ export default function Home() {
             <Filter size={15} />
             <span className={styles.hideMobile}>ตัวกรอง</span>
             {activeCount > 0 && <span className={styles.pip}>{activeCount}</span>}
+          </button>
+
+          {/* Four hundred books, and most readers never leave the first
+              screenful. This opens one of them at random — drawn from what
+              the current filters allow, so narrowing to Arabic and pressing
+              it gives an Arabic book, not a surprise from the whole shelf. */}
+          <button
+            className="btn"
+            onClick={openRandomBook}
+            disabled={pool.length === 0}
+            aria-label="เปิดเล่มสุ่ม"
+            title="เปิดเล่มสุ่ม"
+          >
+            <Dices size={15} />
+            <span className={styles.hideMobile}>สุ่มเล่ม</span>
           </button>
         </div>
       </header>
@@ -839,6 +877,7 @@ export default function Home() {
           )}
         </div>
       </div>
+      <BackToTop />
     </div>
   );
 }

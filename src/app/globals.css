@@ -341,6 +341,50 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .stagger > *:nth-child(8) { animation-delay: 0.23s; }
 .stagger > *:nth-child(n+9) { animation-delay: 0.26s; }
 
+/* ---------- Shared-element morph ----------
+   A cover clicked in the shelf travels to the book's own page rather than one
+   picture vanishing and another appearing somewhere else. The pairing is in
+   the markup (`<ViewTransition name={`cover-${id}`}>` in both places); this
+   only sets the timing.
+
+   400ms is long enough to be read as one object moving and short enough not
+   to feel like waiting. The blur at the midpoint hides the stretching that
+   happens while a 163px cell interpolates into a 320px cover. */
+::view-transition-group(.morph) {
+  animation-duration: 400ms;
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-image-pair(.morph) { animation-name: morph-blur; }
+@keyframes morph-blur {
+  30% { filter: blur(3px); }
+}
+
+/* ---------- Scroll-driven reveal ----------
+   `.stagger` only ever fires once, on first paint, so the covers that arrive
+   as the reader pages down appeared with no ceremony at all. This runs off
+   scroll position instead of a timer: no listener, no IntersectionObserver,
+   nothing on the main thread. Browsers without `animation-timeline` skip it
+   and the card is simply there, which is what they do today. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      /* Finished by the time the card is a fifth of the way up the screen —
+         it should be settled before it is read, not still arriving. */
+      animation-range: entry 0% cover 20%;
+    }
+    @keyframes reveal-in {
+      from { opacity: 0; transform: translateY(18px) scale(0.97); }
+      to   { opacity: 1; transform: none; }
+    }
+  }
+}
+
+/* Digits that change in place — a tally rolling to its new value rather than
+   jumping. Tabular figures so the width never twitches mid-count. */
+.tally-num { font-variant-numeric: tabular-nums; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -348,6 +392,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+  /* The morph is a navigation, not decoration: cancelled outright rather than
+     run at 0.001ms, which would flash. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
 }
 
 /* ---------- Shimmer skeleton ---------- */

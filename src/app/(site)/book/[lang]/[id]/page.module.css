@@ -241,3 +241,21 @@
   transition: color var(--dur) var(--ease);
 }
 .mirrorLink:hover { color: var(--accent); }
+
+/* The cover arrives rather than appears.
+   This is the modest version of a shared-element morph. React's
+   <ViewTransition> would have moved the actual cover from its cell in the
+   shelf to here, and it is wired up in Next's docs — but on the installed
+   stable channel (next 16.2.11, react 19.2.4) the component renders as a
+   passthrough and no transition ever starts, verified by watching for
+   ::view-transition pseudo-elements across a navigation and finding none.
+   Next only swaps to the React build that implements it for three other
+   experimental flags, and viewTransition is not one of them.
+   So: a short rise and settle, which needs nothing but CSS and works
+   everywhere. Swap this for the real morph when the flag graduates. */
+.coverArrive { animation: coverArrive 0.42s var(--ease-out) both; }
+
+@keyframes coverArrive {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}

@@ -256,7 +256,9 @@ export default function BookDetail({ lang, id }) {
       <article className={`${styles.layout} rise`}>
         {/* ---------- Left rail: cover + actions ---------- */}
         <aside className={styles.rail}>
-          <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+          <div className={styles.coverArrive}>
+            <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+          </div>
 
           <div className={styles.actions}>
             {locked ? (
