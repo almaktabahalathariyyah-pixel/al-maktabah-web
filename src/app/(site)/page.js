@@ -353,6 +353,22 @@ export default function Home() {
         .includes(q);
     });
 
+    // localeCompare with 'th', so ก sorts before ข and a Latin title lands
+    // sensibly among them — the same collation the name lists use. Sorting a
+    // shelf of 432 by date is fine for "what's new" and useless for "find the
+    // one I half-remember the name of".
+    if (sortOrder === 'title') {
+      return [...filtered].sort((a, b) =>
+        String(a.title ?? '').localeCompare(String(b.title ?? ''), 'th')
+      );
+    }
+    if (sortOrder === 'title-desc') {
+      return [...filtered].sort((a, b) =>
+        String(b.title ?? '').localeCompare(String(a.title ?? ''), 'th')
+      );
+    }
+    // `filtered` is already newest-first from the fetch. reverse() mutates,
+    // which is safe only because filter() handed us a fresh array.
     if (sortOrder === 'asc') {
       return filtered.reverse();
     }
@@ -709,6 +725,8 @@ export default function Home() {
             >
               <option value="desc">ใหม่ไปเก่า</option>
               <option value="asc">เก่าไปใหม่</option>
+              <option value="title">ชื่อเรื่อง ก–ฮ</option>
+              <option value="title-desc">ชื่อเรื่อง ฮ–ก</option>
             </select>
           </div>
         </div>
@@ -755,6 +773,8 @@ export default function Home() {
           >
             <option value="desc">ใหม่ไปเก่า</option>
             <option value="asc">เก่าไปใหม่</option>
+            <option value="title">ชื่อเรื่อง ก–ฮ</option>
+            <option value="title-desc">ชื่อเรื่อง ฮ–ก</option>
           </select>
         </div>
       </div>

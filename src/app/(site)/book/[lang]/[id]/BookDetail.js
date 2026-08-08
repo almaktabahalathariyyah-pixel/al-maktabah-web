@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Download, Bookmark, Check, User, BookOpen, Lock, LifeBuoy } from 'lucide-react';
+import { ArrowLeft, Download, Bookmark, Check, User, BookOpen, Lock, LifeBuoy, Share2 } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { db } from '@/lib/firebase';
 import {
@@ -21,6 +21,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { getLangPath } from '@/lib/langPath';
+import { copyText } from '@/lib/copyText';
 import { recordAccess } from '@/lib/stats';
 import { asList, joinPeople } from '@/lib/people';
 import styles from './page.module.css';
@@ -37,6 +38,9 @@ export default function BookDetail({ lang, id }) {
   const [saving, setSaving] = useState(false);
   const [opening, setOpening] = useState(false);
   const [relatedBooks, setRelatedBooks] = useState([]);
+  // Shows for a moment after the link is copied. A share that gives no sign it
+  // happened gets pressed three times.
+  const [copied, setCopied] = useState(false);
 
   // The book itself never depends on who is reading, so it loads once.
   useEffect(() => {
@@ -200,6 +204,45 @@ export default function BookDetail({ lang, id }) {
     }
   };
 
+  /**
+   * Passing a book on, which there was no way to do.
+   *
+   * A library is a thing people recommend to each other, and the only way to
+   * send someone a title was to copy the address bar — which on a phone means
+   * leaving the page. navigator.share opens the real system sheet where it
+   * exists (every current mobile browser), and everywhere else this falls
+   * back to the clipboard and says so. Both paths need a user gesture, which
+   * a button press is.
+   */
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = book?.title || 'Al-Maktabah';
+
+    // Read at click time, not render time. `navigator` does not exist during
+    // the server pass, and a capability check in the JSX would either throw
+    // there or disagree with the client and trip hydration. One icon for both
+    // routes means render never needs to know.
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title, text: title, url });
+        return;
+      } catch (err) {
+        // AbortError is the reader closing the sheet — not a failure, and it
+        // must not fall through to copying something they declined to share.
+        if (err?.name === 'AbortError') return;
+      }
+    }
+
+    if (await copyText(url)) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      // Never a dead end: if nothing can copy, the address is at least on
+      // screen to be read or long-pressed.
+      toast.info(`คัดลอกอัตโนมัติไม่ได้ — ลิงก์คือ ${url}`);
+    }
+  };
+
   const handleDirectDownload = async () => {
     if (!requireAccess()) return;
 
@@ -309,6 +352,11 @@ export default function BookDetail({ lang, id }) {
             >
               {saved ? <Check size={15} /> : <Bookmark size={15} />}
               {saved ? 'บันทึกแล้ว' : 'บันทึกไว้อ่าน'}
+            </button>
+
+            <button className="btn btn-block" onClick={handleShare}>
+              {copied ? <Check size={15} /> : <Share2 size={15} />}
+              {copied ? 'คัดลอกลิงก์แล้ว' : 'แบ่งปันเล่มนี้'}
             </button>
           </div>
 
