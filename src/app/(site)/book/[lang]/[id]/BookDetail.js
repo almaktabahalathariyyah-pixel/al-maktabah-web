@@ -80,7 +80,21 @@ export default function BookDetail({ lang, id }) {
     if (!book?.category || authLoading) return;
     let alive = true;
 
-    getDocs(query(collection(db, 'books'), where('category', '==', book.category), limit(8)))
+    // The restricted filter has to be IN THE QUERY, not applied to the
+    // results. Rules are evaluated against every document a query could
+    // return and the whole query fails if one of them is denied — so asking
+    // for a category that contains a single restricted book was denied
+    // outright for every signed-out reader, which is most of them. The
+    // section simply never appeared, and the console filled with
+    // permission-denied. Filtering afterwards, as this did, is too late.
+    //
+    // Same question the shelf asks, and the same caveat: a book with no
+    // `restricted` field does not match `== false`, so it stays out until
+    // the admin health page backfills it.
+    const constraints = [where('category', '==', book.category)];
+    if (!approved) constraints.push(where('restricted', '==', false));
+
+    getDocs(query(collection(db, 'books'), ...constraints, limit(8)))
       .then((snap) => {
         if (!alive) return;
         const related = [];

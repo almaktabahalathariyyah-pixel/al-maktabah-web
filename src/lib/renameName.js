@@ -1,7 +1,8 @@
-import { collection, query, where, getDocs, writeBatch, doc, deleteField } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, deleteField } from 'firebase/firestore';
 import { db } from './firebase';
 import { asList } from './people';
 import { bumpCatalogRev } from './catalogRev';
+import { commitInChunks } from './batchWrite';
 
 /**
  * Rewrites one name across every book crediting it.
@@ -29,13 +30,20 @@ async function booksUsing(field, name, isMulti) {
   return found;
 }
 
-/** Returns how many books were rewritten. */
-export async function renameInBooks({ field, from, to, isMulti }) {
+/**
+ * Returns how many books were rewritten.
+ *
+ * `bump` exists because the manage-lists page saves a whole queue of renames
+ * and deletes in one press. Bumping the catalogue revision inside each one
+ * meant one extra Firestore write per name — twenty corrections cost twenty
+ * writes to say the same thing once. That page passes false and bumps once
+ * when the queue is done; every other caller leaves it alone.
+ */
+export async function renameInBooks({ field, from, to, isMulti, bump = true }) {
   const found = await booksUsing(field, from, isMulti);
   if (found.size === 0) return 0;
 
-  const batch = writeBatch(db);
-  for (const [id, data] of found) {
+  await commitInChunks(found, (batch, [id, data]) => {
     // A book already crediting both spellings must not end up crediting the
     // surviving name twice — which is exactly what merging two duplicate
     // entries into one does.
@@ -43,9 +51,8 @@ export async function renameInBooks({ field, from, to, isMulti }) {
       ? [...new Set(asList(data[field]).map((v) => (v === from ? to : v)))]
       : to;
     batch.update(doc(db, 'books', id), { [field]: next });
-  }
-  await batch.commit();
-  await bumpCatalogRev();
+  });
+  if (bump) await bumpCatalogRev();
   return found.size;
 }
 
@@ -58,18 +65,16 @@ export async function renameInBooks({ field, from, to, isMulti }) {
  * nothing rather than crediting a laptop, and needsEnrich picks the book back
  * up as missing an author, which is true.
  */
-export async function removeFromBooks({ field, name, isMulti }) {
+export async function removeFromBooks({ field, name, isMulti, bump = true }) {
   const found = await booksUsing(field, name, isMulti);
   if (found.size === 0) return 0;
 
-  const batch = writeBatch(db);
-  for (const [id, data] of found) {
+  await commitInChunks(found, (batch, [id, data]) => {
     const next = isMulti
       ? asList(data[field]).filter((v) => v !== name)
       : deleteField();
     batch.update(doc(db, 'books', id), { [field]: next });
-  }
-  await batch.commit();
-  await bumpCatalogRev();
+  });
+  if (bump) await bumpCatalogRev();
   return found.size;
 }

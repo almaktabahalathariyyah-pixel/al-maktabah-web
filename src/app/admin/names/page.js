@@ -12,6 +12,7 @@ import SearchableListEditor from '@/components/SearchableListEditor';
 import UnsavedBar from '@/components/UnsavedBar';
 import { useUnsavedGuard } from '@/lib/useUnsavedGuard';
 import { renameInBooks, removeFromBooks } from '@/lib/renameName';
+import { bumpCatalogRev } from '@/lib/catalogRev';
 import styles from '../settings/page.module.css'; // We can reuse settings styles for layout
 
 /** Thai collation, so ก comes before ข and an English name sorts sensibly. */
@@ -81,6 +82,27 @@ export default function NamesPage() {
   const pending = useRef(emptyQueue());
 
   /**
+   * How many names the books still owe, mirrored into state.
+   *
+   * This used to be counted straight off `pending.current` during render.
+   * It happened to be right — every mutation of the queue sits beside a
+   * setState, so a render always followed — but reading a ref during render
+   * is not something React promises to re-run, and the number shown on the
+   * save bar is the one thing telling the owner how much is about to be
+   * rewritten. Not worth leaving to a coincidence.
+   */
+  const [changeCount, setChangeCount] = useState(0);
+  const recount = useCallback(() => {
+    setChangeCount(
+      Object.keys(BOOK_FIELD).reduce(
+        (total, key) =>
+          total + pending.current[key].renames.length + pending.current[key].deletes.length,
+        0
+      )
+    );
+  }, []);
+
+  /**
    * The four lists as they last stood in Firestore — on load, and again after
    * every save that lands. Renames and deletes announce themselves through
    * `pending`, but a name that was merely ADDED leaves no trace there, so
@@ -97,8 +119,9 @@ export default function NamesPage() {
       else renames.push({ from, to });
       // Renaming back to where it started leaves the books alone.
       pending.current[listKey].renames = renames.filter((op) => op.from !== op.to);
+      recount();
     },
-    []
+    [recount]
   );
 
   const trackDelete = useCallback(
@@ -113,8 +136,9 @@ export default function NamesPage() {
       } else {
         deletes.push(name);
       }
+      recount();
     },
-    []
+    [recount]
   );
 
   // A renamed category has to carry its group across with it, or saving would
@@ -137,11 +161,6 @@ export default function NamesPage() {
       trackDelete('categories')(name);
     },
     [trackDelete]
-  );
-
-  const changeCount = Object.keys(BOOK_FIELD).reduce(
-    (total, key) => total + pending.current[key].renames.length + pending.current[key].deletes.length,
-    0
   );
 
   const lists = { authors, translators, publishers, categories };
@@ -283,13 +302,16 @@ export default function NamesPage() {
         // dropped from the queue as it lands, so a failure part-way through
         // leaves only what is still owed. Pressing save again finishes the
         // job instead of redoing the part that already worked.
+        // bump: false — one press here can carry twenty renames, and each
+        // one bumping the catalogue revision is twenty writes to say the same
+        // thing once. Bumped below, after the whole queue has landed.
         while (queue.renames.length > 0) {
           const op = queue.renames[0];
-          booksTouched += await renameInBooks({ field, from: op.from, to: op.to, isMulti });
+          booksTouched += await renameInBooks({ field, from: op.from, to: op.to, isMulti, bump: false });
           queue.renames.shift();
         }
         while (queue.deletes.length > 0) {
-          booksTouched += await removeFromBooks({ field, name: queue.deletes[0], isMulti });
+          booksTouched += await removeFromBooks({ field, name: queue.deletes[0], isMulti, bump: false });
           queue.deletes.shift();
         }
       }
@@ -298,6 +320,11 @@ export default function NamesPage() {
       setTranslators(saved.translators);
       setPublishers(saved.publishers);
       setCategories(saved.categories);
+      // One bump for the whole queue, and only when a book actually moved —
+      // renaming a name no book uses changes nothing a reader can see.
+      if (booksTouched > 0) await bumpCatalogRev();
+      recount();
+
       setNameOk(payload.nameOk);
       setBaseline({ lists: saved, groupOf: new Map(groupOf.current), nameOk: payload.nameOk });
 

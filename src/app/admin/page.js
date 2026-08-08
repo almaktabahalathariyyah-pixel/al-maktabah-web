@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, deleteDoc, doc, query, orderBy, writeBatch, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, query, orderBy, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import Link from 'next/link';
@@ -29,6 +29,7 @@ import { makeCover } from '@/lib/pdfCover';
 import { extractPdfInfo } from '@/lib/pdfInfo';
 import { canMirror, bookSizeBytes } from '@/lib/mirror';
 import { bumpCatalogRev } from '@/lib/catalogRev';
+import { commitInChunks } from '@/lib/batchWrite';
 import { useTabLock } from '@/lib/tabLock';
 import { asList, joinPeople, hasPerson, splitPeople } from '@/lib/people';
 import BookFormPanel from '@/components/BookFormPanel';
@@ -327,12 +328,17 @@ export default function AdminPage() {
     const targets = books.filter((b) => selectedBooks.has(b.id));
 
     try {
-      await removeDriveCopies(targets, token);
-
-      const batch = writeBatch(db);
-      targets.forEach((b) => batch.delete(doc(db, 'books', b.id)));
-      await batch.commit();
+      // Records first, Drive second, and both chunked.
+      //
+      // The old order deleted the Drive copies and THEN wrote one unchunked
+      // batch. Past 500 selected books that commit throws and writes nothing,
+      // which left the files gone and the records still on the shelf pointing
+      // at them — every one of those books unopenable, with no way back. This
+      // way a failure after the records are gone leaves an orphaned file in
+      // Drive, which costs space and breaks nothing.
+      await commitInChunks(targets, (batch, b) => batch.delete(doc(db, 'books', b.id)));
       await bumpCatalogRev();
+      await removeDriveCopies(targets, token);
 
       setBooks((prev) => prev.filter((b) => !selectedBooks.has(b.id)));
       setSelectedBooks(new Set());
@@ -410,7 +416,6 @@ export default function AdminPage() {
     e.preventDefault();
     setSubmittingBulk(true);
     try {
-      const batch = writeBatch(db);
       const updates = {};
       if (bulkValues.category) updates.category = bulkValues.category;
       // Stored as a list like every other write to this field. Semicolons let
@@ -425,10 +430,9 @@ export default function AdminPage() {
         return;
       }
 
-      selectedBooks.forEach(id => {
+      await commitInChunks(selectedBooks, (batch, id) => {
         batch.update(doc(db, 'books', id), updates);
       });
-      await batch.commit();
       await bumpCatalogRev();
 
       // Same rule as the single-book form: what is set here joins the lists.
@@ -525,12 +529,11 @@ export default function AdminPage() {
         setFileNameProgress((prev) => ({ ...prev, done: Math.min(prev.total, i + slice.length) }));
       }
 
-      // A write batch caps at 500 operations, and this shelf can exceed that.
-      for (let i = 0; i < updates.length; i += 400) {
-        const batch = writeBatch(db);
-        updates.slice(i, i + 400).forEach((item) => batch.update(doc(db, 'books', item.id), item.patch));
-        await batch.commit();
-      }
+      // The original of the 500-op chunking, now shared with the two batches
+      // above that were missing it.
+      await commitInChunks(updates, (batch, item) =>
+        batch.update(doc(db, 'books', item.id), item.patch)
+      );
 
       if (updates.length > 0) {
         await bumpCatalogRev();
