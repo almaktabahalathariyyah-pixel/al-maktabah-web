@@ -109,15 +109,31 @@
 
 .pageHeadActs { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 
-/* ---------------- Tabs ---------------- */
+/* ---------------- Tabs ----------------
+   A grid, not a flex row. `flex: 1` with `min-width: 0` let each tab be cut
+   narrower than its own label, and .btn is nowrap — so the four bilingual
+   labels ran straight out of their pills and over each other. Columns are
+   dropped at a width the labels are known to need instead. */
 .tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
   margin-bottom: 2rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
 }
-.tab { flex: 1; justify-content: center; min-width: 0; }
+/* overflow is the backstop: if a label ever outgrows its column anyway — a
+   longer name, a wider font — it gets clipped at its own pill instead of
+   printing across the one beside it. */
+.tab { justify-content: center; min-width: 0; overflow: hidden; }
+
+@media (max-width: 900px) {
+  /* The columns are equal, so all four are as wide as the widest label needs:
+     measured, "สำนักพิมพ์ (Publishers)" wants 195px, which four of plus gaps
+     is 804px of row — more than the container has below about 884px of
+     viewport. Two across keeps the English gloss rather than dropping it. */
+  .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 @media (max-width: 700px) {
   /* Buttons take their own full-width row rather than squeezing beside the
@@ -131,8 +147,14 @@
   /* Four tabs still fit across once the English gloss steps aside: measured
      at 375px they want 246px of a 343px row. */
   .tabEn { display: none; }
-  .tabs { gap: 0.35rem; }
+  .tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; }
   .tab { padding-inline: 0.5rem; font-size: var(--t-micro); }
+}
+
+@media (max-width: 400px) {
+  /* And on the narrowest phones not even the Thai alone fits four across:
+     at 320px "สำนักพิมพ์" wants 74px of a 67px column. */
+  .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .sectionTitle {
