@@ -127,11 +127,15 @@
    printing across the one beside it. */
 .tab { justify-content: center; min-width: 0; overflow: hidden; }
 
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
   /* The columns are equal, so all four are as wide as the widest label needs:
      measured, "สำนักพิมพ์ (Publishers)" wants 195px, which four of plus gaps
-     is 804px of row — more than the container has below about 884px of
-     viewport. Two across keeps the English gloss rather than dropping it. */
+     is 804px of row. Mind that this row is not the viewport — above 900px the
+     admin sidebar holds 250px of it and .main takes 2.5rem of padding a side,
+     so the row is only about vw - 330. Four stop fitting at about 1133px of
+     viewport; the switch is at 1200 to leave the widest label ~17px of slack,
+     since Thai font metrics differ across platforms. Two across keeps the
+     English gloss rather than dropping it. */
   .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
