@@ -188,6 +188,19 @@ export default function Home() {
   const canSeeAll = approved || isAdmin;
 
   /**
+   * Which load() run is the current one.
+   *
+   * Signing in flips `canSeeAll` a moment AFTER `user` arrives — the session
+   * reads the profile document before it knows whether the reader is
+   * approved — so an approved reader starts a 'public' load and then a 'full'
+   * one. Both walk the collection a chunk at a time, painting as they go, and
+   * the public walk is the shorter of the two, so it usually lands last and
+   * puts the restricted titles back out of sight until a reload. The token
+   * lets a superseded run finish its in-flight page quietly instead.
+   */
+  const runId = useRef(0);
+
+  /**
    * Fills the shelf in chunks, painting after each one — or, when the
    * catalogue has not changed since this browser last looked, straight from
    * the cache without reading a single book document.
@@ -199,6 +212,9 @@ export default function Home() {
    * everything would be refused outright rather than quietly filtered.
    */
   const load = useCallback(async () => {
+    const run = ++runId.current;
+    const current = () => runId.current === run;
+
     setLoadError(false);
     setFullyLoaded(false);
 
@@ -213,6 +229,7 @@ export default function Home() {
 
     // One document. Everything below hangs on whether it still matches.
     const rev = await readCatalogRev();
+    if (!current()) return;
 
     // Same revision means no book has been added, edited or removed since
     // this list was cached, so there is nothing to ask for.
@@ -237,6 +254,10 @@ export default function Home() {
         ? query(base, where('restricted', '==', false), orderBy('createdAt', 'desc'), ...extra)
         : query(base, orderBy('createdAt', 'desc'), ...extra);
 
+    // `stale` rather than a plain return, so a superseded run still stops
+    // asking for pages it will not be allowed to paint.
+    const stale = Symbol('stale');
+
     const fetchAll = async (filterRestricted) => {
       const collected = [];
       let cursor = null;
@@ -247,6 +268,7 @@ export default function Home() {
             ? scoped(filterRestricted, startAfter(cursor), limit(FETCH_CHUNK))
             : scoped(filterRestricted, limit(FETCH_CHUNK))
         );
+        if (!current()) return stale;
         if (snapshot.empty) break;
 
         snapshot.forEach((d) => collected.push(toBook(d)));
@@ -261,9 +283,11 @@ export default function Home() {
 
     try {
       const fetched = await fetchAll(!canSeeAll);
+      if (fetched === stale) return;
       writeBookCache(scope, fetched, rev);
       setFullyLoaded(true);
     } catch (error) {
+      if (!current()) return;
       // The narrowed query needs a composite index and the new rules. Until
       // both are deployed it throws, so fall back to the plain query rather
       // than showing an empty library. Once the rules ARE live this fallback
@@ -271,14 +295,16 @@ export default function Home() {
       console.warn('Filtered query failed, retrying unfiltered:', error);
       try {
         const fetched = await fetchAll(false);
+        if (fetched === stale) return;
         writeBookCache(scope, fetched, rev);
         setFullyLoaded(true);
       } catch (retryError) {
+        if (!current()) return;
         console.error('Error loading library:', retryError);
         if (!cached) setLoadError(true);
       }
     } finally {
-      setLoading(false);
+      if (current()) setLoading(false);
     }
   }, [canSeeAll]);
 
