@@ -55,7 +55,11 @@ export default function DriveStatus({ active = true, onToken, onAccount }) {
   // Pick up a token saved by an earlier session.
   useEffect(() => {
     if (!active) return;
+    // set-state-in-effect: the token lives in localStorage, which does not
+    // exist on the server and so cannot be read during render — and `publish`
+    // also hands it to the parent, which must not happen mid-render either.
     const saved = readSavedToken();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     publish(saved?.token || null);
     refreshAccount(saved?.token || null);
   }, [active, publish, refreshAccount]);

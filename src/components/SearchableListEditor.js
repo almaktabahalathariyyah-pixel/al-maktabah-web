@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Trash2, Search, X, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
@@ -17,7 +17,15 @@ import styles from '@/app/admin/settings/page.module.css';
  */
 function EditableRow({ value, problem, checkable, checked, onToggle, onCommit, onRemove }) {
   const [draft, setDraft] = useState(value);
-  useEffect(() => setDraft(value), [value]);
+  // A rename accepted elsewhere — or put back after a declined merge — has to
+  // reach the field. Adjusted during render rather than in an effect: the
+  // effect version painted the stale text once before correcting it, which on
+  // a declined merge meant the rejected name flickered back into view.
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setDraft(value);
+  }
 
   // A merge the owner declines leaves the typed text sitting in the field
   // while the list still holds the old name, so the row has to put the old

@@ -42,10 +42,14 @@ export default function Masthead({ children }) {
   }, []);
 
   // Navigating away should never leave a menu hanging open behind the page.
-  useEffect(() => {
+  // Adjusted during render rather than in an effect, so the new page never
+  // paints with the old page's drawer still over it for a frame.
+  const [prevPath, setPrevPath] = useState(pathname);
+  if (pathname !== prevPath) {
+    setPrevPath(pathname);
     setDropOpen(false);
     setOpen(false);
-  }, [pathname]);
+  }
 
   // The mobile drawer covers the page; the page behind it must not scroll.
   useEffect(() => {

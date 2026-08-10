@@ -79,7 +79,13 @@ export default function MirrorRunner() {
   };
 
   useEffect(() => {
+    // set-state-in-effect: scan() reads the book list from Firestore. Its
+    // opening setLoading(true) is the spinner for that request, which is
+    // exactly the kind of external work an effect is for.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     scan();
+    // Once, when the panel opens — scan is redefined every render, so listing
+    // it here would re-scan the whole shelf on each one.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

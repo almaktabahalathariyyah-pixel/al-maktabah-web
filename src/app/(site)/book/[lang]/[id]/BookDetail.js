@@ -117,11 +117,19 @@ export default function BookDetail({ lang, id }) {
     };
   }, [book?.category, id, approved, authLoading]);
 
+  // Nobody's shelf has been consulted for this reader-and-book pair yet, so
+  // the bookmark starts unfilled. Cleared during render rather than in the
+  // effect: signing out with a saved book open would otherwise leave the mark
+  // filled until the effect ran.
+  const [checkedFor, setCheckedFor] = useState(null);
+  const savedKey = user ? `${user.uid}:${id}` : null;
+  if (savedKey !== checkedFor) {
+    setCheckedFor(savedKey);
+    setSaved(false);
+  }
+
   useEffect(() => {
-    if (!user) {
-      setSaved(false);
-      return;
-    }
+    if (!user) return;
     let alive = true;
 
     getDoc(doc(db, 'users', user.uid))

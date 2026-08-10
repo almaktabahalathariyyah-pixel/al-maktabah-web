@@ -1,46 +1,61 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import styles from './ThemeToggle.module.css';
 
 /**
- * Light/dark switch. The first paint is handled by the inline script in
- * layout.js, so there is no flash of the wrong palette before hydration.
+ * The theme is not this component's state — it is the `data-theme` attribute
+ * on <html>, which the inline script in layout.js has already set before the
+ * first paint, and which another tab can change underneath us.
+ *
+ * So it is read as an external store rather than copied into useState and
+ * synced back with effects. That also settles the server render honestly:
+ * getServerSnapshot says 'dark', the shell's default, and the attribute is
+ * consulted from the first client render onward.
  */
+
+/** Tabs that changed it themselves; `storage` only fires in the others. */
+const listeners = new Set();
+
+function subscribe(onChange) {
+  const onStorage = (e) => {
+    // key === null is a whole-storage clear.
+    if (e.key !== 'theme' && e.key !== null) return;
+    const next = localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    onChange();
+  };
+  window.addEventListener('storage', onStorage);
+  listeners.add(onChange);
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    listeners.delete(onChange);
+  };
+}
+
+/** A string, so React can compare snapshots without re-rendering forever. */
+const getSnapshot = () =>
+  document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+
+/** Dark is the shell's default, and what the server markup assumes. */
+const getServerSnapshot = () => 'dark';
+
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState(null);
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const isDark = theme === 'dark';
 
-  useEffect(() => {
-    // Dark is the default shell; light only when explicitly chosen.
-    setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
-  }, []);
-
-  // Follow the choice made in another tab, rather than needing a reload to
-  // notice. The event fires only in the tabs that did not make the change.
-  useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key !== 'theme' && e.key !== null) return;
-      const next = localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
-      setTheme(next);
-      document.documentElement.setAttribute('data-theme', next);
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
-
-  const toggle = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
+  const toggle = useCallback(() => {
+    const next = isDark ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     try {
       localStorage.setItem('theme', next);
     } catch {
       /* storage unavailable — ignore */
     }
-  };
-
-  const isDark = theme === 'dark';
+    // This tab gets no `storage` event for its own write.
+    listeners.forEach((notify) => notify());
+  }, [isDark]);
 
   return (
     <button

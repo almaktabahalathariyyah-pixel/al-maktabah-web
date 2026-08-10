@@ -47,21 +47,30 @@ function Card({ tone = 'plain', icon: Icon, title, body, children }) {
 export default function JoinPage({ params }) {
   const { code } = use(params);
   const { user, profile, loginWithGoogle, loading } = useAuth();
-  const [status, setStatus] = useState('loading'); // loading | login | success | already | invalid | error
+  // What redeeming the invite decided, once it has decided anything.
+  const [outcome, setOutcome] = useState(null); // null | success | invalid | error
   const [errorMessage, setErrorMessage] = useState('');
 
+  /**
+   * Everything before the invite is redeemed is a fact about the session, not
+   * state of this page's own — so it is derived rather than written by an
+   * effect. The outcome wins once it exists: redeeming sets `approved` on the
+   * reader's own document, so a profile that refreshed afterwards would
+   * otherwise turn the "ยินดีต้อนรับ" they just earned into a flat "you were
+   * already approved".
+   */
+  const status = outcome
+    ? outcome
+    : loading
+      ? 'loading'
+      : !user
+        ? 'login'
+        : profile?.approved
+          ? 'already'
+          : 'loading';
+
   useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      setStatus('login');
-      return;
-    }
-
-    if (profile?.approved) {
-      setStatus('already');
-      return;
-    }
+    if (loading || !user || profile?.approved) return;
 
     let alive = true;
 
@@ -72,25 +81,25 @@ export default function JoinPage({ params }) {
         if (!alive) return;
 
         if (!snap.exists()) {
-          setStatus('invalid');
+          setOutcome('invalid');
           return;
         }
 
         const invite = snap.data();
 
         if (invite.active === false) {
-          setStatus('invalid');
+          setOutcome('invalid');
           return;
         }
         if (invite.expiresAt) {
           const expires = invite.expiresAt.toDate?.() ?? new Date(invite.expiresAt);
           if (new Date() > expires) {
-            setStatus('invalid');
+            setOutcome('invalid');
             return;
           }
         }
         if (invite.maxUses && (invite.usedCount || 0) >= invite.maxUses) {
-          setStatus('invalid');
+          setOutcome('invalid');
           return;
         }
 
@@ -111,15 +120,15 @@ export default function JoinPage({ params }) {
           console.error('Could not bump invite usage:', counterErr);
         }
 
-        if (alive) setStatus('success');
+        if (alive) setOutcome('success');
       } catch (err) {
         console.error(err);
         if (!alive) return;
         if (err?.code === 'permission-denied') {
-          setStatus('invalid');
+          setOutcome('invalid');
         } else {
           setErrorMessage(err.message);
-          setStatus('error');
+          setOutcome('error');
         }
       }
     };

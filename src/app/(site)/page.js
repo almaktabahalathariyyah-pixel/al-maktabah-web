@@ -260,14 +260,23 @@ export default function Home() {
   // depends on whether they have been approved.
   useEffect(() => {
     if (authLoading) return;
+    // set-state-in-effect: load() is a fetch against Firestore — subscribing
+    // to an external system is what effects are for. Its opening
+    // setLoadError/setFullyLoaded clear the last run's outcome before this
+    // one starts; deferring them past the first await would leave a stale
+    // error banner on screen while the new request is in flight.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load, authLoading]);
 
-  // Adopt whatever the shared link asked for. This runs once, after mount,
-  // so hydration never compares a server-rendered empty box against a
-  // pre-filled one.
+  // Adopt whatever the shared link asked for.
   useEffect(() => {
+    // set-state-in-effect: window.location does not exist on the server, so
+    // this cannot be read during render. Deliberately after mount — the state
+    // starts empty so the server's markup and the first client render agree,
+    // and the URL is adopted on the pass after that.
     const { q, filters: fromUrl } = readUrlState();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (q) setQueryText(q);
     if (Object.keys(fromUrl).length) setFilters(fromUrl);
     setUrlReady(true);
@@ -377,10 +386,31 @@ export default function Home() {
     return filtered;
   }, [visibleBooks, filters, queryText, sortOrder]);
 
-  // A fresh query or sort means a fresh first page.
-  useEffect(() => {
+  /**
+   * A fresh query or sort means a fresh first page, and no leftover highlight
+   * in a suggestion list that has just been rebuilt.
+   *
+   * Adjusted during render rather than in an effect. React applies these
+   * before it paints, so the shelf never shows one frame of page 5 of a list
+   * that has just become one page long — where an effect would have let that
+   * frame through and then corrected it.
+   *
+   * The key is a string because `filters` is a new object every time it
+   * changes; entries are sorted so that setting A then B looks the same as B
+   * then A, and falsy values are dropped so clearing a filter matches never
+   * having set it.
+   */
+  const viewKey = JSON.stringify([
+    queryText,
+    sortOrder,
+    Object.entries(filters).filter(([, v]) => Boolean(v)).sort(),
+  ]);
+  const [prevViewKey, setPrevViewKey] = useState(viewKey);
+  if (viewKey !== prevViewKey) {
+    setPrevViewKey(viewKey);
     setPage(1);
-  }, [queryText, filters, sortOrder]);
+    setHighlight(-1);
+  }
 
   // --- Autocomplete ---
   const suggestions = useMemo(() => {
@@ -413,10 +443,6 @@ export default function Home() {
   }, [queryText, visibleBooks]);
 
   const suggestionsOpen = showSuggestions && queryText.trim() !== '' && suggestions.length > 0;
-
-  useEffect(() => {
-    setHighlight(-1);
-  }, [queryText]);
 
   const activeFilters = Object.entries(filters).filter(([, v]) => Boolean(v));
   const activeCount = activeFilters.length;

@@ -12,20 +12,33 @@ export default function PdfReaderPage({ params }) {
 
   const [frameLoading, setFrameLoading] = useState(true);
   const [token, setToken] = useState('');
-  const [error, setError] = useState('');
+  const [tokenError, setTokenError] = useState('');
+
+  // Being signed out is not a failure to report, it is a fact about the
+  // session — so it is derived here rather than written into state by an
+  // effect. Waiting on the session is not the same as being signed out
+  // either: the old check treated both as an auth failure and flashed an
+  // error banner while the session was still settling.
+  const error = authLoading
+    ? ''
+    : !user
+      ? 'กรุณาเข้าสู่ระบบก่อนเปิดอ่านหนังสือ'
+      : tokenError;
+
+  // A different reader needs a different token, and must not keep reading on
+  // the last one. Cleared during render so the frame cannot be handed a token
+  // that is no longer whose it was.
+  const [tokenFor, setTokenFor] = useState(null);
+  if (user !== tokenFor) {
+    setTokenFor(user);
+    setToken('');
+    setTokenError('');
+    setFrameLoading(true);
+  }
 
   useEffect(() => {
-    // Waiting on the session is not the same as being signed out — the old
-    // check treated both as an auth failure and flashed an error banner.
-    if (authLoading) return;
-
-    if (!user) {
-      setError('กรุณาเข้าสู่ระบบก่อนเปิดอ่านหนังสือ');
-      return;
-    }
-
+    if (authLoading || !user) return;
     let alive = true;
-    setError('');
 
     user
       .getIdToken(true)
@@ -34,7 +47,7 @@ export default function PdfReaderPage({ params }) {
       })
       .catch((e) => {
         console.error('Error fetching token', e);
-        if (alive) setError('ตรวจสอบสิทธิ์ไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่');
+        if (alive) setTokenError('ตรวจสอบสิทธิ์ไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่');
       });
 
     return () => {

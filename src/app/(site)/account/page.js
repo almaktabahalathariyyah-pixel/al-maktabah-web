@@ -44,11 +44,21 @@ export default function AccountPage() {
     fetchChannels();
   }, []);
 
+  // Whoever is signed in now has not had their history read yet, so the list
+  // is emptied during render rather than in the effect below. Signing out or
+  // switching account clears the previous reader's titles on the same pass
+  // that notices the change, instead of leaving them on screen for a frame.
+  const [readFor, setReadFor] = useState(user);
+  if (user !== readFor) {
+    setReadFor(user);
+    setRecent([]);
+  }
+
   // Costs two queries and only for a signed-in reader, so it is kept off the
   // shelf itself and lives here, where someone has already asked about their
   // own account. A failure leaves the section absent rather than erroring.
   useEffect(() => {
-    if (!user) { setRecent([]); return; }
+    if (!user) return;
     let alive = true;
 
     recentlyOpened(user.uid)
@@ -59,12 +69,15 @@ export default function AccountPage() {
   }, [user]);
 
   // Start the form from whatever was sent last time, so a reader editing a
-  // request does not have to retype it.
-  useEffect(() => {
-    if (!profile) return;
+  // request does not have to retype it. Adjusted during render rather than in
+  // an effect, so the fields are already filled on the pass that first shows
+  // them instead of appearing empty for a frame.
+  const [seededFrom, setSeededFrom] = useState(null);
+  if (profile && profile !== seededFrom) {
+    setSeededFrom(profile);
     setSocial(profile.social || '');
     setNote(profile.requestNote || '');
-  }, [profile]);
+  }
 
   const submitRequest = async (e) => {
     e.preventDefault();
