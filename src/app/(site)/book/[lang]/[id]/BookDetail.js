@@ -21,6 +21,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { getLangPath } from '@/lib/langPath';
+import { fetchBookOrNull } from '@/lib/fetchBook';
 import { copyText } from '@/lib/copyText';
 import { recordAccess } from '@/lib/stats';
 import { asList, joinPeople } from '@/lib/people';
@@ -47,26 +48,24 @@ export default function BookDetail({ lang, id }) {
     let alive = true;
 
     const fetchBook = async () => {
-      try {
-        const snap = await getDoc(doc(db, 'books', id));
-        if (!alive) return;
+      // Missing and not-allowed arrive here as the same null, deliberately —
+      // see lib/fetchBook. Both are the "ไม่พบหนังสือ" card.
+      const data = await fetchBookOrNull(id, 'book');
+      if (!alive) return;
 
-        if (!snap.exists()) {
+      try {
+        if (!data) {
           setNotFound(true);
           return;
         }
 
-        const data = snap.data();
         const correctLang = getLangPath(data.language);
         if (lang !== correctLang) {
           router.replace(`/book/${correctLang}/${id}`);
           return;
         }
 
-        setBook({ id: snap.id, ...data });
-      } catch (error) {
-        console.error('Error fetching book:', error);
-        if (alive) setNotFound(true);
+        setBook(data);
       } finally {
         if (alive) setLoading(false);
       }

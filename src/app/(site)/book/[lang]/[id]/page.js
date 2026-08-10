@@ -1,5 +1,4 @@
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { fetchBookOrNull } from '@/lib/fetchBook';
 import BookDetail from './BookDetail';
 
 /**
@@ -14,19 +13,12 @@ import BookDetail from './BookDetail';
  * A restricted title deliberately gets a neutral card: its existence is not
  * something to advertise.
  */
-async function fetchBook(id) {
-  try {
-    const snap = await getDoc(doc(db, 'books', id));
-    return snap.exists() ? { id: snap.id, ...snap.data() } : null;
-  } catch (error) {
-    console.error('Error loading book for metadata:', error);
-    return null;
-  }
-}
-
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  const book = await fetchBook(id);
+  // The crawler is not signed in, so a restricted title reads as null here
+  // exactly as a missing one does — which is what gives it the neutral card
+  // below rather than a description that confirms it exists.
+  const book = await fetchBookOrNull(id, 'book for metadata');
 
   if (!book) {
     return { title: 'ไม่พบหนังสือ · Al-Maktabah Al-Athariyyah' };
@@ -68,7 +60,7 @@ export async function generateMetadata({ params }) {
 
 export default async function BookDetailPage({ params }) {
   const { lang, id } = await params;
-  const book = await fetchBook(id);
+  const book = await fetchBookOrNull(id, 'book for structured data');
 
   // Structured data, so a search result can show the author and format
   // rather than just a URL. Restricted titles are left out entirely.

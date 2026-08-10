@@ -1,6 +1,5 @@
 import { redirect, notFound } from 'next/navigation';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { fetchBookOrNull } from '@/lib/fetchBook';
 import { getLangPath } from '@/lib/langPath';
 
 /**
@@ -19,20 +18,12 @@ import { getLangPath } from '@/lib/langPath';
 export default async function LegacyBookRedirect({ params }) {
   const { lang: id } = await params;
 
-  let language = null;
-  let found = false;
+  // Null covers "no such id" and "not readable by whoever asked" alike, and
+  // the legacy URL answers the same way to both: a 404. redirect() and
+  // notFound() signal by throwing, so they stay outside any try.
+  const book = await fetchBookOrNull(id, 'legacy book URL');
 
-  try {
-    const snap = await getDoc(doc(db, 'books', id));
-    if (snap.exists()) {
-      found = true;
-      language = snap.data().language;
-    }
-  } catch (error) {
-    console.error('Error resolving legacy book URL:', error);
-  }
+  if (!book) notFound();
 
-  if (!found) notFound();
-
-  redirect(`/book/${getLangPath(language)}/${id}`);
+  redirect(`/book/${getLangPath(book.language)}/${id}`);
 }
