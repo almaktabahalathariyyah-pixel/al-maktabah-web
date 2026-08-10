@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  Search, Filter, X, User, Book, ArrowLeftRight, Building, Tag,
+  Search, Filter, X, User, Book, ArrowLeftRight, Building, Tag, FolderTree,
   ChevronLeft, ChevronRight, Dices,
 } from 'lucide-react';
 import BookCover from '@/components/BookCover';
@@ -101,6 +101,7 @@ const SUGGESTION_GROUPS = [
   { key: 'author', label: 'ผู้แต่ง', icon: User },
   { key: 'translator', label: 'ผู้แปล', icon: ArrowLeftRight },
   { key: 'publisher', label: 'สำนักพิมพ์', icon: Building },
+  { key: 'category', label: 'หมวดหมู่', icon: FolderTree },
   { key: 'type', label: 'ประเภท', icon: Tag },
 ];
 
@@ -361,7 +362,16 @@ export default function Home() {
   );
 
   const results = useMemo(() => {
-    const q = queryText.trim().toLowerCase();
+    // Every word has to appear, but not in the order or the spacing they were
+    // typed in. One substring match over the raw fields failed three ordinary
+    // searches: the shelf holds five titles with a double space inside them,
+    // so "สามด่าน กับการปกป้อง" typed normally matched nothing; naming a book
+    // and its author together — either way round — matched nothing, since no
+    // single run of characters contains both; and "บทความ" or "เตาฮีด" found
+    // only the books wearing the word in their title, not the 37 and 8 that
+    // are actually filed under it.
+    const terms = queryText.trim().toLowerCase().split(/\s+/).filter(Boolean);
+
     const filtered = visibleBooks.filter((book) => {
       for (const [key, value] of Object.entries(filters)) {
         if (!value) continue;
@@ -373,10 +383,29 @@ export default function Home() {
         // String conversion matters for year, which may be stored as a number.
         if (String(book[key] ?? '').trim() !== value) return false;
       }
-      if (!q) return true;
-      return `${book.title ?? ''} ${joinPeople(book.author, ' ')} ${joinPeople(book.translator, ' ')} ${book.publisher ?? ''}`
+      if (!terms.length) return true;
+
+      // Category, type and year join the haystack because they are what a
+      // reader browsing by subject actually types. Description stays out: only
+      // 17 of the 374 carry one, but those run to 595 characters on average,
+      // so including it would rank a paragraph that merely mentions a word
+      // alongside a title that is about it — while 95% of the shelf, having no
+      // description at all, could never match that way.
+      const haystack = [
+        book.title,
+        joinPeople(book.author, ' '),
+        joinPeople(book.translator, ' '),
+        book.publisher,
+        book.category,
+        book.type,
+        book.year,
+      ]
+        .map((field) => String(field ?? ''))
+        .join(' ')
         .toLowerCase()
-        .includes(q);
+        .replace(/\s+/g, ' ');
+
+      return terms.every((term) => haystack.includes(term));
     });
 
     // localeCompare with 'th', so ก sorts before ข and a Latin title lands
@@ -411,9 +440,9 @@ export default function Home() {
     const q = queryText.trim().toLowerCase();
     if (!q) return [];
 
-    const buckets = { author: [], translator: [], publisher: [], type: [], title: [] };
-    const seen = { author: new Set(), translator: new Set(), publisher: new Set(), type: new Set(), title: new Set() };
-    const caps = { title: 3, author: 3, translator: 3, publisher: 2, type: 2 };
+    const buckets = { author: [], translator: [], publisher: [], category: [], type: [], title: [] };
+    const seen = { author: new Set(), translator: new Set(), publisher: new Set(), category: new Set(), type: new Set(), title: new Set() };
+    const caps = { title: 3, author: 3, translator: 3, publisher: 2, category: 2, type: 2 };
 
     for (const book of visibleBooks) {
       for (const key of Object.keys(buckets)) {
@@ -608,7 +637,7 @@ export default function Home() {
               aria-controls="search-suggestions"
               aria-label="ค้นหาหนังสือ"
               autoComplete="off"
-              placeholder="ค้นหาชื่อเรื่อง ผู้แต่ง สำนักพิมพ์…"
+              placeholder="ค้นหาชื่อเรื่อง ผู้แต่ง หมวดหมู่…"
               value={queryText}
               onChange={(e) => {
                 setQueryText(e.target.value);
