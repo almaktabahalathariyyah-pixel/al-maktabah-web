@@ -7,6 +7,7 @@ import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import panelStyles from './BookFormPanel.module.css';
 import styles from '@/app/admin/fields/page.module.css';
+import { useBodyScrollLock } from '@/lib/bodyScrollLock';
 
 const TYPES = [
   { value: 'text', label: 'ข้อความ' },
@@ -47,14 +48,7 @@ export default function FieldsPanel({ isOpen, onClose }) {
     onClose();
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;

@@ -16,6 +16,7 @@ import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
 import { uploadPdfToDrive, driveIdFrom, pickDriveFile, shareWithAnyone } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror, bookSizeBytes } from '@/lib/mirror';
 import { bumpCatalogRev } from '@/lib/catalogRev';
+import { useBodyScrollLock } from '@/lib/bodyScrollLock';
 import { loadAllBooks } from '@/lib/bookCatalog';
 import { makeCover } from '@/lib/pdfCover';
 import { extractPdfInfo } from '@/lib/pdfInfo';
@@ -113,12 +114,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   const fileBytes = pdfFile?.size || sizeBytes;
   const mirrorEligible = canMirror(fileBytes);
 
-  // Lock body scroll when open
-  useEffect(() => {
-    if (isOpen) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   // Stable refs for callbacks used inside useEffect
   const toastRef = useRef(toast);

@@ -15,6 +15,7 @@ import { canMirror } from '@/lib/mirror';
 import { makeCover } from '@/lib/pdfCover';
 import { useTabLock } from '@/lib/tabLock';
 import { bumpCatalogRev } from '@/lib/catalogRev';
+import { useBodyScrollLock } from '@/lib/bodyScrollLock';
 import {
   X, UploadCloud, CheckCircle, AlertCircle, Loader2, FileSpreadsheet,
   FolderOpen, Play, Pause, SkipForward,
@@ -73,11 +74,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
   const handleToken = useCallback((value) => setGoogleToken(value), []);
   const handleAccount = useCallback((value) => setDriveOwner(value), []);
 
-  useEffect(() => {
-    if (isOpen) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   // Which books are already in the library, so a second run does not duplicate
   // everything. Books added by this panel carry the filename they came from.

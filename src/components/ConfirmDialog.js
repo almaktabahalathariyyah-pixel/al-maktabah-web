@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { AlertTriangle, HelpCircle } from 'lucide-react';
 import { useConfirm } from '../context/ConfirmContext';
 import styles from './ConfirmDialog.module.css';
+import { useBodyScrollLock } from '@/lib/bodyScrollLock';
 
 /**
  * Renders whatever `ConfirmProvider` currently has pending. Mounted once, at
@@ -25,18 +26,16 @@ export default function ConfirmDialog() {
     };
     document.addEventListener('keydown', onKey);
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
     // Returning focus is handled by the browser once the button unmounts; what
     // matters here is that the keyboard starts inside the dialog, not behind it.
     firstActionRef.current?.focus();
 
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
     };
   }, [dialog, settle]);
+
+  useBodyScrollLock(Boolean(dialog));
 
   if (!dialog) return null;
 

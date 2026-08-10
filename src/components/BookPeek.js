@@ -7,6 +7,7 @@ import BookCover from './BookCover';
 import { getLangPath } from '@/lib/langPath';
 import { joinPeople } from '@/lib/people';
 import styles from './BookPeek.module.css';
+import { useBodyScrollLock } from '@/lib/bodyScrollLock';
 
 /**
  * What a row cannot say: which book this actually is.
@@ -31,13 +32,14 @@ export default function BookPeek({ book, selected, onToggleSelect, onEdit, onClo
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previous;
     };
   }, [onClose]);
+
+  // Keyed on the book, not on being mounted: without one this renders nothing,
+  // and a lock held behind an empty sheet is the leak this hook exists to stop.
+  useBodyScrollLock(Boolean(book));
 
   if (!book) return null;
 

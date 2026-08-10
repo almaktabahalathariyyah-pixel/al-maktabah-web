@@ -10,6 +10,7 @@ import { X, Plus, Trash2, GripVertical, Save } from 'lucide-react';
 import panelStyles from './BookFormPanel.module.css';
 import styles from '@/app/admin/settings/page.module.css'; // Reuse existing setting styles
 import SearchableListEditor from './SearchableListEditor';
+import { useBodyScrollLock } from '@/lib/bodyScrollLock';
 
 export default function SettingsPanel({ isOpen, onClose }) {
   const { toast } = useToast();
@@ -53,15 +54,7 @@ export default function SettingsPanel({ isOpen, onClose }) {
     onClose();
   };
 
-  // Lock body scroll when open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;

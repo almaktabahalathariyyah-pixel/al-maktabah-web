@@ -8,6 +8,7 @@ import { Menu, X, LogOut } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 import styles from './Masthead.module.css';
+import { useBodyScrollLock } from '@/lib/bodyScrollLock';
 
 const NAV = [
   { label: 'หน้าหลัก', href: '/' },
@@ -52,12 +53,7 @@ export default function Masthead({ children }) {
   }
 
   // The mobile drawer covers the page; the page behind it must not scroll.
-  useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
+  useBodyScrollLock(open);
 
   return (
     <>
