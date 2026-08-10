@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { collection, getDocs, getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
+import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { loadBookFields } from '@/lib/bookFields';
 import BookCover from '@/components/BookCover';
@@ -16,6 +16,7 @@ import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
 import { uploadPdfToDrive, driveIdFrom, pickDriveFile, shareWithAnyone } from '@/lib/googleDrive';
 import { mirrorToTelegram, canMirror, bookSizeBytes } from '@/lib/mirror';
 import { bumpCatalogRev } from '@/lib/catalogRev';
+import { loadAllBooks } from '@/lib/bookCatalog';
 import { makeCover } from '@/lib/pdfCover';
 import { extractPdfInfo } from '@/lib/pdfInfo';
 import { toCE } from '@/lib/thaiYear';
@@ -176,9 +177,9 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         if (!isMounted) return;
         setFields(f.filter((x) => x.form));
 
-        const [settings, snap] = await Promise.all([
+        const [settings, allBooks] = await Promise.all([
           getDropdownSettings(),
-          getDocs(collection(db, 'books'))
+          loadAllBooks()
         ]);
 
         if (!isMounted) return;
@@ -205,8 +206,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         };
 
         const opts = { author: new Set(), category: new Set(), publisher: new Set(), translator: new Set(), language: new Set(), type: new Set(), year: new Set() };
-        snap.forEach(dSnap => {
-          const d = dSnap.data();
+        allBooks.forEach(d => {
           Object.keys(opts).forEach(k => {
             // A book with two authors contributes both to the dropdown.
             // String(d[k]) on an array would have offered "A,B" as one name.

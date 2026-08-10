@@ -81,6 +81,14 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
 
   // Which books are already in the library, so a second run does not duplicate
   // everything. Books added by this panel carry the filename they came from.
+  //
+  // This one reads the collection itself rather than going through
+  // loadAllBooks(), unlike the book form. The cache behind that is only as
+  // fresh as the last catalogue bump, and a bump that failed to write is
+  // logged rather than raised — which here would mean re-uploading files that
+  // are already on the shelf. The form risks a missing dropdown option in the
+  // same case, which is worth 374 reads a time; this is not, and the uploader
+  // is opened a handful of times rather than once per book.
   useEffect(() => {
     if (!isOpen) return;
     cancelled.current = false;

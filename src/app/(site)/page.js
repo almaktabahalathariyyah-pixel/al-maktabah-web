@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import { collection, getDocs, query, orderBy, where, limit, startAfter } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { readCatalogRev } from '@/lib/catalogRev';
+import { readBookCache, writeBookCache, toBook, CACHE_TTL_MS } from '@/lib/bookCatalog';
 import { getLangPath } from '@/lib/langPath';
 import AuthorSidebar from '@/components/AuthorSidebar';
 import BackToTop from '@/components/BackToTop';
@@ -25,60 +26,6 @@ const URL_FILTERS = ['category', 'type', 'language', 'year', 'publisher', 'perso
 const PAGE_SIZE = 20;
 /** Books fetched per Firestore round trip while the shelf fills in. */
 const FETCH_CHUNK = 150;
-
-/**
- * Search and filters run client-side over the whole shelf, so every visit
- * used to re-read every book from Firestore — on a Spark-tier daily quota,
- * a couple hundred ordinary page loads was enough to exhaust it with no bug
- * involved at all. The cache below keeps last visit's list in localStorage.
- *
- * Whether that copy is still good is settled by ONE document read: the
- * catalogue revision, bumped by every admin write. Same number, and the
- * shelf paints from the cache having read nothing else; different, and it
- * refetches. So a quiet day costs 1 read per visit instead of 432, and an
- * edit still reaches everyone on their next visit rather than a day later.
- *
- * The expiry below is now only a backstop for the case where a bump was
- * lost, or where the revision itself could not be read.
- */
-const CACHE_VERSION = 2;
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-
-const cacheKey = (scope) => `al-maktabah:books:${scope}:v${CACHE_VERSION}`;
-
-function readBookCache(scope) {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(cacheKey(scope));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed.books) || typeof parsed.fetchedAt !== 'number') return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-function writeBookCache(scope, books, rev) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(
-      cacheKey(scope),
-      JSON.stringify({ books, rev, fetchedAt: Date.now() })
-    );
-  } catch {
-    // Quota exceeded or storage disabled (private browsing) — caching is an
-    // optimization, not a requirement, so just skip it.
-  }
-}
-
-/** Normalizes the Timestamp to millis so cached books are plain JSON. */
-function toBook(doc) {
-  const data = doc.data();
-  const createdAt =
-    typeof data.createdAt?.toMillis === 'function' ? data.createdAt.toMillis() : Date.now();
-  return { id: doc.id, ...data, createdAt };
-}
 
 const FILTER_LABELS = {
   category: 'หมวดหมู่',
