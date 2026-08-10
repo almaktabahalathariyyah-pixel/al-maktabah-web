@@ -27,6 +27,16 @@
 
 /* .menuBtn is the bare .icon-btn-quiet — see globals.css */
 
+/* The rail is pinned to the window, so it cannot be taller than one — and its
+   own contents want 687px. On a 1366x768 laptop, the commonest screen there
+   is, the window is about 650px of viewport once the browser's own chrome is
+   taken out, and the rail used to scroll ITSELF to make up the difference.
+   That hid the thing a reader was reaching for: scrolled down, the six main
+   links went up out of sight and only "กลับหน้าเว็บ" was left; scrolled up,
+   that link was the one out of reach. Either way the sidebar looked broken.
+
+   So the rail no longer scrolls. The list of links inside it does, between a
+   header and a footer that stay put — see .navScroll. */
 .sidebar {
   width: 250px;
   background: var(--surface);
@@ -38,11 +48,25 @@
   top: 0;
   height: 100vh; /* fallback */
   height: 100dvh;
-  overflow-y: auto;
+  overflow: hidden;
   flex: none;
   align-self: flex-start;
   transition: transform 0.3s var(--ease), width 0.3s var(--ease);
   z-index: 50;
+}
+
+/* Takes whatever height is left over and scrolls inside it. `min-height: 0`
+   is what makes that possible: a flex item's floor is its content, so without
+   it this refuses to shrink and pushes the footer off the bottom again —
+   which is the same bug wearing a different hat. */
+.navScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Room for the scrollbar so it never sits on top of a label. */
+  margin-inline: -0.25rem;
+  padding-inline: 0.25rem;
 }
 
 .sidebarClosed {

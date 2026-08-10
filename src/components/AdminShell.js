@@ -95,41 +95,45 @@ export default function AdminShell({ children }) {
           </button>
         </div>
 
-        <nav className={styles.nav}>
-          {ADMIN_NAV.map((item) => {
-            const active =
-              item.href === '/admin'
-                ? pathname === '/admin'
-                : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`${styles.navLink} ${active ? styles.navActive : ''}`}
-                title={!isSidebarOpen ? item.label : undefined}
-                onClick={closeOnMobile}
-              >
-                <item.icon size={18} className={styles.navIcon} />
-                <span className={styles.navText}>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Header above and "กลับหน้าเว็บ" below stay put; only this scrolls,
+            so a short window hides nothing that cannot be reached. */}
+        <div className={styles.navScroll}>
+          <nav className={styles.nav}>
+            {ADMIN_NAV.map((item) => {
+              const active =
+                item.href === '/admin'
+                  ? pathname === '/admin'
+                  : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`${styles.navLink} ${active ? styles.navActive : ''}`}
+                  title={!isSidebarOpen ? item.label : undefined}
+                  onClick={closeOnMobile}
+                >
+                  <item.icon size={18} className={styles.navIcon} />
+                  <span className={styles.navText}>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         
-        <div className={styles.navDivider} />
+          <div className={styles.navDivider} />
         
-        <div className={styles.settingsNav}>
-          {/* Contact, not UserCheck: UserCheck is the approvals queue above, and
-              two nav rows sharing a glyph is two rows nobody can tell apart. */}
-          <Link href="/admin/names" className={styles.navLink} title={!isSidebarOpen ? 'จัดการรายชื่อ' : undefined} onClick={closeOnMobile}>
-            <Contact size={18} className={styles.navIcon} /> <span className={styles.navText}>จัดการรายชื่อ</span>
-          </Link>
-          <button onClick={openFields} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าฟิลด์' : undefined}>
-            <SlidersHorizontal size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าฟิลด์</span>
-          </button>
-          <button onClick={openSettings} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าหมวดหมู่' : undefined}>
-            <FolderTree size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าหมวดหมู่</span>
-          </button>
+          <div className={styles.settingsNav}>
+            {/* Contact, not UserCheck: UserCheck is the approvals queue above, and
+                two nav rows sharing a glyph is two rows nobody can tell apart. */}
+            <Link href="/admin/names" className={styles.navLink} title={!isSidebarOpen ? 'จัดการรายชื่อ' : undefined} onClick={closeOnMobile}>
+              <Contact size={18} className={styles.navIcon} /> <span className={styles.navText}>จัดการรายชื่อ</span>
+            </Link>
+            <button onClick={openFields} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าฟิลด์' : undefined}>
+              <SlidersHorizontal size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าฟิลด์</span>
+            </button>
+            <button onClick={openSettings} className={styles.navLink} title={!isSidebarOpen ? 'ตั้งค่าหมวดหมู่' : undefined}>
+              <FolderTree size={18} className={styles.navIcon} /> <span className={styles.navText}>ตั้งค่าหมวดหมู่</span>
+            </button>
+          </div>
         </div>
 
         <div className={styles.bottomNav}>
