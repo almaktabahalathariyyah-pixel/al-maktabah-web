@@ -509,44 +509,73 @@ export default function AdminPage() {
     setStoringFileNames(true);
     setFileNameProgress({ done: 0, total: targets.length });
     try {
-      let saved = readSavedToken();
-      if (!saved) {
-        toast.info('กำลังเปิดหน้าต่างเชื่อมต่อ Google Drive');
-        saved = await connectDrive();
-      }
-
-      // Drive omits `owners` on shared drives; the connected account stands in.
-      const account = await fetchDriveAccount(saved.token);
+      const driveTargets = targets.filter((book) => driveIdFrom(book.driveUrl));
+      const externalTargets = targets.filter((book) => !driveIdFrom(book.driveUrl));
 
       const updates = [];
       let skipped = 0;
       let otherAccount = 0;
       let expired = false;
+      let doneCount = 0;
 
-      // Five at a time: 365 books one-after-another is a minute of staring at
-      // a spinner, and Drive is happy to answer this many metadata reads.
-      const BATCH = 5;
-      for (let i = 0; i < targets.length && !expired; i += BATCH) {
-        const slice = targets.slice(i, i + BATCH);
-        const results = await Promise.all(
-          slice.map((book) => fetchDriveFileMeta(book.driveUrl, saved.token, account?.email || ''))
-        );
-
-        results.forEach((result, index) => {
-          const book = slice[index];
-          if (!result.ok) {
-            if (result.reason === 'expired') expired = true;
-            else if (result.reason === 'other-account') otherAccount += 1;
-            else skipped += 1;
-            return;
-          }
+      // External direct PDF URLs (e.g. d1.islamhouse.com, salafythai.com) are not
+      // on Google Drive: derive sourceFile from URL pathname and driveOwner from host.
+      for (const book of externalTargets) {
+        try {
+          const parsed = new URL(book.driveUrl);
+          const rawName = parsed.pathname.split('/').filter(Boolean).pop() || '';
+          let decodedName = rawName;
+          try { decodedName = decodeURIComponent(rawName); } catch {}
+          const host = parsed.hostname;
           const patch = {};
-          if (result.name && result.name !== book.sourceFile) patch.sourceFile = result.name;
-          if (result.owner && result.owner !== book.driveOwner) patch.driveOwner = result.owner;
+          if (decodedName && decodedName !== book.sourceFile) patch.sourceFile = decodedName;
+          if (host && host !== book.driveOwner) patch.driveOwner = host;
           if (Object.keys(patch).length > 0) updates.push({ id: book.id, patch });
-        });
+        } catch {
+          skipped += 1;
+        }
+        doneCount += 1;
+      }
+      if (externalTargets.length > 0) {
+        setFileNameProgress({ done: doneCount, total: targets.length });
+      }
 
-        setFileNameProgress((prev) => ({ ...prev, done: Math.min(prev.total, i + slice.length) }));
+      if (driveTargets.length > 0) {
+        let saved = readSavedToken();
+        if (!saved) {
+          toast.info('กำลังเปิดหน้าต่างเชื่อมต่อ Google Drive');
+          saved = await connectDrive();
+        }
+
+        // Drive omits `owners` on shared drives; the connected account stands in.
+        const account = await fetchDriveAccount(saved.token);
+
+        // Five at a time: 365 books one-after-another is a minute of staring at
+        // a spinner, and Drive is happy to answer this many metadata reads.
+        const BATCH = 5;
+        for (let i = 0; i < driveTargets.length && !expired; i += BATCH) {
+          const slice = driveTargets.slice(i, i + BATCH);
+          const results = await Promise.all(
+            slice.map((book) => fetchDriveFileMeta(book.driveUrl, saved.token, account?.email || ''))
+          );
+
+          results.forEach((result, index) => {
+            const book = slice[index];
+            if (!result.ok) {
+              if (result.reason === 'expired') expired = true;
+              else if (result.reason === 'other-account') otherAccount += 1;
+              else skipped += 1;
+              return;
+            }
+            const patch = {};
+            if (result.name && result.name !== book.sourceFile) patch.sourceFile = result.name;
+            if (result.owner && result.owner !== book.driveOwner) patch.driveOwner = result.owner;
+            if (Object.keys(patch).length > 0) updates.push({ id: book.id, patch });
+          });
+
+          doneCount += slice.length;
+          setFileNameProgress((prev) => ({ ...prev, done: Math.min(prev.total, doneCount) }));
+        }
       }
 
       // The original of the 500-op chunking, now shared with the two batches
