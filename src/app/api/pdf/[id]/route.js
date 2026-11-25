@@ -147,6 +147,50 @@ async function serveFromDrive({ driveId, title, action }) {
 }
 
 /**
+ * Streams a direct HTTPS PDF URL (e.g. IslamHouse, SalafyThai, IslamicBook.ws)
+ * through this origin so it opens inside the built-in reader without exposing
+ * external links or failing cross-origin framing.
+ */
+async function serveFromDirectPdf({ url, title, action }) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === 'localhost' ||
+      host.endsWith('.local') ||
+      /^127\.|^10\.|^192\.168\.|^169\.254\.|^172\.(1[6-9]|2\d|3[01])\./.test(host)
+    ) {
+      return null;
+    }
+
+    const res = await fetch(url, {
+      redirect: 'follow',
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    });
+    if (!res.ok) return null;
+
+    const type = (res.headers.get('content-type') || '').toLowerCase();
+    if (type.includes('text/html')) return null;
+
+    const disposition = action === 'download' ? 'attachment' : 'inline';
+    const safeName = encodeURIComponent(`${title}.pdf`);
+
+    return new Response(res.body, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `${disposition}; filename*=UTF-8''${safeName}`,
+        'Cache-Control': 'private, no-store',
+        'Referrer-Policy': 'no-referrer',
+        'X-Maktabah-Source': 'external',
+      },
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Serves a book, trying every copy before giving up.
  *
  *   1. ?source=telegram          the reader explicitly asked for the backup
@@ -238,6 +282,12 @@ export async function GET(request, { params }) {
           }),
           503
         );
+      }
+
+      // Direct HTTPS PDF URL (non-Google-Drive source such as IslamHouse / SalafyThai)
+      if (/^https?:\/\//i.test(driveUrl)) {
+        const direct = await serveFromDirectPdf({ url: driveUrl, title, action });
+        if (direct) return direct;
       }
     }
 
