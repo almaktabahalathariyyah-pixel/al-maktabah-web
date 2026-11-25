@@ -49,3 +49,11 @@ book-catalog.json
 book-catalog.backup.csv
 book-catalog-enriched.csv
 catalog-needs-category.txt
+
+# Telegram sync session, local state, downloads & Firebase keys
+*.session
+*.session-journal
+scripts/.telegram-*
+telegram-new-pdfs/
+*firebase-adminsdk*.json
+__pycache__/
