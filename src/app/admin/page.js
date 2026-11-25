@@ -652,19 +652,11 @@ export default function AdminPage() {
     setEnriching(true);
     setEnrichProgress({ done: 0, total: targets.length });
 
-    let saved;
-    try {
-      saved = readSavedToken();
-      if (!saved) {
-        toast.info('กำลังเปิดหน้าต่างเชื่อมต่อ Google Drive');
-        saved = await connectDrive();
-      }
-    } catch (err) {
-      toast.error(err.message || 'เชื่อมต่อ Google Drive ไม่สำเร็จ');
-      setEnriching(false);
-      setEnrichProgress({ done: 0, total: 0 });
-      return;
-    }
+    // Optional Drive token (used as fallback if a file is private to the
+    // connected Drive account). Most books — including public Drive links and
+    // direct external PDFs (IslamHouse, SalafyThai, etc.) — stream cleanly
+    // through our own /api/pdf/[id] proxy without requiring Drive OAuth.
+    const saved = readSavedToken();
 
     let updated = 0;
     let unreadable = 0;
@@ -679,30 +671,23 @@ export default function AdminPage() {
       setEnrichCurrent(book.title || book.id);
 
       try {
-        const id = driveIdFrom(book.driveUrl);
-        const res = id
-          ? await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
+        const idToken = await user.getIdToken();
+        let res = await fetch(`/api/pdf/${book.id}?token=${encodeURIComponent(idToken)}`);
+        const ct = (res.headers.get('content-type') || '').toLowerCase();
+        if (!res.ok || !ct.includes('pdf')) {
+          const id = driveIdFrom(book.driveUrl);
+          if (id && saved?.token) {
+            res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
               headers: { Authorization: `Bearer ${saved.token}` },
-            })
-          : null;
-
-        // 401 is OUR token expiring — every remaining book would fail the same
-        // way, so stop rather than burn through the shelf marking it unreadable.
-        if (res?.status === 401) { expired = true; break; }
+            });
+            if (res.status === 401) { expired = true; break; }
+          } else {
+            res = null;
+          }
+        }
 
         if (!res || !res.ok) {
           unreadable += 1;
-          // 403/404 means this file belongs to a different Google account (or
-          // is gone). That is permanent as far as the connected token is
-          // concerned, so stamp it and stop asking — otherwise these books
-          // sit in the queue being re-attempted on every single run forever,
-          // which is the exact waste enrichCheckedAt exists to end. Anything
-          // else (a timeout, a 5xx) is left unstamped so it retries.
-          if (res && (res.status === 403 || res.status === 404)) {
-            const stamp = { enrichCheckedAt: new Date() };
-            await updateDoc(doc(db, 'books', book.id), stamp);
-            setBooks((prev) => prev.map((b) => (b.id === book.id ? { ...b, ...stamp } : b)));
-          }
           continue;
         }
 
@@ -712,7 +697,6 @@ export default function AdminPage() {
         const patch = {};
 
         if (!book.coverUrl) {
-          const idToken = await user.getIdToken();
           const cover = await makeCover(file, { idToken });
           if (cover.url) patch.coverUrl = cover.url;
         }
