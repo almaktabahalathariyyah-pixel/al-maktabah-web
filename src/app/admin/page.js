@@ -8,7 +8,7 @@ import { collection, getDocs, deleteDoc, doc, query, orderBy, updateDoc } from '
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 import Link from 'next/link';
-import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, BookImage, UploadCloud, Filter, Mail, FileText, Sparkles } from 'lucide-react';
+import { Search, Plus, Download, Edit2, Trash2, LayoutGrid, List, BookImage, UploadCloud, Filter, Mail, FileText, Sparkles, Lock } from 'lucide-react';
 import { getLangPath } from '@/lib/langPath';
 import { getDropdownSettings, rememberDropdowns } from '@/lib/settings';
 import dynamic from 'next/dynamic';
@@ -1290,6 +1290,11 @@ export default function AdminPage() {
               </div>
               <Link href={`/book/${getLangPath(book.language)}/${book.id}`} className={styles.coverWrap}>
                 <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+                {book.restricted && (
+                  <span className={styles.restrictedBadge} role="img" aria-label="สงวนสิทธิ์" title="สงวนสิทธิ์">
+                    <Lock size={16} aria-hidden="true" />
+                  </span>
+                )}
               </Link>
               <span className={styles.name} title={book.title} dir="auto">{book.title}</span>
               <span className={styles.smallMeta}>{joinPeople(book.author) || 'ไม่ระบุผู้แต่ง'}</span>
