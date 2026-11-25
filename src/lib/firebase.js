@@ -11,11 +11,22 @@ import { getFirestore } from 'firebase/firestore';
  * login outright.
  *
  * Each host still has to be listed under Authentication → Settings →
- * Authorized domains in the Firebase console; localhost is there by default.
- * The env var stays as the server-side fallback, where auth never runs.
+ * Authorized domains in the Firebase console, AND as an authorized redirect
+ * URI (`https://<host>/__/auth/handler`) on the OAuth client Firebase created,
+ * or Google answers the sign-in with redirect_uri_mismatch.
+ *
+ * Only over https, though: the SDK glues a literal `https://` in front of
+ * whatever authDomain says, so on a plain-http dev server it would ask for
+ * https://localhost:3000 and the browser would fail the handshake outright
+ * (ERR_SSL_PROTOCOL_ERROR) before login ever started. Plain http means local
+ * development, so fall back to the env value and let the round trip go
+ * through firebaseapp.com there — the storage partitioning this proxy exists
+ * to dodge is a production problem, on a real site, in a real browser.
+ *
+ * The env var also covers the server, where auth never runs.
  */
 const authDomain =
-  typeof window !== 'undefined'
+  typeof window !== 'undefined' && window.location.protocol === 'https:'
     ? window.location.host
     : process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
 
