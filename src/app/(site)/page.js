@@ -133,6 +133,7 @@ export default function Home() {
   const [highlight, setHighlight] = useState(-1);
   const [page, setPage] = useState(1);
   const [jumpInput, setJumpInput] = useState('');
+  const [adminShelfView, setAdminShelfView] = useState('all'); // 'all' | 'public' | 'restricted'
 
   const [fullyLoaded, setFullyLoaded] = useState(false);
   const searchRef = useRef(null);
@@ -317,10 +318,16 @@ export default function Home() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const visibleBooks = useMemo(
-    () => books.filter((book) => !book.restricted || approved),
-    [books, approved]
+  const allowedBooks = useMemo(
+    () => books.filter((book) => !book.restricted || canSeeAll),
+    [books, canSeeAll]
   );
+
+  const visibleBooks = useMemo(() => {
+    if (!isAdmin || adminShelfView === 'all') return allowedBooks;
+    if (adminShelfView === 'restricted') return allowedBooks.filter((book) => Boolean(book.restricted));
+    return allowedBooks.filter((book) => !book.restricted);
+  }, [allowedBooks, isAdmin, adminShelfView]);
 
   const results = useMemo(() => {
     // Every word has to appear, but not in the order or the spacing they were
@@ -406,6 +413,7 @@ export default function Home() {
   const viewKey = JSON.stringify([
     queryText,
     sortOrder,
+    adminShelfView,
     Object.entries(filters).filter(([, v]) => Boolean(v)).sort(),
   ]);
   const [prevViewKey, setPrevViewKey] = useState(viewKey);
@@ -703,6 +711,41 @@ export default function Home() {
           </button>
         </div>
       </header>
+
+      {/* Admin-only shelf scope switcher: all / public-only / restricted-only */}
+      {isAdmin && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            flexWrap: 'wrap',
+            marginBottom: '1rem',
+            padding: '0.5rem 0.75rem',
+            borderRadius: '10px',
+            background: 'var(--surface-2, rgba(128,128,128,0.08))',
+            border: '1px solid var(--border, rgba(128,128,128,0.18))',
+            fontSize: '0.85rem',
+          }}
+        >
+          <span style={{ opacity: 0.75, fontWeight: 500, marginRight: '0.25rem' }}>มุมมองแอดมิน:</span>
+          {[
+            { id: 'all', label: `ทั้งหมด (${allowedBooks.length.toLocaleString('th-TH')})` },
+            { id: 'public', label: `สาธารณะ (${allowedBooks.filter((b) => !b.restricted).length.toLocaleString('th-TH')})` },
+            { id: 'restricted', label: `สงวนสิทธิ์ (${allowedBooks.filter((b) => b.restricted).length.toLocaleString('th-TH')})` },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setAdminShelfView(opt.id)}
+              className={`btn ${adminShelfView === opt.id ? 'btn-solid' : ''}`}
+              style={{ padding: '0.28rem 0.75rem', fontSize: '0.82rem' }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Whatever is narrowing the shelf stays visible and removable. */}
       {activeCount > 0 && (

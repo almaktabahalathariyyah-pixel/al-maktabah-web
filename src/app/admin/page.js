@@ -877,18 +877,51 @@ export default function AdminPage() {
       </header>
 
       <div className={styles.stats}>
-        <div className={styles.statCard}>
+        <button
+          type="button"
+          className={styles.statCard}
+          onClick={() => updateFilter(setStatusFilter, '')}
+          style={{
+            cursor: 'pointer',
+            textAlign: 'center',
+            borderColor: statusFilter === '' ? 'var(--accent)' : undefined,
+            boxShadow: statusFilter === '' ? '0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent)' : undefined,
+          }}
+          title="แสดงหนังสือทั้งหมด"
+        >
           <div className={styles.statValue}>{totalBooks}</div>
           <div className={styles.statLabel}>หนังสือทั้งหมด</div>
-        </div>
-        <div className={styles.statCard}>
+        </button>
+        <button
+          type="button"
+          className={styles.statCard}
+          onClick={() => updateFilter(setStatusFilter, statusFilter === 'public' ? '' : 'public')}
+          style={{
+            cursor: 'pointer',
+            textAlign: 'center',
+            borderColor: statusFilter === 'public' ? 'var(--accent)' : undefined,
+            boxShadow: statusFilter === 'public' ? '0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent)' : undefined,
+          }}
+          title="กรองเฉพาะหนังสือสาธารณะ"
+        >
           <div className={styles.statValue}>{publicCount}</div>
           <div className={styles.statLabel}>สาธารณะ</div>
-        </div>
-        <div className={styles.statCard}>
+        </button>
+        <button
+          type="button"
+          className={styles.statCard}
+          onClick={() => updateFilter(setStatusFilter, statusFilter === 'restricted' ? '' : 'restricted')}
+          style={{
+            cursor: 'pointer',
+            textAlign: 'center',
+            borderColor: statusFilter === 'restricted' ? 'var(--hot)' : undefined,
+            boxShadow: statusFilter === 'restricted' ? '0 0 0 2px color-mix(in srgb, var(--hot) 20%, transparent)' : undefined,
+          }}
+          title="กรองเฉพาะหนังสือสงวนสิทธิ์"
+        >
           <div className={styles.statValue} style={{ color: 'var(--hot)' }}>{restrictedCount}</div>
           <div className={styles.statLabel}>สงวนสิทธิ์</div>
-        </div>
+        </button>
       </div>
 
       {healthFilter && (
