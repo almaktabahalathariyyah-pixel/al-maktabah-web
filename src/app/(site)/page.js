@@ -17,6 +17,7 @@ import { getLangPath } from '@/lib/langPath';
 import AuthorSidebar from '@/components/AuthorSidebar';
 import BackToTop from '@/components/BackToTop';
 import { asList, joinPeople, hasPerson } from '@/lib/people';
+import { matchesSearch, matchesSuggestion } from '@/lib/searchMatch';
 import { useCountUp } from '@/lib/useCountUp';
 import styles from './page.module.css';
 
@@ -82,14 +83,18 @@ function pageWindow(current, total, span = 1) {
 
 /** Reads the opening state out of the address bar (client-only). */
 function readUrlState() {
-  if (typeof window === 'undefined') return { q: '', filters: {} };
+  if (typeof window === 'undefined') return { q: '', filters: {}, page: 1, sort: 'desc' };
   const params = new URLSearchParams(window.location.search);
   const filters = {};
   for (const key of URL_FILTERS) {
     const value = params.get(key);
     if (value) filters[key] = value;
   }
-  return { q: params.get('q') || '', filters };
+  const rawPage = Number(params.get('page'));
+  const page = Number.isInteger(rawPage) && rawPage >= 1 ? rawPage : 1;
+  const rawSort = params.get('sort') || 'desc';
+  const sort = ['desc', 'asc', 'title', 'title-desc'].includes(rawSort) ? rawSort : 'desc';
+  return { q: params.get('q') || '', filters, page, sort };
 }
 
 function BookCard({ book }) {
@@ -127,6 +132,7 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlight, setHighlight] = useState(-1);
   const [page, setPage] = useState(1);
+  const [jumpInput, setJumpInput] = useState('');
 
   const [fullyLoaded, setFullyLoaded] = useState(false);
   const searchRef = useRef(null);
@@ -269,22 +275,19 @@ export default function Home() {
     load();
   }, [load, authLoading]);
 
-  // Adopt whatever the shared link asked for.
+  // Adopt whatever the shared link or back-button history asked for.
   useEffect(() => {
-    // set-state-in-effect: window.location does not exist on the server, so
-    // this cannot be read during render. Deliberately after mount — the state
-    // starts empty so the server's markup and the first client render agree,
-    // and the URL is adopted on the pass after that.
-    const { q, filters: fromUrl } = readUrlState();
+    const { q, filters: fromUrl, page: fromPage, sort: fromSort } = readUrlState();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (q) setQueryText(q);
     if (Object.keys(fromUrl).length) setFilters(fromUrl);
+    if (fromSort && fromSort !== 'desc') setSortOrder(fromSort);
+    if (fromPage > 1) setPage(fromPage);
     setUrlReady(true);
   }, []);
 
-  // Mirror the current view back into the address bar. replaceState rather
-  // than push: the back button should leave the library, not step through
-  // every keystroke of a search.
+  // Mirror the current view (including page and sort) back into the address bar
+  // so pressing Back from a book page returns to the exact page you were on.
   useEffect(() => {
     if (!urlReady) return;
     const params = new URLSearchParams();
@@ -292,12 +295,14 @@ export default function Home() {
     for (const key of URL_FILTERS) {
       if (filters[key]) params.set(key, filters[key]);
     }
+    if (sortOrder && sortOrder !== 'desc') params.set('sort', sortOrder);
+    if (page > 1) params.set('page', String(page));
     const search = params.toString();
     const next = `${window.location.pathname}${search ? `?${search}` : ''}`;
     if (next !== window.location.pathname + window.location.search) {
       window.history.replaceState(null, '', next);
     }
-  }, [queryText, filters, urlReady]);
+  }, [queryText, filters, sortOrder, page, urlReady]);
 
   // "/" jumps to the search box the way it does in every library catalogue.
   useEffect(() => {
@@ -357,11 +362,9 @@ export default function Home() {
         book.year,
       ]
         .map((field) => String(field ?? ''))
-        .join(' ')
-        .toLowerCase()
-        .replace(/\s+/g, ' ');
+        .join(' ');
 
-      return terms.every((term) => haystack.includes(term));
+      return matchesSearch(haystack, queryText);
     });
 
     // localeCompare with 'th', so ก sorts before ข and a Latin title lands
@@ -408,7 +411,8 @@ export default function Home() {
   const [prevViewKey, setPrevViewKey] = useState(viewKey);
   if (viewKey !== prevViewKey) {
     setPrevViewKey(viewKey);
-    setPage(1);
+    // Do not clobber a `?page=N` loaded from the URL on initial mount.
+    if (urlReady) setPage(1);
     setHighlight(-1);
   }
 
@@ -428,7 +432,7 @@ export default function Home() {
         for (const value of asList(book[key])) {
           if (seen[key].has(value)) continue;
           if (buckets[key].length >= caps[key]) break;
-          if (String(value).toLowerCase().includes(q)) {
+          if (matchesSuggestion(value, queryText)) {
             seen[key].add(value);
             buckets[key].push(value);
           }
@@ -919,6 +923,45 @@ export default function Home() {
                   <span className={styles.pageCount} aria-live="polite">
                     หน้า {current.toLocaleString('th-TH')} จาก {pageCount.toLocaleString('th-TH')}
                   </span>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const n = Math.max(1, Math.min(pageCount, Math.floor(Number(jumpInput))));
+                      if (Number.isFinite(n) && n >= 1) {
+                        goToPage(n);
+                        setJumpInput('');
+                      }
+                    }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginLeft: '0.5rem' }}
+                  >
+                    <input
+                      type="number"
+                      min={1}
+                      max={pageCount}
+                      value={jumpInput}
+                      onChange={(e) => setJumpInput(e.target.value)}
+                      placeholder="ไปหน้า…"
+                      aria-label="พิมพ์เลขหน้าเพื่อข้ามไปทันที"
+                      style={{
+                        width: '4.8rem',
+                        padding: '0.32rem 0.45rem',
+                        fontSize: '0.82rem',
+                        borderRadius: 'var(--r-sm)',
+                        border: '1px solid var(--border)',
+                        background: 'var(--surface)',
+                        color: 'var(--fg)',
+                        textAlign: 'center',
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      className={styles.pageNum}
+                      style={{ padding: '0.32rem 0.65rem', width: 'auto' }}
+                    >
+                      ไป
+                    </button>
+                  </form>
                 </nav>
               )}
             </>

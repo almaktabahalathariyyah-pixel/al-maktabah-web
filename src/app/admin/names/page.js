@@ -13,6 +13,8 @@ import UnsavedBar from '@/components/UnsavedBar';
 import { useUnsavedGuard } from '@/lib/useUnsavedGuard';
 import { renameInBooks, removeFromBooks } from '@/lib/renameName';
 import { bumpCatalogRev } from '@/lib/catalogRev';
+import { loadAllBooks } from '@/lib/bookCatalog';
+import { asList } from '@/lib/people';
 import styles from '../settings/page.module.css'; // We can reuse settings styles for layout
 
 /** Thai collation, so ก comes before ข and an English name sorts sensibly. */
@@ -371,6 +373,73 @@ export default function NamesPage() {
      entered before that, and it had been done. Its own dialog said so.
      Recoverable from git if a rebuild ever needs it. */
 
+  const [pruning, setPruning] = useState(false);
+
+  const handlePruneUnused = async () => {
+    setPruning(true);
+    try {
+      const allBooks = await loadAllBooks();
+      const usedAuthors = new Set(allBooks.flatMap((b) => asList(b.author)));
+      const usedTranslators = new Set(allBooks.flatMap((b) => asList(b.translator)));
+      const usedPublishers = new Set(allBooks.map((b) => String(b.publisher || '').trim()).filter(Boolean));
+
+      const nextAuthors = authors.filter((n) => usedAuthors.has(n));
+      const nextTranslators = translators.filter((n) => usedTranslators.has(n));
+      const nextPublishers = publishers.filter((n) => usedPublishers.has(n));
+
+      const removedA = authors.length - nextAuthors.length;
+      const removedT = translators.length - nextTranslators.length;
+      const removedP = publishers.length - nextPublishers.length;
+      const total = removedA + removedT + removedP;
+
+      if (total === 0) {
+        toast.info('รายชื่อทั้งหมดมีหนังสือใช้งานอยู่แล้ว ไม่มีรายชื่อค้าง');
+        return;
+      }
+
+      const agreed = await confirm({
+        title: `ล้างรายชื่อที่ไม่มีหนังสือใช้? (${total} รายการ)`,
+        message:
+          `พบรายชื่อที่ไม่ได้ถูกใช้ในหนังสือเล่มใดเลย:\n` +
+          `• ผู้แต่ง: ${removedA} รายชื่อ\n` +
+          `• ผู้แปล: ${removedT} รายชื่อ\n` +
+          `• สำนักพิมพ์: ${removedP} รายชื่อ\n\n` +
+          `การลบนี้จะลบเฉพาะจากรายการตัวเลือก (ไม่กระทบหนังสือในคลัง)`,
+        confirmLabel: 'ล้างและบันทึกเลย',
+      });
+      if (!agreed) return;
+
+      const payload = {
+        authors: nextAuthors,
+        translators: nextTranslators,
+        publishers: nextPublishers,
+        nameOk: nameOk.filter((n) =>
+          nextAuthors.includes(n) || nextTranslators.includes(n) || nextPublishers.includes(n)
+        ),
+      };
+      const ok = await saveDropdownSettings(payload);
+      if (!ok) {
+        toast.error('บันทึกไม่สำเร็จ');
+        return;
+      }
+      setAuthors(nextAuthors);
+      setTranslators(nextTranslators);
+      setPublishers(nextPublishers);
+      setNameOk(payload.nameOk);
+      setBaseline((prev) => ({
+        ...prev,
+        lists: { ...prev.lists, authors: nextAuthors, translators: nextTranslators, publishers: nextPublishers },
+        nameOk: payload.nameOk,
+      }));
+      toast.success(`ล้างรายชื่อที่ไม่ได้ใช้แล้ว ${total} รายการ`);
+    } catch (err) {
+      console.error('Prune unused names failed:', err);
+      toast.error('ตรวจสอบรายชื่อไม่สำเร็จ');
+    } finally {
+      setPruning(false);
+    }
+  };
+
   if (authLoading || loading) {
     return <div className="container" style={{paddingTop: '4rem'}}>กำลังโหลดข้อมูล...</div>;
   }
@@ -399,11 +468,16 @@ export default function NamesPage() {
           </p>
         </div>
 
-        {/* No save button here.
-            Saving lives in one place — the tray that appears at the bottom
-            once there is something to save. A header copy meant two buttons
-            doing one job, and the header one is the copy that scrolls out of
-            reach the moment the owner starts editing. */}
+        <div>
+          <button
+            type="button"
+            className="btn"
+            onClick={handlePruneUnused}
+            disabled={pruning || saving}
+          >
+            {pruning ? 'กำลังตรวจสอบ…' : 'ล้างรายชื่อที่ไม่มีหนังสือใช้'}
+          </button>
+        </div>
       </header>
 
       {/* Tabs */}

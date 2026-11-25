@@ -32,6 +32,7 @@ import { bumpCatalogRev } from '@/lib/catalogRev';
 import { commitInChunks } from '@/lib/batchWrite';
 import { useTabLock } from '@/lib/tabLock';
 import { asList, joinPeople, hasPerson, splitPeople } from '@/lib/people';
+import { matchesSearch } from '@/lib/searchMatch';
 import BookFormPanel from '@/components/BookFormPanel';
 import BulkUploadPanel from '@/components/BulkUploadPanel';
 import BookCover from '@/components/BookCover';
@@ -155,9 +156,28 @@ export default function AdminPage() {
   const [ownerFilter, setOwnerFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = Newest first, 'asc' = Oldest first
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    if (typeof window === 'undefined') return 1;
+    const p = Number(new URLSearchParams(window.location.search).get('page'));
+    return Number.isInteger(p) && p >= 1 ? p : 1;
+  });
+  const [jumpPage, setJumpPage] = useState('');
   // Set by the links on the stats page: 'nofile' | 'telegram' | ''
   const [healthFilter, setHealthFilter] = useState(readInitialHealthFilter);
+
+  // Keep ?page=N in the address bar so pressing Back from a book or edit view
+  // returns to the exact admin page instead of resetting to page 1.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (currentPage > 1) params.set('page', String(currentPage));
+    else params.delete('page');
+    const qs = params.toString();
+    const next = `${window.location.pathname}${qs ? `?${qs}` : ''}`;
+    if (next !== window.location.pathname + window.location.search) {
+      window.history.replaceState(null, '', next);
+    }
+  }, [currentPage]);
 
 
   // Selection & Bulk Edit
@@ -794,10 +814,10 @@ export default function AdminPage() {
   const owners = Array.from(new Set(books.map(b => b.driveOwner).filter(Boolean))).sort();
 
   const filteredBooks = books.filter(book => {
-    const needle = searchQuery.toLowerCase();
-    const matchesSearch =
-      book.title?.toLowerCase().includes(needle) ||
-      joinPeople(book.author, ' ').toLowerCase().includes(needle);
+    const matchesSearchQuery = !searchQuery.trim() || matchesSearch(
+      [book.title, joinPeople(book.author, ' '), joinPeople(book.translator, ' '), book.publisher, book.id].join(' '),
+      searchQuery
+    );
     const matchesCat = categoryFilter ? book.category === categoryFilter : true;
     const matchesAuthor = authorFilter ? hasPerson(book.author, authorFilter) : true;
     const matchesTranslator = translatorFilter ? hasPerson(book.translator, translatorFilter) : true;
@@ -818,7 +838,7 @@ export default function AdminPage() {
       : healthFilter === 'unmirrored' ? book.driveUrl && !book.telegramFileId && canMirror(bookSizeBytes(book))
       : true;
 
-    return matchesSearch && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus && matchesOwner && matchesHealth;
+    return matchesSearchQuery && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus && matchesOwner && matchesHealth;
   });
 
   // Sort the filtered books based on sortOrder (books array is already 'desc' by default)
@@ -1357,6 +1377,42 @@ export default function AdminPage() {
           >
             ถัดไป
           </button>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const n = Math.max(1, Math.min(pageCount, Math.floor(Number(jumpPage))));
+              if (Number.isFinite(n) && n >= 1) {
+                setCurrentPage(n);
+                setJumpPage('');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginLeft: '0.6rem' }}
+          >
+            <input
+              type="number"
+              min={1}
+              max={pageCount}
+              value={jumpPage}
+              onChange={(e) => setJumpPage(e.target.value)}
+              placeholder={`ไปหน้า (1-${pageCount})`}
+              aria-label="พิมพ์เลขหน้าเพื่อข้ามไปทันที"
+              style={{
+                width: '7.5rem',
+                padding: '0.4rem 0.55rem',
+                fontSize: '0.85rem',
+                borderRadius: 'var(--r-sm)',
+                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                color: 'var(--fg)',
+                textAlign: 'center',
+              }}
+            />
+            <button type="submit" className="btn" style={{ padding: '0.4rem 0.75rem' }}>
+              ไป
+            </button>
+          </form>
         </div>
       )}
 

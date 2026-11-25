@@ -22,6 +22,7 @@ import { makeCover } from '@/lib/pdfCover';
 import { extractPdfInfo } from '@/lib/pdfInfo';
 import { toCE } from '@/lib/thaiYear';
 import { asList } from '@/lib/people';
+import { normalizeSearch } from '@/lib/searchMatch';
 import { X, UploadCloud, CheckCircle, AlertCircle, FileText, Lock, LifeBuoy, Sparkles, Loader2, FolderOpen, ExternalLink, ChevronDown } from 'lucide-react';
 import styles from './BookFormPanel.module.css';
 
@@ -71,6 +72,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
   // (every value harvested from the books), so only these count as "known"
   // when deciding whether a save has something new to announce.
   const known = useRef(null);
+  const catalogBooksRef = useRef([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -179,6 +181,7 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         ]);
 
         if (!isMounted) return;
+        catalogBooksRef.current = allBooks;
         const {
           categories: predefinedCategories,
           languages: predefinedLanguages,
@@ -645,6 +648,24 @@ export default function BookFormPanel({ isOpen, onClose, bookId = null, onSaved 
         confirmLabel: 'บันทึกไปก่อน',
       });
       if (!keepGoing) return;
+    }
+
+    // Duplicate check for new books: exact file size or exact normalized title.
+    if (!bookId && catalogBooksRef.current.length > 0) {
+      const normTitle = normalizeSearch(values.title);
+      const dup = catalogBooksRef.current.find((b) => {
+        if (fileBytes > 10000 && Number(b.sizeBytes) === fileBytes) return true;
+        if (normTitle.length >= 6 && normalizeSearch(b.title) === normTitle) return true;
+        return false;
+      });
+      if (dup) {
+        const proceed = await confirm({
+          title: 'พบหนังสือที่อาจซ้ำในคลังแล้ว',
+          message: `หนังสือ “${dup.title}” (ID ${dup.id}) มีชื่อหรือขนาดไฟล์ตรงกันอยู่แล้ว\n\nต้องการบันทึกเพิ่มอีกเล่มหรือไม่?`,
+          confirmLabel: 'ยืนยันบันทึกซ้ำ',
+        });
+        if (!proceed) return;
+      }
     }
 
     setSaving(true);

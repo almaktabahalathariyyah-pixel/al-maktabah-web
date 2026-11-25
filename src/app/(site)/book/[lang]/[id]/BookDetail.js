@@ -25,6 +25,9 @@ import { fetchBookOrNull } from '@/lib/fetchBook';
 import { copyText } from '@/lib/copyText';
 import { recordAccess } from '@/lib/stats';
 import { asList, joinPeople } from '@/lib/people';
+import { readBookCache } from '@/lib/bookCatalog';
+import { findSeriesBooks } from '@/lib/series';
+import { getReadingProgress } from '@/lib/readingProgress';
 import styles from './page.module.css';
 
 export default function BookDetail({ lang, id }) {
@@ -39,6 +42,8 @@ export default function BookDetail({ lang, id }) {
   const [saving, setSaving] = useState(false);
   const [opening, setOpening] = useState(false);
   const [relatedBooks, setRelatedBooks] = useState([]);
+  const [seriesBooks, setSeriesBooks] = useState([]);
+  const [savedPage, setSavedPage] = useState(0);
   // Shows for a moment after the link is copied. A share that gives no sign it
   // happened gets pressed three times.
   const [copied, setCopied] = useState(false);
@@ -115,6 +120,22 @@ export default function BookDetail({ lang, id }) {
       alive = false;
     };
   }, [book?.category, id, approved, authLoading]);
+
+  // Series siblings (from client cache, zero extra Firestore reads) + saved reading bookmark.
+  useEffect(() => {
+    if (!book) return;
+    const progress = getReadingProgress(id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSavedPage(progress?.page || 0);
+
+    const cached = readBookCache(approved ? 'full' : 'public') || readBookCache('public');
+    if (cached?.books?.length) {
+      const visible = cached.books.filter((b) => !b.restricted || approved);
+      setSeriesBooks(findSeriesBooks(book, visible));
+    } else {
+      setSeriesBooks([]);
+    }
+  }, [book, id, approved]);
 
   // Nobody's shelf has been consulted for this reader-and-book pair yet, so
   // the bookmark starts unfilled. Cleared during render rather than in the
@@ -313,9 +334,20 @@ export default function BookDetail({ lang, id }) {
 
   return (
     <div className="container">
-      <Link href="/" className={styles.back}>
+      <button
+        type="button"
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.history.length > 1 && document.referrer.startsWith(window.location.origin)) {
+            router.back();
+          } else {
+            router.push('/');
+          }
+        }}
+        className={styles.back}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+      >
         <ArrowLeft size={15} /> <span className="tlink">คลังหนังสือ</span>
-      </Link>
+      </button>
 
       <article className={`${styles.layout} rise`}>
         {/* ---------- Left rail: cover + actions ---------- */}
@@ -342,7 +374,12 @@ export default function BookDetail({ lang, id }) {
                   className="btn btn-solid btn-block"
                   disabled={opening}
                 >
-                  <BookOpen size={15} /> {opening ? 'กำลังเปิด…' : 'เปิดอ่านหนังสือ'}
+                  <BookOpen size={15} />{' '}
+                  {opening
+                    ? 'กำลังเปิด…'
+                    : savedPage > 1
+                      ? `อ่านต่อจากหน้า ${savedPage}`
+                      : 'เปิดอ่านหนังสือ'}
                 </button>
 
                 <button onClick={handleDirectDownload} className="btn btn-block">
@@ -420,6 +457,43 @@ export default function BookDetail({ lang, id }) {
                 </div>
               ))}
             </dl>
+          )}
+
+          {seriesBooks.length > 1 && (
+            <div style={{ marginTop: '1.75rem' }}>
+              <h2 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.65rem', color: 'var(--fg-2)' }}>
+                เล่มอื่นในชุดเดียวกัน ({seriesBooks.length} เล่ม)
+              </h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {seriesBooks.map(({ book: sb, label }) => {
+                  const isCurrent = String(sb.id) === String(id);
+                  return isCurrent ? (
+                    <span
+                      key={sb.id}
+                      style={{
+                        padding: '0.4rem 0.85rem',
+                        borderRadius: 'var(--r-sm)',
+                        background: 'var(--accent)',
+                        color: '#fff',
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {label} (เล่มนี้)
+                    </span>
+                  ) : (
+                    <Link
+                      key={sb.id}
+                      href={`/book/${getLangPath(sb.language)}/${sb.id}`}
+                      className="btn"
+                      style={{ padding: '0.4rem 0.85rem', fontSize: '0.88rem' }}
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       </article>

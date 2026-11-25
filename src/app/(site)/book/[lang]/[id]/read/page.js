@@ -2,8 +2,9 @@
 
 import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Loader2, ExternalLink, Bookmark, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { getReadingProgress, saveReadingProgress } from '@/lib/readingProgress';
 import styles from './page.module.css';
 
 export default function PdfReaderPage({ params }) {
@@ -13,6 +14,12 @@ export default function PdfReaderPage({ params }) {
   const [frameLoading, setFrameLoading] = useState(true);
   const [token, setToken] = useState('');
   const [tokenError, setTokenError] = useState('');
+  const [startPage, setStartPage] = useState(() => getReadingProgress(id)?.page || 1);
+  const [pageInput, setPageInput] = useState(() => {
+    const p = getReadingProgress(id)?.page;
+    return p ? String(p) : '';
+  });
+  const [bookmarkSaved, setBookmarkSaved] = useState(false);
 
   // Being signed out is not a failure to report, it is a fact about the
   // session — so it is derived here rather than written into state by an
@@ -63,7 +70,45 @@ export default function PdfReaderPage({ params }) {
           <span>กลับไปหน้าหนังสือ</span>
         </Link>
 
-        <div className={styles.title}>อ่านหนังสือ</div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const n = Math.max(1, Math.floor(Number(pageInput)));
+            if (!Number.isFinite(n) || n < 1) return;
+            saveReadingProgress(id, { page: n });
+            setStartPage(n);
+            setBookmarkSaved(true);
+            setTimeout(() => setBookmarkSaved(false), 1800);
+          }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+        >
+          <Bookmark size={14} style={{ opacity: 0.75 }} />
+          <input
+            type="number"
+            min={1}
+            value={pageInput}
+            onChange={(e) => setPageInput(e.target.value)}
+            placeholder="คั่นหน้า…"
+            aria-label="บันทึกเลขหน้าที่อ่านค้างไว้"
+            style={{
+              width: '5.2rem',
+              padding: '0.25rem 0.45rem',
+              fontSize: '0.82rem',
+              borderRadius: '6px',
+              border: '1px solid rgba(255,255,255,0.22)',
+              background: 'rgba(255,255,255,0.08)',
+              color: 'inherit',
+              textAlign: 'center',
+            }}
+          />
+          <button
+            type="submit"
+            className={styles.backBtn}
+            style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', cursor: 'pointer', background: 'none' }}
+          >
+            {bookmarkSaved ? <Check size={14} /> : 'บันทึก'}
+          </button>
+        </form>
 
         {token ? (
           <a
@@ -100,7 +145,8 @@ export default function PdfReaderPage({ params }) {
 
             {token && (
               <iframe
-                src={`/api/pdf/${id}?token=${token}`}
+                key={startPage}
+                src={`/api/pdf/${id}?token=${token}${startPage > 1 ? `#page=${startPage}` : ''}`}
                 className={styles.iframe}
                 onLoad={() => setFrameLoading(false)}
                 title="เครื่องอ่าน PDF"

@@ -49,6 +49,7 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
   const [catalogName, setCatalogName] = useState('');
   const [items, setItems] = useState([]);
   const [existing, setExisting] = useState(new Set());
+  const [existingSizes, setExistingSizes] = useState(new Set());
 
   const [restricted, setRestricted] = useState(false);
   const [autoCover, setAutoCover] = useState(true);
@@ -96,11 +97,15 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
       .then((snap) => {
         if (!alive) return;
         const seen = new Set();
+        const sizes = new Set();
         snap.forEach((d) => {
           const data = d.data();
           if (data.sourceFile) seen.add(String(data.sourceFile).toLowerCase());
+          const sz = Number(data.sizeBytes) || 0;
+          if (sz > 10000) sizes.add(sz);
         });
         setExisting(seen);
+        setExistingSizes(sizes);
       })
       .catch((err) => console.error('Could not read existing books:', err));
 
@@ -144,14 +149,17 @@ export default function BulkUploadPanel({ isOpen, onClose, onSaved }) {
       const known = new Set(prev.map((it) => it.file.name.toLowerCase()));
       const added = pdfs
         .filter((f) => !known.has(f.name.toLowerCase()))
-        .map((f) => ({
-          id: `${f.name}-${f.size}-${Math.random().toString(36).slice(2, 8)}`,
-          file: f,
-          row: matchRow(catalog, f.name),
-          status: existing.has(f.name.toLowerCase()) ? 'skipped' : 'pending',
-          progress: 0,
-          error: '',
-        }));
+        .map((f) => {
+          const isDup = existing.has(f.name.toLowerCase()) || (f.size > 10000 && existingSizes.has(f.size));
+          return {
+            id: `${f.name}-${f.size}-${Math.random().toString(36).slice(2, 8)}`,
+            file: f,
+            row: matchRow(catalog, f.name),
+            status: isDup ? 'skipped' : 'pending',
+            progress: 0,
+            error: isDup ? 'พบไฟล์ชื่อหรือขนาดเดียวกันในคลังแล้ว' : '',
+          };
+        });
       return [...prev, ...added];
     });
   };
