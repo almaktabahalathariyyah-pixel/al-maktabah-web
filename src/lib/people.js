@@ -38,6 +38,17 @@ export function hasPerson(value, name) {
   return asList(value).includes(name);
 }
 
+/** A selected name can be credited in more than one role on the shelf. */
+export const BOOK_NAME_ROLES = [
+  { key: 'author', label: 'ผลงานเขียน' },
+  { key: 'translator', label: 'ผลงานแปล' },
+  { key: 'publisher', label: 'จัดพิมพ์โดย' },
+];
+
+export function hasBookName(book, name) {
+  return BOOK_NAME_ROLES.some(({ key }) => hasPerson(book[key], name));
+}
+
 /**
  * Free text → a list of names.
  *

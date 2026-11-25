@@ -1,17 +1,26 @@
-import { Kanit, Sarabun } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import Providers from '@/components/Providers';
 
-const kanit = Kanit({
-  weight: ['300', '400', '500', '600'],
-  subsets: ['latin', 'thai'],
+// Keep the fonts in the checkout so builds do not depend on Google Fonts.
+const kanit = localFont({
+  src: [
+    { path: './fonts/kanit/Kanit-Light.ttf', weight: '300', style: 'normal' },
+    { path: './fonts/kanit/Kanit-Regular.ttf', weight: '400', style: 'normal' },
+    { path: './fonts/kanit/Kanit-Medium.ttf', weight: '500', style: 'normal' },
+    { path: './fonts/kanit/Kanit-SemiBold.ttf', weight: '600', style: 'normal' },
+  ],
   variable: '--font-kanit',
   display: 'swap',
 });
 
-const sarabun = Sarabun({
-  weight: ['300', '400', '500', '600'],
-  subsets: ['latin', 'thai'],
+const sarabun = localFont({
+  src: [
+    { path: './fonts/sarabun/Sarabun-Light.ttf', weight: '300', style: 'normal' },
+    { path: './fonts/sarabun/Sarabun-Regular.ttf', weight: '400', style: 'normal' },
+    { path: './fonts/sarabun/Sarabun-Medium.ttf', weight: '500', style: 'normal' },
+    { path: './fonts/sarabun/Sarabun-SemiBold.ttf', weight: '600', style: 'normal' },
+  ],
   variable: '--font-sarabun',
   display: 'swap',
 });

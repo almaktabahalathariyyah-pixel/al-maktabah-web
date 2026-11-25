@@ -148,6 +148,9 @@ npm run dev
 
 เปิด http://localhost:3000
 
+ฟอนต์ Kanit และ Sarabun เก็บอยู่ใน `src/app/fonts/` พร้อมใบอนุญาต SIL Open Font License
+และโหลดผ่าน `next/font/local` จึงไม่ต้องเชื่อมต่อ Google Fonts ระหว่าง `npm run build`
+
 > ถ้าไม่มี `.env.local` หน้าเว็บจะ render ได้ แต่ทุกคำสั่งที่คุยกับ Firebase จะล้มเหลว
 
 ### ตั้งตัวเองเป็นแอดมิน

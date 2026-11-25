@@ -16,7 +16,7 @@ import { readBookCache, writeBookCache, toBook, CACHE_TTL_MS } from '@/lib/bookC
 import { getLangPath } from '@/lib/langPath';
 import AuthorSidebar from '@/components/AuthorSidebar';
 import BackToTop from '@/components/BackToTop';
-import { asList, joinPeople, hasPerson } from '@/lib/people';
+import { asList, joinPeople, hasPerson, hasBookName, BOOK_NAME_ROLES } from '@/lib/people';
 import { matchesSearch, matchesSuggestion } from '@/lib/searchMatch';
 import { useCountUp } from '@/lib/useCountUp';
 import styles from './page.module.css';
@@ -34,7 +34,7 @@ const FILTER_LABELS = {
   language: 'ภาษา',
   year: 'ปีพิมพ์',
   publisher: 'สำนักพิมพ์',
-  person: 'บุคคล',
+  person: 'บุคคล / สำนักพิมพ์',
 };
 
 /**
@@ -89,6 +89,11 @@ function readUrlState() {
   for (const key of URL_FILTERS) {
     const value = params.get(key);
     if (value) filters[key] = value;
+  }
+  // Keep previously shared publisher links working with the combined name shelf.
+  if (filters.publisher) {
+    filters.person ||= filters.publisher;
+    delete filters.publisher;
   }
   const rawPage = Number(params.get('page'));
   const page = Number.isInteger(rawPage) && rawPage >= 1 ? rawPage : 1;
@@ -344,8 +349,7 @@ export default function Home() {
       for (const [key, value] of Object.entries(filters)) {
         if (!value) continue;
         if (key === 'person') {
-          // Credited anywhere on the book, not only as the first name.
-          if (!hasPerson(book.author, value) && !hasPerson(book.translator, value)) return false;
+          if (!hasBookName(book, value)) return false;
           continue;
         }
         // String conversion matters for year, which may be stored as a number.
@@ -522,8 +526,13 @@ export default function Home() {
   const setFilter = (key, value) =>
     setFilters((prev) => {
       const next = { ...prev };
-      if (value) next[key] = value;
-      else delete next[key];
+      // All name entry points open the same shelf, regardless of the role
+      // where the reader found the name. Other filters still narrow it.
+      const isName = key === 'person' || BOOK_NAME_ROLES.some((role) => role.key === key);
+      const filterKey = isName ? 'person' : key;
+      if (isName) delete next.publisher;
+      if (value) next[filterKey] = value;
+      else delete next[filterKey];
       return next;
     });
 
@@ -567,10 +576,13 @@ export default function Home() {
   const current = Math.min(page, pageCount);
   const shown = results.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  // A person can be one of two authors here and the sole translator there, so
-  // a book can legitimately appear in both sections.
-  const authored = filters.person ? results.filter((b) => hasPerson(b.author, filters.person)) : [];
-  const translated = filters.person ? results.filter((b) => hasPerson(b.translator, filters.person)) : [];
+  // One book may appear in several roles, while the result total counts it once.
+  const nameSections = filters.person
+    ? BOOK_NAME_ROLES.map((role) => ({
+      ...role,
+      books: results.filter((book) => hasPerson(book[role.key], filters.person)),
+    })).filter((section) => section.books.length > 0)
+    : [];
 
   const goToPage = (next) => {
     setPage(next);
@@ -778,7 +790,7 @@ export default function Home() {
               <select
                 id={`filter-${key}`}
                 className={styles.filterSelect}
-                value={filters[key] || ''}
+                value={key === 'publisher' ? (publishers.includes(filters.person) ? filters.person : '') : filters[key] || ''}
                 onChange={(e) => setFilter(key, e.target.value)}
               >
                 <option value="">ทั้งหมด</option>
@@ -858,6 +870,7 @@ export default function Home() {
         <AuthorSidebar
           authors={authors}
           translators={translators}
+          publishers={publishers}
           selectedPerson={filters.person || ''}
           onSelect={(name) => setFilter('person', name)}
         />
@@ -901,22 +914,16 @@ export default function Home() {
             </div>
           ) : filters.person ? (
             <div className={styles.personSections}>
-              {authored.length > 0 && (
-                <div>
-                  <h2 className={styles.sectionHead}>ผลงานเขียน</h2>
-                  <section className={`${styles.grid} stagger`}>
-                    {authored.map((book) => <BookCard key={book.id} book={book} />)}
-                  </section>
-                </div>
-              )}
-              {translated.length > 0 && (
-                <div>
-                  <h2 className={styles.sectionHead}>ผลงานแปล</h2>
-                  <section className={`${styles.grid} stagger`}>
-                    {translated.map((book) => <BookCard key={book.id} book={book} />)}
-                  </section>
-                </div>
-              )}
+              {nameSections.map(({ key, label, books: sectionBooks }) => (
+                <section key={key} aria-labelledby={`name-section-${key}`}>
+                  <h2 id={`name-section-${key}`} className={styles.sectionHead}>
+                    {label} <span className={styles.sectionCount}>({sectionBooks.length.toLocaleString('th-TH')} เล่ม)</span>
+                  </h2>
+                  <div className={`${styles.grid} stagger`}>
+                    {sectionBooks.map((book) => <BookCard key={book.id} book={book} />)}
+                  </div>
+                </section>
+              ))}
             </div>
           ) : (
             <>

@@ -294,6 +294,7 @@
 .shelf { min-width: 0; }
 
 .personSections { display: flex; flex-direction: column; gap: 2.5rem; }
+.sectionCount { color: var(--fg-3); font-size: var(--t-small); font-weight: 400; }
 .sectionHead {
   font-family: var(--display);
   font-size: 1.15rem;
