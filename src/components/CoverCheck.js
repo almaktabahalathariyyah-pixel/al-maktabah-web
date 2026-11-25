@@ -89,7 +89,32 @@ export default function CoverCheck({ books }) {
     setRunning(true);
     setProgress({ done: 0, total: queue.length });
 
+    const checkExternalImage = (url) =>
+      new Promise((resolve) => {
+        const img = new Image();
+        const timer = setTimeout(() => {
+          img.src = '';
+          resolve({ url, ok: false, reason: 'http-error', status: 0 });
+        }, 12000);
+        img.onload = () => {
+          clearTimeout(timer);
+          resolve({ url, ok: true, reason: '', status: 200 });
+        };
+        img.onerror = () => {
+          clearTimeout(timer);
+          resolve({ url, ok: false, reason: 'download-failed', status: 0 });
+        };
+        img.referrerPolicy = 'no-referrer';
+        img.src = url;
+      });
+
     const one = async (book) => {
+      // External cover hosts (e.g. R2, IslamHouse, Talib Club) do not send CORS
+      // headers for fetch(), even though <img> renders them cleanly. Test them
+      // the same way BookCover loads them.
+      if (/^https?:\/\//i.test(book.coverUrl)) {
+        return checkExternalImage(book.coverUrl);
+      }
       try {
         // HEAD would be cheaper, but the proxies only implement GET.
         const res = await fetch(book.coverUrl, { cache: 'no-store' });
