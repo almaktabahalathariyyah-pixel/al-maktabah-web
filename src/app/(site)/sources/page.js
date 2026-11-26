@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  Globe, MonitorPlay, Send, Users, HardDrive, Library, Link2, ArrowUpRight, Compass,
+  Globe, MonitorPlay, Send, Users, Camera, HardDrive, Library, Link2, ArrowUpRight, Compass,
   Search, X,
 } from 'lucide-react';
 import { loadSources, SOURCE_KINDS, kindOf } from '@/lib/sources';
@@ -11,7 +11,7 @@ import styles from './page.module.css';
 
 /** Resolved here rather than in lib/sources so that module stays renderable
     from anywhere, including a server component. */
-const ICONS = { Globe, MonitorPlay, Send, Users, HardDrive, Library, Link2 };
+const ICONS = { Globe, MonitorPlay, Send, Users, Camera, HardDrive, Library, Link2 };
 
 function SourceCard({ source }) {
   const kind = kindOf(source.kind);

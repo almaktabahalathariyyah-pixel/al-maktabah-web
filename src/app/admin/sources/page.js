@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Plus, Trash2, Save, ArrowUp, ArrowDown, ExternalLink, Compass, TriangleAlert,
   Search, X, ChevronDown, ChevronsDownUp, ChevronsUpDown, Copy,
-  Globe, MonitorPlay, Send, Users, HardDrive, Library, Link2,
+  Globe, MonitorPlay, Send, Users, Camera, HardDrive, Library, Link2,
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
@@ -14,7 +14,7 @@ import styles from './page.module.css';
 
 /** Same map the public page keeps, for the same reason: lib/sources stays
     free of lucide so a server component can import it. */
-const ICONS = { Globe, MonitorPlay, Send, Users, HardDrive, Library, Link2 };
+const ICONS = { Globe, MonitorPlay, Send, Users, Camera, HardDrive, Library, Link2 };
 
 const blank = () => ({
   id: `source-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,

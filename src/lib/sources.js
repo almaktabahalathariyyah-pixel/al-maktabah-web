@@ -11,13 +11,14 @@ import { db } from './firebase';
  */
 
 export const SOURCE_KINDS = [
-  { key: 'website',  label: 'เว็บไซต์',        icon: 'Globe',       hint: 'https://example.com' },
-  { key: 'youtube',  label: 'ยูทูป',           icon: 'MonitorPlay', hint: 'https://youtube.com/@channel' },
-  { key: 'telegram', label: 'เทเลแกรม',        icon: 'Send',        hint: 'https://t.me/channel' },
-  { key: 'facebook', label: 'เฟซบุ๊ก',         icon: 'Users',       hint: 'https://facebook.com/page' },
-  { key: 'drive',    label: 'ไดรฟ์',           icon: 'HardDrive',   hint: 'https://drive.google.com/drive/folders/…' },
-  { key: 'library',  label: 'ห้องสมุดออนไลน์', icon: 'Library',     hint: 'https://example.org/library' },
-  { key: 'other',    label: 'อื่นๆ',           icon: 'Link2',       hint: 'https://…' },
+  { key: 'website',   label: 'เว็บไซต์',        icon: 'Globe',       hint: 'https://example.com' },
+  { key: 'youtube',   label: 'ยูทูป',           icon: 'MonitorPlay', hint: 'https://youtube.com/@channel' },
+  { key: 'telegram',  label: 'เทเลแกรม',        icon: 'Send',        hint: 'https://t.me/channel' },
+  { key: 'facebook',  label: 'เฟซบุ๊ก',         icon: 'Users',       hint: 'https://facebook.com/page' },
+  { key: 'instagram', label: 'อินสตาแกรม',      icon: 'Camera',      hint: 'https://instagram.com/account' },
+  { key: 'drive',     label: 'ไดรฟ์',           icon: 'HardDrive',   hint: 'https://drive.google.com/drive/folders/…' },
+  { key: 'library',   label: 'ห้องสมุดออนไลน์', icon: 'Library',     hint: 'https://example.org/library' },
+  { key: 'other',     label: 'อื่นๆ',           icon: 'Link2',       hint: 'https://…' },
 ];
 
 export const OTHER_KIND = SOURCE_KINDS[SOURCE_KINDS.length - 1];
@@ -26,7 +27,10 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 3;
+const CURATED_VERSION = 4;
+
+const MUNADIYA_DESC =
+  'ห้องเรียนและแพลตฟอร์มการเรียนรู้อิสลามออนไลน์ตามแนวทางสะละฟุศศอลิห์ รวบรวมสื่อการสอน บทความ เอกสารวิชาการ และ E-Book แปลจากตำราปราชญ์สายสะละฟี ครอบคลุมอะกีดะฮ์ มันฮัจญ์ ฟิกฮ์ ตัฟซีร และตัรบียะฮ์';
 
 /**
  * Verified Thai Salafi / Ahlus-Sunnah Islamic book repositories, encyclopedias,
@@ -230,11 +234,18 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     url: 'https://darisslamm.com',
   },
   {
-    id: 'curated-muslimthai',
+    id: 'curated-sufumothman',
     kind: 'website',
-    title: 'MuslimThai (หมวด E-Book และคลังความรู้)',
-    description: 'พอร์ทัลความรู้อิสลามในไทยที่มีหมวดรวบรวม E-Book ตำราวิชาการอิสลาม และอัลกุรอานแปลไทย',
-    url: 'https://www.muslimthai.com',
+    title: 'ซุฟอัม อุษมาน (Sufum Othman)',
+    description: 'แหล่งรวมผลงานแปลหนังสือ บทความวิชาการ และสื่อความรู้ศาสนาอิสลามตามแนวทางอะฮ์ลุสซุนนะฮ์วัลญะมาอะฮ์และสะละฟุศศอลิห์',
+    url: 'https://sufumothman.com',
+  },
+  {
+    id: 'curated-munadiya-linktree',
+    kind: 'website',
+    title: 'Munadiya (มุนาดิยา — ห้องเรียนศาสนาออนไลน์)',
+    description: MUNADIYA_DESC,
+    url: 'https://linktr.ee/munadiya',
   },
   {
     id: 'curated-ftu',
@@ -244,7 +255,21 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     url: 'https://www.ftu.ac.th',
   },
 
-  // ===== สื่อวิดีโอ บรรยาย และแหล่งต้นฉบับสะละฟีสากลสำหรับงานแปล =====
+  // ===== เพจเฟซบุ๊ก อินสตาแกรม ช่องยูทูป และต้นฉบับสะละฟีสากล =====
+  {
+    id: 'curated-assabiqoon-fb',
+    kind: 'facebook',
+    title: 'สำนักพิมพ์อัซซาบิกูน (Facebook)',
+    description: 'เพจทางการของสำนักพิมพ์อัซซาบิกูน เผยแพร่บทความ หนังสือแปล ซีรีส์สอนตำราอะกีดะฮ์ และไลฟ์สดวิชาการตามแนวทางสะลัฟ',
+    url: 'https://www.facebook.com/AssabiqoonPublisher',
+  },
+  {
+    id: 'curated-munadiya-ig',
+    kind: 'instagram',
+    title: 'Munadiya Official (Instagram)',
+    description: MUNADIYA_DESC,
+    url: 'https://www.instagram.com/munadiya_official/',
+  },
   {
     id: 'curated-talib-club-web',
     kind: 'website',
@@ -342,9 +367,19 @@ function normUrl(url) {
   return String(url || '').trim().toLowerCase().replace(/^https?:\/\/(www\.)?/, '').replace(/\/+$/, '');
 }
 
+/** Fills in missing descriptions for known sources (e.g. Munadiya) without overwriting custom text. */
+function enrichMissingDescriptions(items) {
+  return items.map((it) => {
+    if (!it.description && /munadiya|มุนาดิยา/i.test(`${it.title} ${it.url}`)) {
+      return { ...it, description: MUNADIYA_DESC };
+    }
+    return it;
+  });
+}
+
 /** Merges curated sources that are not already present in `existing` by normalized URL. */
 export function mergeRecommendedSources(existing = []) {
-  const base = normalise(existing);
+  const base = enrichMissingDescriptions(normalise(existing));
   const seen = new Set(base.map((it) => normUrl(it.url)));
   const additions = normalise(RECOMMENDED_THAI_SALAFI_SOURCES).filter(
     (it) => !seen.has(normUrl(it.url))
@@ -360,7 +395,7 @@ export async function loadSources() {
       return normalise(RECOMMENDED_THAI_SALAFI_SOURCES);
     }
     const data = snap.data();
-    const stored = normalise(data?.items);
+    const stored = enrichMissingDescriptions(normalise(data?.items));
     if ((data?.curatedVersion || 0) >= CURATED_VERSION) {
       return stored;
     }

@@ -125,8 +125,9 @@
 .website  { background: rgba(62, 230, 160, 0.14); color: #3ee6a0; }
 .youtube  { background: rgba(255, 99, 92, 0.15);  color: #ff635c; }
 .telegram { background: rgba(90, 178, 255, 0.15); color: #5ab2ff; }
-.facebook { background: rgba(120, 145, 255, 0.16); color: #7891ff; }
-.drive    { background: rgba(255, 199, 89, 0.15); color: #ffc759; }
+.facebook  { background: rgba(120, 145, 255, 0.16); color: #7891ff; }
+.instagram { background: rgba(244, 114, 182, 0.16); color: #f472b6; }
+.drive     { background: rgba(255, 199, 89, 0.15); color: #ffc759; }
 .library  { background: rgba(186, 148, 255, 0.15); color: #ba94ff; }
 .other    { background: var(--surface-3); color: var(--fg-2); }
 
