@@ -12,6 +12,7 @@ import { useBodyScrollLock } from '@/lib/bodyScrollLock';
 
 const NAV = [
   { label: 'หน้าหลัก', href: '/' },
+  { label: 'แผ่นพับดะอ์วะฮ์', href: '/pamphlets' },
   { label: 'แหล่งหนังสืออื่นๆ', href: '/sources' },
   { label: 'เกี่ยวกับ', href: '/about' },
 ];
@@ -194,6 +195,7 @@ export default function Masthead({ children }) {
         <div className={`container ${styles.footerInner}`}>
           <span>Al-Maktabah Al-Athariyyah</span>
           <span className={styles.footerLinks}>
+            <Link href="/pamphlets" className="tlink">แผ่นพับดะอ์วะฮ์</Link>
             <Link href="/about" className="tlink">เกี่ยวกับคลัง</Link>
             <Link href="/sources" className="tlink">แหล่งหนังสืออื่นๆ</Link>
           </span>

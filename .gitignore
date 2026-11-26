@@ -62,3 +62,6 @@ __pycache__/
 /output/pdf/
 /tmp/pdfs/
 /scripts/book-download/
+
+# Local Thai pamphlets working folder (web assets live in public/pamphlets/)
+pamphlets-th/

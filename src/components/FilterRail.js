@@ -3,9 +3,6 @@
 import { useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { facetValues } from '@/lib/bookFields';
-import dynamic from 'next/dynamic';
-const Select = dynamic(() => import('react-select'), { ssr: false });
-import { selectStyles } from '@/lib/selectStyles';
 import styles from './FilterRail.module.css';
 
 /**
@@ -77,16 +74,16 @@ function FilterGroup({ field, books, value, onChange }) {
       {open && (
         <div className={styles.options}>
           {useSelect ? (
-            <Select
-              instanceId={`filter-${field.key}`}
-              isClearable
-              styles={selectStyles}
-              options={selectOptions}
-              value={selectedOption}
-              onChange={(selected) => onChange(selected ? selected.value : '')}
-              placeholder="ค้นหา..."
-              classNamePrefix="react-select"
-            />
+            <select
+              className={styles.nativeSelect}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+            >
+              <option value="">ทั้งหมด</option>
+              {options.map((o) => (
+                <option key={o.value} value={o.value}>{o.value} ({o.count})</option>
+              ))}
+            </select>
           ) : (
             <>
               {value && (

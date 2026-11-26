@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>การเหยียดเชื้อชาติ — การกดขี่ ความอยุติธรรม และคำสอนของอิสลาม — แผ่นพับ 3 ตอน หน้า-หลัง (A4 แนวนอน)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #181816;
+      color: #f4f1ea;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      padding: 1.25rem 1rem 3rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      max-width: 297mm;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #222220;
+      padding: 0.85rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #3a3a35;
+    }
+    .toolbar-title {
+      font-weight: 700;
+      font-size: 0.96rem;
+      color: #f5ea14;
+    }
+    .toolbar-hint {
+      font-size: 0.82rem;
+      color: #c8c6be;
+      margin-top: 2px;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .toolbar button, .toolbar a {
+      padding: 0.5rem 1rem;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #484842;
+      background: #2f2f2b;
+      color: #f4f1ea;
+    }
+    .toolbar .btn-primary {
+      background: #d81e26;
+      border-color: #d81e26;
+      color: #ffffff;
+    }
+    .toolbar .btn-primary:hover { background: #b8161d; }
+
+    .sheet-label {
+      max-width: 297mm;
+      margin: 0 auto 0.5rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #d7d5cd;
+      letter-spacing: 0.02em;
+    }
+
+    /* ===== A4 LANDSCAPE TRIFOLD SHEET (297mm x 210mm) ===== */
+    .trifold-sheet {
+      width: 297mm;
+      height: 210mm;
+      margin: 0 auto 2rem;
+      display: grid;
+      grid-template-columns: 99mm 99mm 99mm;
+      grid-template-rows: 210mm;
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+      background: #deddd8;
+      position: relative;
+    }
+
+    .trifold-sheet::before,
+    .trifold-sheet::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 1px dashed rgba(128, 128, 128, 0.28);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .trifold-sheet::before { left: 99mm; }
+    .trifold-sheet::after { left: 198mm; }
+
+    .panel {
+      width: 99mm;
+      height: 210mm;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== PANEL CONTENT STYLES (calibrated for 99mm x 210mm) ===== */
+    .panel-inner {
+      padding: 7mm 6.5mm 6mm;
+      font-size: 8.2pt;
+      line-height: 1.50;
+    }
+    .panel-light {
+      background: #deddd8;
+      color: #161614;
+    }
+    .panel-soft {
+      background: #e9e8e3;
+      color: #161614;
+    }
+    .panel-back {
+      background: #1d1d1b;
+      color: #eeede8;
+      padding-bottom: 0;
+      justify-content: space-between;
+    }
+
+    .panel-inner h2 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 10.4pt;
+      font-weight: 800;
+      line-height: 1.35;
+      margin-bottom: 2.4mm;
+      letter-spacing: 0.01em;
+    }
+    .panel-light h2, .panel-soft h2 {
+      color: #111110;
+      border-bottom: 1.5pt solid #d81e26;
+      padding-bottom: 1.2mm;
+      margin-top: 2mm;
+    }
+    .panel-light h2:first-child, .panel-soft h2:first-child { margin-top: 0; }
+    .panel-back h2 { color: #f5ea14; }
+
+    .panel-inner p {
+      margin-bottom: 2.3mm;
+      text-align: left;
+    }
+
+    .callout-red {
+      font-family: 'Noto Sans Thai', sans-serif;
+      color: #d81e26;
+      font-size: 9.8pt;
+      font-weight: 700;
+      line-height: 1.42;
+      margin: 3mm 0 1.2mm !important;
+      padding-left: 3mm;
+      border-left: 2.5pt solid #d81e26;
+    }
+    .callout-src {
+      font-size: 7.4pt;
+      color: #44433e;
+      margin-bottom: 3mm !important;
+      padding-left: 3mm;
+    }
+    .panel-back .callout-red {
+      color: #f5ea14;
+      border-left-color: #f5ea14;
+    }
+    .panel-back .callout-src {
+      color: #c8c6be;
+    }
+
+    .quote-indent {
+      margin: 1.6mm 0 2.3mm 3.2mm !important;
+      font-weight: 700;
+      line-height: 1.46;
+    }
+    .panel-light .quote-indent, .panel-soft .quote-indent { color: #121210; }
+    .panel-back .quote-indent { color: #ffffff; }
+
+    .cite {
+      font-weight: 400;
+      opacity: 0.85;
+      font-size: 7.5pt;
+    }
+
+    .footnotes-box {
+      margin-top: 2.5mm;
+      padding-top: 2mm;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 6.8pt;
+      line-height: 1.42;
+      color: #d2d0c8;
+    }
+    .footnotes-box h3 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 7.6pt;
+      font-weight: 700;
+      color: #f5ea14;
+      margin-bottom: 1.2mm;
+    }
+    .footnotes-box ol {
+      padding-left: 3.8mm;
+    }
+    .footnotes-box li {
+      margin-bottom: 0.6mm;
+    }
+
+    .author-line {
+      margin-top: 2.2mm;
+      font-size: 7.5pt;
+      color: #f5ea14;
+      font-weight: 600;
+    }
+
+    /* Authentic TROID bottom footer bar on Back Cover */
+    .troid-footer {
+      margin: 3mm -6.5mm 0;
+      padding: 3.8mm 6mm 4.2mm;
+      background: #11110f;
+      border-top: 2pt solid #d81e26;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3mm;
+      color: #f4f2ec;
+      font-size: 7pt;
+      line-height: 1.42;
+    }
+    .troid-brand {
+      font-family: Georgia, serif;
+      font-size: 18pt;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: #f5ea14;
+    }
+    .troid-sub {
+      font-size: 6.6pt;
+      margin-top: 1mm;
+      opacity: 0.9;
+    }
+    .troid-divider {
+      width: 1.5pt;
+      height: 11mm;
+      background: #d81e26;
+      flex-shrink: 0;
+    }
+    .troid-info {
+      flex: 1;
+      font-size: 6.5pt;
+    }
+
+    /* ===== FRONT COVER (Page 2, Right Column) ===== */
+    .panel-cover {
+      background: url('assets/07-cover-bg.jpg') center center / cover no-repeat;
+      color: #111110;
+    }
+    .cover-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(245, 234, 20, 0.72) 0%, rgba(245, 234, 20, 0.28) 42%, rgba(245, 234, 20, 0.0) 65%);
+      pointer-events: none;
+    }
+    .cover-vertical-wrap {
+      position: absolute;
+      left: 4.5mm;
+      top: 7mm;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.6mm;
+      z-index: 2;
+    }
+    .cover-v-black {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 22pt;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      color: #111110;
+      line-height: 1.05;
+      white-space: nowrap;
+    }
+    .cover-v-red-col {
+      display: flex;
+      gap: 0.8mm;
+    }
+    .cover-v-red {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 11.2pt;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #d81e26;
+      line-height: 1.12;
+      white-space: nowrap;
+    }
+    .cover-verse-box {
+      position: absolute;
+      top: 8.5mm;
+      right: 5.5mm;
+      width: 54mm;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      font-size: 8.8pt;
+      font-weight: 600;
+      line-height: 1.48;
+      color: #141412;
+      text-align: left;
+      z-index: 2;
+    }
+    .cover-verse-ref {
+      margin-top: 2mm;
+      font-size: 7.8pt;
+      font-weight: 700;
+      color: #2c2c28;
+    }
+
+    /* ===== PRINT: EXACT 2-PAGE A4 LANDSCAPE DOUBLE-SIDED TRIFOLD ===== */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .no-print { display: none !important; }
+      .trifold-sheet {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .trifold-sheet:last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .trifold-sheet::before,
+      .trifold-sheet::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div>
+      <div class="toolbar-title">แผ่นพับที่ 07: การเหยียดเชื้อชาติ — การกดขี่ ความอยุติธรรม และคำสอนของอิสลาม (Desktop Trifold A4 แนวนอน)</div>
+      <div class="toolbar-hint">วิธีพิมพ์: กดปุ่มพิมพ์ → เลือก A4 แนวนอน (Landscape) → ตั้งค่าขอบกระดาษ None → เปิด Background graphics → พิมพ์ 2 หน้า (Flip on short edge)</div>
+    </div>
+    <div class="toolbar-actions">
+      <a href="/pamphlets">← สารบัญรวม</a>
+      <button class="btn-primary" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF (2 หน้า หน้า-หลัง)</button>
+    </div>
+  </div>
+
+  <!-- ==================== SHEET 1: INSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 1 (ด้านในแผ่นพับ): คอลัมน์ซ้าย • คอลัมน์กลาง • คอลัมน์ขวา</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Inside Left) -->
+    <div class="panel panel-inner panel-light">
+      <h2>การกดขี่และความอยุติธรรม</h2>
+
+      <p>มุสลิมถูกสั่งใช้ให้ยึดมั่นในความยุติธรรมในทุกกิจการ อัลลอฮ์ตรัสว่า:</p>
+
+      <p class="quote-indent">“โอ้ปวงบ่าวของข้าเอ๋ย แท้จริงข้าได้กำหนดให้การกดขี่อธรรมเป็นสิ่งต้องห้ามสำหรับตัวข้าเอง และได้กำหนดให้มันเป็นสิ่งต้องห้ามในหมู่พวกเจ้า ดังนั้นพวกเจ้าอย่าได้กดขี่อธรรมซึ่งกันและกัน”<sup>[1]</sup></p>
+
+      <p>และท่านนบีมุฮัมมัด (ﷺ) กล่าวว่า:</p>
+
+      <p class="quote-indent">“การกดขี่อธรรมจะกลายเป็นความมืดมิดอันซ้อนทับกันเป็นชั้น ๆ ในวันกิยามะฮ์ (วันฟื้นคืนชีพ)”<sup>[2]</sup></p>
+
+      <p>น่าเสียดายที่ประเทศตะวันตกเต็มไปด้วยความอยุติธรรมและการกดขี่ระหว่างผู้คน ตลอดจนความเสื่อมทรามทางศีลธรรมและการฝ่าฝืนต่อพระผู้เป็นเจ้าแห่งสรรพสิ่งที่ถูกสร้าง การเหยียดเชื้อชาติเป็นเพียงโฉมหน้าอันอัปลักษณ์ด้านหนึ่งของความอยุติธรรมนั้น ซึ่งเราจะกล่าวถึงในบทความสั้น ๆ ฉบับนี้</p>
+
+      <p class="callout-red">“แท้จริง การตั้งภาคีในการเคารพสักการะต่ออัลลอฮ์นั้น เป็นความอยุติธรรมอันยิ่งใหญ่โดยแท้”</p>
+      <p class="callout-src">— อัลกุรอาน ซูเราะฮ์ ลุกมาน 31:13</p>
+
+      <h2>ความอยุติธรรมที่ยิ่งใหญ่ที่สุด</h2>
+
+      <p>ความอยุติธรรมที่ยิ่งใหญ่ที่สุดที่มนุษย์กระทำคือ การที่พวกเขาละทิ้งการเคารพสักการะต่ออัลลอฮ์ ละทิ้งทางนำและบทบัญญัติของพระองค์ อัลลอฮ์ตรัสว่า: <strong>“แท้จริง การตั้งภาคีในการเคารพสักการะต่ออัลลอฮ์นั้น เป็นความอยุติธรรมอันยิ่งใหญ่โดยแท้”</strong> และหากผู้คนถูกปล่อยให้กระทำตามอำเภอใจโดยปราศจากทางนำ พวกเขาก็จะกดขี่ข่มเหงซึ่งกันและกัน ซึ่งเป็นความจริงอันน่าเศร้าที่เราสามารถเห็นได้รอบตัวในทุกวันนี้ อัลลอฮ์ตรัสว่า:</p>
+
+      <p class="quote-indent">“และผู้ใดผินหลังให้แก่ข้อตักเตือนของข้า (อัลกุรอาน) แท้จริงสำหรับเขานั้นคือชีวิตที่คับแค้นยากลำบาก และเราจะให้เขาฟื้นคืนชีพในวันกิยามะฮ์ในสภาพที่ตาบอด”<sup>[3]</sup></p>
+    </div>
+
+    <!-- Column 2 (Inside Center) -->
+    <div class="panel panel-inner panel-soft">
+      <p>ลองพิจารณาตัวอย่างของนครมักกะฮ์ในคาบสมุทรอาหรับยุคก่อนอิสลาม ในยุคนั้นมีความอยุติธรรมอันใหญ่หลวงเกิดขึ้นมากมาย เช่น การเหยียดเชื้อชาติ ความคลั่งเผ่าพันธุ์ การฝังเด็กหญิงทั้งเป็น การฆาตกรรม การผิดประเวณี การลักขโมย ดอกเบี้ย การดื่มของมึนเมา และอื่น ๆ แต่เมื่อผู้คนเหล่านั้นเข้ารับอิสลาม ยอมจำนนต่ออัลลอฮ์ เคารพสักการะพระองค์แต่เพียงผู้เดียว ปฏิบัติตามทางนำแห่งอัลกุรอานและแบบอย่างของท่านนบีมุฮัมมัด (ﷺ) ความอยุติธรรมทั้งหลายก็ยุติลง ผู้กระทำผิดถูกลงโทษ และสังคมก็เจริญรุ่งเรือง มีความปลอดภัย และปราศจากการกดขี่</p>
+
+      <p>นี่คือผลลัพธ์ของการปฏิบัติตามทางนำ อัลลอฮ์ทรงถ่ายทอดเรื่องราวของท่านนบีนูห์ (อะลัยฮิสสะลาม) ว่า:</p>
+
+      <p class="quote-indent">“ข้าพเจ้าได้กล่าวแก่กลุ่มชนของข้าพเจ้าว่า: ‘พวกท่านจงขออภัยโทษต่อพระเจ้าของพวกท่านเถิด เพราะแท้จริงพระองค์เป็นผู้ทรงอภัยยิ่ง พระองค์จะทรงหลั่งน้ำฝนลงมาให้แก่พวกท่านอย่างอุดมสมบูรณ์ และจะทรงเพิ่มพูนทรัพย์สินและลูกหลานให้แก่พวกท่าน และพระองค์จะทรงบันดาลสวนผลไม้ให้แก่พวกท่าน และทรงบันดาลแม่น้ำลำธารที่ไหลรินให้แก่พวกท่าน เหตุใดพวกท่านจึงไม่ยำเกรงอัลลอฮ์และไม่มุ่งหวังผลตอบแทนจากพระองค์เล่า?’”<sup>[4]</sup></p>
+
+      <p class="callout-red">“โอ้มนุษย์เอ๋ย แท้จริงพระเจ้าของพวกท่านนั้นมีเพียงหนึ่งเดียว และบิดาของพวกท่าน (อาดัม) ก็มีเพียงหนึ่งเดียว แท้จริงชาวอาหรับมิได้ประเสริฐไปกว่าผู้มิใช่ชาวอาหรับ...”</p>
+      <p class="callout-src">— ท่านนบีมุฮัมมัด (ﷺ)</p>
+
+      <h2>อิสลามและการเหยียดเชื้อชาติ</h2>
+
+      <p>อิสลามคือศาสนาที่ตัดสินผู้คนตามความยำเกรง การงานที่ดีงาม และมารยาทอันดีงาม มิใช่ตามสีผิว รูปร่างหน้าตา หรือเพศสภาพ ท่านนบี (ﷺ) กล่าวว่า:</p>
+    </div>
+
+    <!-- Column 3 (Inside Right) -->
+    <div class="panel panel-inner panel-light">
+      <p class="quote-indent">“โอ้มนุษย์เอ๋ย แท้จริงพระเจ้าของพวกท่านนั้นมีเพียงหนึ่งเดียว และบิดาของพวกท่าน (อาดัม) ก็มีเพียงหนึ่งเดียว แท้จริงชาวอาหรับมิได้ประเสริฐไปกว่าผู้มิใช่ชาวอาหรับ และผู้มิใช่ชาวอาหรับก็มิได้ประเสริฐไปกว่าชาวอาหรับ คนผิวขาวมิได้ประเสริฐไปกว่าคนผิวดำ และคนผิวดำก็มิได้ประเสริฐไปกว่าคนผิวขาว เว้นแต่ด้วยความยำเกรงและเกรงกลัวต่ออัลลอฮ์ ฉันได้เผยแผ่สาส์นแล้วมิใช่หรือ?” พวกเขาตอบว่า: “แท้จริงท่านเราะสูลุลลอฮ์ได้เผยแผ่สาส์นแล้ว”<sup>[5]</sup></p>
+
+      <p>มุสลิมทุกคนที่เกรงกลัวอัลลอฮ์ย่อมรังเกียจการเหยียดเชื้อชาติ ไม่มีการเหยียดเชื้อชาติในหมู่เหล่าศอฮาบะฮ์ของท่านนบี หนึ่งในศอฮาบะฮ์ที่ใกล้ชิดที่สุดของท่านนบี (ﷺ) คือ ท่านอับดุรเราะห์มาน บิน เอาฟ์ ได้ยกน้องสาวของท่านให้แต่งงานกับท่านบิลาล บิน เราะบาห์ ศอฮาบะฮ์ผู้ทำหน้าที่อะซานเรียกร้องมุสลิมสู่การละหมาด</p>
+
+      <p>นางเป็นสตรีอาหรับเผ่ากุร็อยช์ ส่วนท่านบิลาลเป็นอดีตทาสผิวดำที่ได้รับการปลดปล่อยจากอะบิสซิเนีย (เอธิโอเปีย) แต่สิ่งนั้นหาได้เป็นความแตกต่างใด ๆ ไม่ เพราะอิสลามมอบเกียรติยศให้แก่ทุกคนที่น้อมรับอิสลามและปฏิบัติตามทางนำ พระเจ้าของเราคืออัลลอฮ์ผู้ทรงสูงส่งตรัสว่า:</p>
+
+      <p class="callout-red">“โอ้มนุษยชาติเอ๋ย แท้จริงเราได้สร้างพวกเจ้ามาจากเพศชายและเพศหญิง และได้ทำให้พวกเจ้าแยกเป็นเผ่าพันธุ์และตระกูลต่าง ๆ เพื่อพวกเจ้าจะได้ทำความรู้จักซึ่งกันและกัน แท้จริงผู้ที่มีเกียรติที่สุดในหมู่พวกเจ้า ณ อัลลอฮ์ คือผู้ที่มีความยำเกรงที่สุดในหมู่พวกเจ้า แท้จริงอัลลอฮ์เป็นผู้ทรงรอบรู้ ผู้ทรงตระหนักยิ่ง”<sup>[6]</sup></p>
+      <p class="callout-src">— อัลกุรอาน ซูเราะฮ์ อัล-หุญุรอต 49:13</p>
+    </div>
+  </section>
+
+  <!-- ==================== SHEET 2: OUTSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 2 (ด้านนอกแผ่นพับ): คอลัมน์ซ้าย [พับใน] • คอลัมน์กลาง [ปกหลัง + TROID] • คอลัมน์ขวา [ปกหน้า]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Outside Left / Inside Flap) -->
+    <div class="panel panel-inner panel-soft">
+      <p class="callout-red">“พวกท่านทั้งหมดคือลูกหลานของอาดัม และอาดัมนั้นมาจากดิน”</p>
+      <p class="callout-src">— ท่านนบีมุฮัมมัด (ﷺ)</p>
+
+      <p>นักวิชาการผู้ทรงคุณธรรม เชค อิบนุ บาซ ได้กล่าวว่า:</p>
+
+      <p class="quote-indent">“อัลลอฮ์ได้ทรงชี้แจงอย่างชัดเจนในอายะฮ์นี้ว่า ไม่มีบุคคลใดมีความพิเศษเหนือกว่าอีกคนหนึ่ง หรือมีความประเสริฐเหนือกว่าอีกคนหนึ่ง ณ อัลลอฮ์ เว้นแต่ด้วยความยำเกรง ผู้ที่มีเกียรติที่สุดในหมู่มนุษย์ ณ อัลลอฮ์ คือผู้ที่ทรงคุณธรรม เชื่อฟังภักดี และเกรงกลัวอัลลอฮ์มากที่สุด ท่านนบี (ﷺ) ถูกถามว่า ‘ใครคือผู้ที่มีเกียรติที่สุดในหมู่มนุษย์?’ ท่านจึงตอบว่า ‘คือผู้ที่มีความยำเกรงที่สุดในหมู่พวกเขา’”<sup>[7]</sup></p>
+
+      <p>ท่านนบี (ﷺ) ยังกล่าวอีกว่า:</p>
+
+      <p class="quote-indent">“อัลลอฮ์ผู้ทรงสูงส่งได้ทรงขจัดความหยิ่งทะนงแห่งยุคญาฮิลียะฮ์ (ยุคก่อนอิสลาม) และการโอ้อวดในบรรพบุรุษออกไปจากพวกเจ้าแล้ว บุคคลหนึ่งนั้นมีเพียงผู้ศรัทธาที่ยำเกรง หรือไม่ก็คนบาปที่น่าสมเพช พวกเจ้าทั้งหมดคือลูกหลานของอาดัม และอาดัมนั้นมาจากดิน จงให้ผู้คนยุติการโอ้อวดเกี่ยวกับบรรพบุรุษและเผ่าพันธุ์ของพวกเขาเสียเถิด มิฉะนั้นพวกเขาจะเป็นเชื้อเพลิงแห่งไฟนรก หรือพวกเขาจะมีค่าน้อยยิ่งกว่าแมลงด้วงที่กลิ้งมูลสัตว์ด้วยจมูกของมัน ณ อัลลอฮ์”<sup>[8]</sup></p>
+
+      <p>จากบทความสั้น ๆ ฉบับนี้ ผู้อ่านย่อมสามารถมองเห็นถึงความยุติธรรมของอิสลามและจุดยืนของอิสลามต่อการเหยียดเชื้อชาติ ตลอดจนการที่อิสลามมอบยารักษาอันยั่งยืนให้แก่โรคร้ายและความแตกแยกในสังคม</p>
+    </div>
+
+    <!-- Column 2 (Outside Center / Back Cover): Dark Charcoal + Footnotes + TROID Footer -->
+    <div class="panel panel-inner panel-back">
+      <div>
+        <h2>ความยุติธรรมในอิสลาม</h2>
+        <p class="callout-red">“และส่วนหนึ่งจากสัญญาณทั้งหลายของพระองค์คือ การสร้างชั้นฟ้าทั้งหลายและแผ่นดิน และความหลากหลายแห่งภาษาและสีผิวของพวกเจ้า แท้จริงในการนั้นย่อมมีสัญญาณทั้งหลายสำหรับบรรดาผู้มีความรู้”</p>
+        <p class="callout-src">— อัลกุรอาน ซูเราะฮ์ อัร-รูม 30:22</p>
+
+        <div class="footnotes-box">
+          <h3>เอกสารอ้างอิง</h3>
+          <ol>
+            <li>ศอฮีฮ์ มุสลิม, หะดีษที่ 2577</li>
+            <li>ศอฮีฮ์ อัล-บุคอรี, หะดีษที่ 2447; ศอฮีฮ์ มุสลิม, หะดีษที่ 2579</li>
+            <li>อัลกุรอาน ซูเราะฮ์ ฏอฮา 20:124</li>
+            <li>อัลกุรอาน ซูเราะฮ์ นูห์ 71:10–13</li>
+            <li>มุสนัด อะห์มัด, หะดีษที่ 22978 ตรวจสอบโดย เชค อัล-อัลบานี ใน <em>อัศ-ศอฮีฮะฮ์</em>, 6/199</li>
+            <li>อัลกุรอาน ซูเราะฮ์ อัล-หุญุรอต 49:13</li>
+            <li>ศอฮีฮ์ อัล-บุคอรี, หะดีษที่ 3353; ศอฮีฮ์ มุสลิม, หะดีษที่ 2378</li>
+            <li>สุนัน อะบู ดาวูด, หะดีษที่ 5116 ตรวจสอบโดย เชค อัล-อัลบานี</li>
+          </ol>
+        </div>
+
+        <p class="author-line">ผู้เขียน: อะบู เคาะดีญะฮ์ อับดุลวาฮิด (Abū Khadījah ʿAbd al-Wāḥid)</p>
+      </div>
+
+      <footer class="troid-footer">
+        <div>
+          <div class="troid-brand">troid</div>
+          <div class="troid-sub">troid.org • ฉบับแปลภาษาไทย</div>
+        </div>
+        <div class="troid-divider"></div>
+        <div class="troid-info">
+          874-A Weston Rd. Toronto, Canada<br>
+          info@troid.org<br>
+          <strong>Salafi Publications &amp; @troidorg</strong>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Column 3 (Outside Right / Front Cover): Original Graphic -->
+    <div class="panel panel-cover">
+      <div class="cover-scrim"></div>
+      <div class="cover-vertical-wrap">
+        <div class="cover-v-black">การเหยียดเชื้อชาติ</div>
+        <div class="cover-v-red-col">
+          <div class="cover-v-red">การกดขี่ ความอยุติธรรม</div>
+          <div class="cover-v-red">และคำสอนของอิสลาม</div>
+        </div>
+      </div>
+      <div class="cover-verse-box">
+        “และส่วนหนึ่งจากสัญญาณทั้งหลายของพระองค์คือ การสร้างชั้นฟ้าทั้งหลายและแผ่นดิน และความหลากหลายแห่งภาษาและสีผิวของพวกเจ้า แท้จริงในการนั้นย่อมมีสัญญาณทั้งหลายสำหรับบรรดาผู้มีความรู้”
+        <div class="cover-verse-ref">(อัลกุรอาน ซูเราะฮ์ อัร-รูม 30:22)</div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

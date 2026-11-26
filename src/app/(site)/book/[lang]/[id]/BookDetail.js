@@ -26,7 +26,7 @@ import { copyText } from '@/lib/copyText';
 import { recordAccess } from '@/lib/stats';
 import { asList, joinPeople } from '@/lib/people';
 import { readBookCache } from '@/lib/bookCatalog';
-import { findSeriesBooks } from '@/lib/series';
+import { findSeriesBooks, parseSeries } from '@/lib/series';
 import { getReadingProgress } from '@/lib/readingProgress';
 import styles from './page.module.css';
 
@@ -121,21 +121,60 @@ export default function BookDetail({ lang, id }) {
     };
   }, [book?.category, id, approved, authLoading]);
 
-  // Series siblings (from client cache, zero extra Firestore reads) + saved reading bookmark.
+  // Series siblings (from client cache first; falls back to Firestore when opened
+  // directly without visiting the shelf) + saved reading bookmark.
   useEffect(() => {
-    if (!book) return;
+    if (!book || authLoading) return;
+    let alive = true;
     const progress = getReadingProgress(id);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSavedPage(progress?.page || 0);
 
+    const seriesInfo = parseSeries(book.title);
+    if (!seriesInfo) {
+      setSeriesBooks([]);
+      return;
+    }
+
     const cached = readBookCache(approved ? 'full' : 'public') || readBookCache('public');
     if (cached?.books?.length) {
       const visible = cached.books.filter((b) => !b.restricted || approved);
-      setSeriesBooks(findSeriesBooks(book, visible));
-    } else {
-      setSeriesBooks([]);
+      const found = findSeriesBooks(book, visible);
+      if (found.length > 1) {
+        setSeriesBooks(found);
+        return;
+      }
     }
-  }, [book, id, approved]);
+
+    // Fallback: query same category (or publisher) so direct links still show the full series album.
+    const constraints = [];
+    if (book.category) constraints.push(where('category', '==', book.category));
+    else if (book.publisher) constraints.push(where('publisher', '==', book.publisher));
+    if (!approved) constraints.push(where('restricted', '==', false));
+
+    if (constraints.length === 0) {
+      setSeriesBooks([]);
+      return;
+    }
+
+    getDocs(query(collection(db, 'books'), ...constraints, limit(200)))
+      .then((snap) => {
+        if (!alive) return;
+        const candidates = [];
+        snap.forEach((d) => {
+          const data = d.data();
+          if (!data.restricted || approved) {
+            candidates.push({ id: d.id, ...data });
+          }
+        });
+        setSeriesBooks(findSeriesBooks(book, candidates));
+      })
+      .catch((error) => console.error('Error fetching series books:', error));
+
+    return () => {
+      alive = false;
+    };
+  }, [book, id, approved, authLoading]);
 
   // Nobody's shelf has been consulted for this reader-and-book pair yet, so
   // the bookmark starts unfilled. Cleared during render rather than in the
@@ -459,42 +498,81 @@ export default function BookDetail({ lang, id }) {
             </dl>
           )}
 
-          {seriesBooks.length > 1 && (
-            <div style={{ marginTop: '1.75rem' }}>
-              <h2 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.65rem', color: 'var(--fg-2)' }}>
-                เล่มอื่นในชุดเดียวกัน ({seriesBooks.length} เล่ม)
-              </h2>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {seriesBooks.map(({ book: sb, label }) => {
-                  const isCurrent = String(sb.id) === String(id);
-                  return isCurrent ? (
-                    <span
-                      key={sb.id}
-                      style={{
-                        padding: '0.4rem 0.85rem',
-                        borderRadius: 'var(--r-sm)',
-                        background: 'var(--accent)',
-                        color: '#fff',
-                        fontSize: '0.88rem',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {label} (เล่มนี้)
-                    </span>
-                  ) : (
-                    <Link
-                      key={sb.id}
-                      href={`/book/${getLangPath(sb.language)}/${sb.id}`}
-                      className="btn"
-                      style={{ padding: '0.4rem 0.85rem', fontSize: '0.88rem' }}
-                    >
-                      {label}
-                    </Link>
-                  );
-                })}
+          {seriesBooks.length > 1 && (() => {
+            const currentIdx = seriesBooks.findIndex(({ book: sb }) => String(sb.id) === String(id));
+            const prevItem = currentIdx > 0 ? seriesBooks[currentIdx - 1] : null;
+            const nextItem = currentIdx >= 0 && currentIdx < seriesBooks.length - 1 ? seriesBooks[currentIdx + 1] : null;
+            const unit = seriesBooks[0]?.unit || 'เล่ม';
+            const seriesBase = seriesBooks[0]?.base;
+            return (
+              <div
+                style={{
+                  marginTop: '1.75rem',
+                  padding: '1.15rem 1.25rem',
+                  borderRadius: 'var(--r-md)',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                  <h2 style={{ fontSize: '0.98rem', fontWeight: 600, color: 'var(--fg)', margin: 0 }}>
+                    อัลบั้มชุดเดียวกัน{seriesBase ? `: ${seriesBase}` : ''} ({seriesBooks.length} {unit})
+                  </h2>
+                  {(prevItem || nextItem) && (
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      {prevItem && (
+                        <Link
+                          href={`/book/${getLangPath(prevItem.book.language)}/${prevItem.book.id}`}
+                          className="btn"
+                          style={{ padding: '0.28rem 0.7rem', fontSize: '0.8rem' }}
+                        >
+                          ← {prevItem.label}
+                        </Link>
+                      )}
+                      {nextItem && (
+                        <Link
+                          href={`/book/${getLangPath(nextItem.book.language)}/${nextItem.book.id}`}
+                          className="btn btn-solid"
+                          style={{ padding: '0.28rem 0.7rem', fontSize: '0.8rem' }}
+                        >
+                          {nextItem.label} →
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                  {seriesBooks.map(({ book: sb, label }) => {
+                    const isCurrent = String(sb.id) === String(id);
+                    return isCurrent ? (
+                      <span
+                        key={sb.id}
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          borderRadius: 'var(--r-sm)',
+                          background: 'var(--accent)',
+                          color: 'var(--accent-ink)',
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {label} (กำลังเปิดอยู่)
+                      </span>
+                    ) : (
+                      <Link
+                        key={sb.id}
+                        href={`/book/${getLangPath(sb.language)}/${sb.id}`}
+                        className="btn"
+                        style={{ padding: '0.4rem 0.85rem', fontSize: '0.86rem' }}
+                      >
+                        {label}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </article>
 

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ข้อสงสัยที่พบบ่อยเกี่ยวกับท่านนบีมุฮัมมัด (ﷺ) — แผ่นพับ 3 ตอน หน้า-หลัง (A4 แนวนอน)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #171e16;
+      color: #f4f1ea;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      padding: 1.25rem 1rem 3rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      max-width: 297mm;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #202a1f;
+      padding: 0.85rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #354733;
+    }
+    .toolbar-title {
+      font-weight: 700;
+      font-size: 0.96rem;
+      color: #c8e0b4;
+    }
+    .toolbar-hint {
+      font-size: 0.82rem;
+      color: #bcc8b6;
+      margin-top: 2px;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .toolbar button, .toolbar a {
+      padding: 0.5rem 1rem;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #445a41;
+      background: #2b3829;
+      color: #f4f1ea;
+    }
+    .toolbar .btn-primary {
+      background: #2e5e2a;
+      border-color: #2e5e2a;
+      color: #ffffff;
+    }
+    .toolbar .btn-primary:hover { background: #234920; }
+
+    .sheet-label {
+      max-width: 297mm;
+      margin: 0 auto 0.5rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #c9d4c4;
+      letter-spacing: 0.02em;
+    }
+
+    /* ===== A4 LANDSCAPE TRIFOLD SHEET (297mm x 210mm) ===== */
+    .trifold-sheet {
+      width: 297mm;
+      height: 210mm;
+      margin: 0 auto 2rem;
+      display: grid;
+      grid-template-columns: 99mm 99mm 99mm;
+      grid-template-rows: 210mm;
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+      background: #ffffff;
+      position: relative;
+    }
+
+    .trifold-sheet::before,
+    .trifold-sheet::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 1px dashed rgba(46, 94, 42, 0.22);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .trifold-sheet::before { left: 99mm; }
+    .trifold-sheet::after { left: 198mm; }
+
+    .panel {
+      width: 99mm;
+      height: 210mm;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== PANEL CONTENT STYLES (calibrated for 99mm x 210mm) ===== */
+    .panel-inner {
+      padding: 5.8mm 5.8mm 5.2mm;
+      font-size: 7.3pt;
+      line-height: 1.42;
+    }
+    .panel-white {
+      background: #ffffff;
+      color: #1c1b18;
+    }
+    .panel-ivory {
+      background: #f9f6ee;
+      color: #1c1b18;
+    }
+    .panel-back {
+      background: #1d3c1a;
+      color: #f2efe4;
+      padding-bottom: 0;
+      justify-content: space-between;
+    }
+
+    .main-banner {
+      text-align: center;
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 9.4pt;
+      font-weight: 800;
+      color: #2e5e2a;
+      border-bottom: 1.5pt solid #2e5e2a;
+      padding-bottom: 1.6mm;
+      margin-bottom: 2.4mm;
+      line-height: 1.32;
+    }
+
+    .panel-inner h2 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 8.6pt;
+      font-weight: 700;
+      line-height: 1.32;
+      color: #2e5e2a;
+      margin-top: 2.2mm;
+      margin-bottom: 1.4mm;
+    }
+    .panel-inner h2:first-child { margin-top: 0; }
+    .panel-back h2 { color: #e8d29c; }
+
+    .panel-inner p {
+      margin-bottom: 1.7mm;
+      text-align: left;
+    }
+
+    .q-label {
+      color: #6a3818;
+      font-weight: 700;
+    }
+    .a-label {
+      color: #2e5e2a;
+      font-weight: 700;
+    }
+    .panel-back .q-label, .panel-back .a-label {
+      color: #e8d29c;
+    }
+
+    .quote-indent {
+      margin: 1.2mm 0 1.8mm 2.8mm !important;
+      padding-left: 2.2mm;
+      border-left: 1.6pt solid #6a3818;
+      font-weight: 600;
+      color: #161512;
+      line-height: 1.40;
+    }
+    .panel-back .quote-indent {
+      border-left-color: #d6b267;
+      color: #ffffff;
+    }
+
+    .cite {
+      font-weight: 400;
+      opacity: 0.85;
+      font-size: 6.7pt;
+    }
+
+    .author-line {
+      margin-top: 2.2mm;
+      font-size: 6.9pt;
+      color: #e8d29c;
+      font-style: italic;
+    }
+
+    /* Authentic TROID bottom footer bar on Back Cover */
+    .troid-footer {
+      margin: 2.8mm -5.8mm 0;
+      padding: 3.8mm 5.8mm 4.2mm;
+      background: #132811;
+      border-top: 1.5pt solid #d6b267;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3mm;
+      color: #f4f1e6;
+      font-size: 6.8pt;
+      line-height: 1.42;
+    }
+    .troid-brand {
+      font-family: Georgia, serif;
+      font-size: 18pt;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: #ffffff;
+    }
+    .troid-sub {
+      font-size: 6.5pt;
+      margin-top: 1mm;
+      opacity: 0.9;
+    }
+    .troid-divider {
+      width: 1.5pt;
+      height: 11mm;
+      background: #d6b267;
+      flex-shrink: 0;
+    }
+    .troid-info {
+      flex: 1;
+      font-size: 6.5pt;
+    }
+
+    /* ===== FRONT COVER (Page 2, Right Column) ===== */
+    .panel-cover {
+      background: url('assets/10-cover-bg.jpg') center center / cover no-repeat;
+      color: #1a1814;
+    }
+    .cover-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(244, 232, 202, 0.52) 0%, rgba(244, 232, 202, 0.34) 70%, rgba(244, 232, 202, 0.05) 100%);
+      pointer-events: none;
+    }
+    .cover-vertical-wrap {
+      position: absolute;
+      left: 3.8mm;
+      top: 6mm;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.2mm;
+      z-index: 2;
+    }
+    .cover-v-black {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 11.5pt;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #141310;
+      line-height: 1.1;
+      white-space: nowrap;
+      text-shadow: 0 1px 6px rgba(255, 255, 255, 0.7);
+    }
+    .cover-v-green {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 26pt;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #2b5c26;
+      line-height: 1.04;
+      white-space: nowrap;
+      text-shadow: 0 2px 10px rgba(255, 255, 255, 0.75);
+    }
+    .cover-verse-box {
+      position: absolute;
+      top: 8mm;
+      right: 5mm;
+      width: 56mm;
+      font-size: 8.6pt;
+      font-weight: 700;
+      line-height: 1.46;
+      color: #1a1712;
+      text-shadow: 0 1px 6px rgba(255, 250, 238, 0.85);
+      z-index: 2;
+    }
+    .cover-verse-ref {
+      margin-top: 1.5mm;
+      font-size: 7.6pt;
+      font-weight: 600;
+      color: #362e22;
+    }
+    .cover-questions {
+      position: absolute;
+      top: 78mm;
+      right: 5mm;
+      width: 52mm;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 4.5mm;
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 9.4pt;
+      font-weight: 700;
+      line-height: 1.34;
+      color: #5b2e12;
+      text-shadow: 0 1px 8px rgba(255, 248, 232, 0.92);
+    }
+
+    /* ===== PRINT: EXACT 2-PAGE A4 LANDSCAPE DOUBLE-SIDED TRIFOLD ===== */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .no-print { display: none !important; }
+      .trifold-sheet {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .trifold-sheet:last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .trifold-sheet::before,
+      .trifold-sheet::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div>
+      <div class="toolbar-title">แผ่นพับที่ 10: ข้อสงสัยที่พบบ่อยเกี่ยวกับท่านนบีมุฮัมมัด (ﷺ) (Desktop Trifold A4 แนวนอน)</div>
+      <div class="toolbar-hint">วิธีพิมพ์: กดปุ่มพิมพ์ → เลือก A4 แนวนอน (Landscape) → ตั้งค่าขอบกระดาษ None → เปิด Background graphics → พิมพ์ 2 หน้า (Flip on short edge)</div>
+    </div>
+    <div class="toolbar-actions">
+      <a href="/pamphlets">← สารบัญรวม</a>
+      <button class="btn-primary" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF (2 หน้า หน้า-หลัง)</button>
+    </div>
+  </div>
+
+  <!-- ==================== SHEET 1: INSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 1 (ด้านในแผ่นพับ): คอลัมน์ซ้าย • คอลัมน์กลาง • คอลัมน์ขวา</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Inside Left) -->
+    <div class="panel panel-inner panel-white">
+      <div class="main-banner">ข้อสงสัยที่พบบ่อยเกี่ยวกับท่านนบีมุฮัมมัด (ﷺ)</div>
+
+      <p><span class="q-label">คำถามที่ 1:</span> อนุญาตให้มุสลิมจัดงานเฉลิมฉลองในมัสยิดเพื่อรำลึกถึงชีวประวัติของท่านนบีผู้ทรงเกียรติ (ﷺ) ในคืนวันที่ 12 เดือนเราะบีอุลเอาวัล เนื่องในโอกาสวันคล้ายวันเกิดของท่านนบี (เมาลิด) โดยไม่ได้ถือเอาวันนั้นเป็นวันหยุดเฉลิมฉลองเช่นวันอีดหรือไม่? พวกเรามีความเห็นขัดแย้งกัน บ้างก็ว่าเป็นบิดอะฮ์ หะสะนะฮ์ และบ้างก็ว่าเป็นอุตริกรรมที่ชั่วร้าย</p>
+
+      <p><span class="a-label">คำตอบ:</span> ไม่อนุญาตให้มุสลิมจัดงานเฉลิมฉลองวันคล้ายวันเกิดของท่านนบี (ﷺ) ไม่ว่าในคืนวันที่ 12 เดือนเราะบีอุลเอาวัล หรือในคืนใด ๆ ทั้งสิ้น และไม่อนุญาตให้จัดงานเฉลิมฉลองวันคล้ายวันเกิดของบุคคลอื่นใดเช่นกัน เพราะการเฉลิมฉลองวันคล้ายวันเกิดนั้นเป็น <strong>อุตริกรรม (บิดอะฮ์)</strong> ในศาสนา แท้จริงแล้วท่านนบี (ﷺ) มิเคยเฉลิมฉลองวันเกิดของท่านเองเลยแม้แต่ครั้งเดียวตลอดชีวิตของท่าน ทั้งที่ท่านคือผู้เผยแผ่ศาสนานี้และเป็นผู้ปฏิบัติตามบทบัญญัติที่ถูกประทานมายังท่านจากพระเจ้าของท่าน และท่านมิได้สั่งให้ผู้อื่นเฉลิมฉลองมัน ไม่ว่าจะเป็นบรรดาเคาะลีฟะฮ์ผู้ทรงธรรม หรือเหล่าศอฮาบะฮ์ท่านอื่น ๆ อีกทั้งไม่มีผู้ใดในชนรุ่น <strong>ตาบิอีน (Tābiʿīn)</strong> หรือชนรุ่นถัดมากระทำเช่นนั้นด้วย! ทั้งที่พวกเขาคือมนุษย์ที่ประเสริฐที่สุดและใกล้ชิดท่านนบีมากที่สุด ท่านเราะสูลุลลอฮ์ (ﷺ) กล่าวว่า:</p>
+
+      <p class="quote-indent">“มนุษย์ที่ประเสริฐที่สุดคือชนรุ่นของฉัน จากนั้นคือบรรดาผู้ที่ตามหลังพวกเขา และจากนั้นคือบรรดาผู้ที่ตามหลังพวกเขา” <span class="cite">[ศอฮีฮ์ อัล-บุคอรี]</span></p>
+
+      <p>ด้วยเหตุนี้ มันจึงเป็นอุตริกรรมต้องห้าม (<strong>บิดอะฮ์</strong>) ท่านเราะสูลุลลอฮ์ (ﷺ) กล่าวว่า: <strong>“ผู้ใดอุตริสิ่งใหม่ขึ้นมาในกิจการ (ศาสนา) นี้ของเรา ซึ่งมิใช่ส่วนหนึ่งของมัน การกระทำนั้นย่อมถูกปฏิเสธ”</strong> <span class="cite">[อัล-บุคอรี]</span> และอีกรายงานว่า: <strong>“ผู้ใดกระทำการงานหนึ่งซึ่งมิใช่ส่วนหนึ่งจากกิจการ (ศาสนา) นี้ของเรา การงานนั้นย่อมถูกปฏิเสธ”</strong> <span class="cite">[มุสลิม]</span></p>
+
+      <p>ดังนั้น ไม่ว่าบุคคลจะริเริ่มอิบาดะฮ์ใหม่หรือเลียนแบบอิบาดะฮ์ที่ถูกอุตริขึ้น การกระทำนั้นย่อมถูกปฏิเสธ การประกอบอิบาดะฮ์ต้องอยู่บนพื้นฐานของอัลกุรอานและซุนนะฮ์เท่านั้น เพราะศาสนาของเราได้รับการทำให้สมบูรณ์ครบถ้วนแล้ว ดังที่อัลลอฮ์ตรัสว่า:</p>
+
+      <p class="quote-indent">“วันนี้ข้าได้ทำให้ศาสนาของพวกเจ้าสมบูรณ์แล้วสำหรับพวกเจ้า และได้ทำให้ความโปรดปรานของข้าครบถ้วนแก่พวกเจ้าแล้ว และข้าได้พึงพอใจให้อิสลามเป็นศาสนาสำหรับพวกเจ้า” <span class="cite">[อัล-มาอิดะฮ์ 5:3]</span></p>
+
+      <p>สิ่งที่อัลลอฮ์ทรงทำให้สมบูรณ์แล้ว ย่อมไม่ต้องการการเพิ่มเติมใด ๆ อีก! พระองค์ตรัสว่า: <strong>“หรือว่าพวกเขามีภาคีอื่นเคียงข้างอัลลอฮ์ที่ได้บัญญัติศาสนาให้แก่พวกเขาในสิ่งที่อัลลอฮ์มิได้ทรงอนุมัติ?”</strong> <span class="cite">[อัช-ชูรอ 42:21]</span></p>
+    </div>
+
+    <!-- Column 2 (Inside Center) -->
+    <div class="panel panel-inner panel-ivory">
+      <p>ดังนั้น การเฉลิมฉลองวันคล้ายวันเกิดของท่านนบี (ﷺ) จึงเป็นศาสนกิจที่ถูกคิดค้นขึ้นใหม่หลายศตวรรษหลังจากการเสียชีวิตของท่าน ท่านนบี (ﷺ) เคยกล่าวเป็นประจำในการคุฏบะฮ์วันศุกร์ว่า:</p>
+
+      <p class="quote-indent">“แท้จริงถ้อยคำที่ดีที่สุดคือคัมภีร์ของอัลลอฮ์ และทางนำที่ดีที่สุดคือทางนำของมุฮัมมัด และกิจการที่เลวร้ายที่สุดคือบรรดาสิ่งที่ถูกคิดค้นขึ้นใหม่ (ในศาสนา) และทุก ๆ อุตริกรรม (บิดอะฮ์) คือความหลงผิด และทุก ๆ ความหลงผิดนั้นอยู่ในไฟนรก” <span class="cite">[ศอฮีฮ์ มุสลิม และ อัล-นะซาอี]</span></p>
+
+      <p>หากการเฉลิมฉลองวันคล้ายวันเกิดของท่านนบีเป็นสิ่งที่ถูกบัญญัติไว้ ชนรุ่นแรกย่อมต้องเป็นผู้ริเริ่มเป็นกลุ่มแรก เพราะพวกเขาคือชนรุ่นที่ประเสริฐที่สุดและรักท่านนบีมากที่สุด ทว่างานเฉลิมฉลองนี้กลับไม่เป็นที่รู้จักเลยในหมู่ผู้ศรัทธาสามชั่วอายุคนแรก ดังนั้น มุสลิมจึงควรออกห่างจากงานเฉลิมฉลองที่อุตริขึ้นใหม่เหล่านี้ แม้จะรวมตัวกันตามท้องถนน มัสยิด หรือบ้านเรือนเพื่อทำซิกร์และแจกขนมหวาน ทั้งหมดนี้เป็นสิ่งต้องห้าม ไม่ว่ามันจะดูงดงามเพียงใดก็ตาม</p>
+
+      <h2>คำถามที่ 2: แสงสว่างของท่านนบีมุฮัมมัด (ﷺ)</h2>
+      <p><span class="q-label">คำถามที่ 2:</span> แสงสว่าง (นูร) ของท่านนบีมุฮัมมัด (ﷺ) มาจากแสงสว่างของอัลลอฮ์ หรือมาจากแสงสว่างอื่น?</p>
+      <p><span class="a-label">คำตอบ:</span> แสงสว่างของท่านนบี (ﷺ) คือ <strong>แสงสว่างแห่งสาส์น (ริสาละฮ์) และทางนำ (ฮิดายะฮ์)</strong> ซึ่งอัลลอฮ์ทรงใช้ในการชี้นำผู้ที่พระองค์ทรงประสงค์ แน่นอนว่าแสงสว่างแห่งสาส์นและทางนำนั้นมาจากอัลลอฮ์ พระองค์ตรัสว่า:</p>
+
+      <p class="quote-indent">“และมิบังควรแก่มนุษย์คนใดที่อัลลอฮ์จะตรัสกับเขา เว้นแต่โดยทางวะฮีย์ หรือจากเบื้องหลังม่านบัง หรือโดยการที่พระองค์ทรงส่งทูตสวรรค์มาเพื่อประทานวะฮีย์ตามที่พระองค์ทรงประสงค์ด้วยอนุมัติของพระองค์ แท้จริงพระองค์เป็นผู้ทรงสูงส่ง ผู้ทรงปรีชาญาณ และในทำนองเดียวกัน เราได้ประทานวะฮีย์ (อัลกุรอาน) ตามพระบัญชาของเราลงมาให้แก่เจ้า โอมุฮัมมัด โดยที่ก่อนหน้านี้เจ้าไม่เคยรู้เลยว่าคัมภีร์คืออะไรและศรัทธาคืออะไร แต่เราได้ทำให้มัน (อัลกุรอานนี้) เป็นแสงสว่างซึ่งเราใช้ชี้นำผู้ที่เราประสงค์จากปวงบ่าวของเรา และแท้จริงเจ้า (โอมุฮัมมัด) ย่อมชี้นำมนุษย์ไปสู่แนวทางอันเที่ยงตรง แนวทางของอัลลอฮ์ ผู้ทรงเป็นเจ้าของทุกสิ่งที่อยู่ในชั้นฟ้าทั้งหลายและทุกสิ่งที่อยู่ในแผ่นดิน” <span class="cite">[อัช-ชูรอ 42:51–53]</span></p>
+
+      <p>ท่านเราะสูลุลลอฮ์ (ﷺ) ถูกสร้างขึ้นมาจากบิดาและมารดา และท่านเป็นมนุษย์คนหนึ่ง อัลลอฮ์ตรัสว่า: <strong>“จงกล่าวเถิด (โอนบี) ว่า: ‘แท้จริงฉันเป็นเพียงมนุษย์เช่นเดียวกับพวกท่าน’”</strong> <span class="cite">[อัล-กะฮ์ฟิ 18:110]</span></p>
+    </div>
+
+    <!-- Column 3 (Inside Right) -->
+    <div class="panel panel-inner panel-white">
+      <p>และท่านเราะสูลุลลอฮ์ (ﷺ) กล่าวว่า: <strong>“แท้จริงฉันเป็นมนุษย์เช่นเดียวกับพวกท่าน ฉันหลงลืมเช่นเดียวกับที่พวกท่านหลงลืม ดังนั้นหากฉันลืม พวกท่านก็จงเตือนฉัน”</strong> <span class="cite">[อัล-บุคอรี และ มุสลิม]</span> การยืนยันตัวบทเหล่านี้มิได้เป็นการลดทอนเกียรติของท่านนบีเลย เรากล่าวอย่างชัดเจนดังที่ท่านกล่าวว่า: <strong>“ทางนำที่ดีที่สุดคือทางนำของมุฮัมมัด”</strong> <span class="cite">[มุสลิม]</span> และอัลลอฮ์ตรัสว่า:</p>
+
+      <p class="quote-indent">“จงกล่าวแก่พวกเขาเถิดโอนบีว่า: หากพวกท่านรักอัลลอฮ์อย่างแท้จริง ก็จงปฏิบัติตามฉัน แล้วอัลลอฮ์จะทรงรักพวกท่านและทรงอภัยโทษความผิดให้แก่พวกท่าน” <span class="cite">[อาลิ อิมรอน 3:31]</span></p>
+
+      <p>และดำรัสของพระองค์ที่ว่า: <strong>“แท้จริงในตัวท่านเราะสูลุลลอฮ์นั้น มีแบบอย่างอันดีงามสำหรับพวกเจ้าแล้ว”</strong> <span class="cite">[อัล-อะห์ซาบ 33:21]</span> ส่วนบรรดารายงานที่อ้างว่าอัลลอฮ์ทรงสร้างแสงสว่างของท่านนบีมุฮัมมัด หรือหยิบแสงสว่างจากพระพักตร์ของพระองค์จนเต็มพระหัตถ์เป็นท่านนบี หรือทรงสร้างสรรพสิ่งจากแสงสว่างของท่านนั้น ไม่มีรายงานใดเลยที่สืบสายรายงานได้อย่างถูกต้องถึงท่านเราะสูลุลลอฮ์ (ﷺ) ไม่อนุญาตให้พรรณนาลักษณะของท่านด้วยสิ่งที่ไม่ได้รับการยืนยันในอัลกุรอานและซุนนะฮ์ คำอ้างของมุสลิมบางกลุ่มว่าท่านมิใช่มนุษย์ ว่าท่านเป็นแสงสว่าง ล่วงรู้สิ่งเร้นลับโดยอิสระ และมาปรากฏตัวในวงชุมนุมของชาวศูฟีย์ ทั้งหมดนี้เป็นความเท็จที่ไร้หลักฐาน</p>
+
+      <h2>คำถามที่ 3: ความเชื่อว่าท่านนบีเป็นแสงสว่าง ล่วงรู้สิ่งเร้นลับ และการขอความช่วยเหลือจากท่าน</h2>
+      <p><span class="q-label">คำถามที่ 3:</span> มีผู้คนที่เชื่อว่าท่านนบี (ﷺ) เป็นแสงสว่างที่มาจากแสงสว่างของอัลลอฮ์และมิใช่มนุษย์ เชื่อว่าท่านล่วงรู้สิ่งเร้นลับ และเชื่อว่าเราควรวิงวอนขอความรอดพ้น การกอบกู้ และความช่วยเหลือจากท่าน โดยเชื่อว่าท่านมีอำนาจให้คุณและให้โทษได้ หลักการศาสนาในเรื่องนี้เป็นอย่างไร?</p>
+
+      <p><span class="a-label">คำตอบ:</span> ผู้ใดเชื่อว่าท่านนบี (ﷺ) เป็นแสงสว่างที่มาจากแสงสว่างของอัลลอฮ์และมิใช่มนุษย์ และเชื่อว่าท่านมีความรู้เกี่ยวกับสิ่งเร้นลับ เขาย่อมตกเป็นผู้ปฏิเสธศรัทธา (กุฟร์) ต่ออัลลอฮ์ บุคคลที่หลงผิดเช่นนี้ไม่อาจถูกนับว่าเป็นผู้ใกล้ชิด (<strong>วะลีย์</strong>) ของอัลลอฮ์ได้ เพราะคำกล่าวนี้มีนัยถึงการปฏิเสธดำรัสของอัลลอฮ์และคำกล่าวของศาสนทูตของพระองค์ (ﷺ) หลักฐานคือดำรัสของอัลลอฮ์ที่ว่า: <strong>“จงกล่าวเถิด (โอนบี) ว่า: ‘ฉันเป็นเพียงมนุษย์เช่นเดียวกับพวกท่าน’”</strong> <span class="cite">[อัล-กะฮ์ฟิ 18:110]</span> และดำรัสของพระองค์ที่ว่า:</p>
+
+      <p class="quote-indent">“จงกล่าวเถิด (โอนบี) ว่า: ‘ไม่มีผู้ใดในชั้นฟ้าทั้งหลายและแผ่นดินที่จะล่วงรู้สิ่งเร้นลับได้นอกจากอัลลอฮ์เท่านั้น’” <span class="cite">[อัน-นัมล์ 27:65]</span></p>
+    </div>
+  </section>
+
+  <!-- ==================== SHEET 2: OUTSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 2 (ด้านนอกแผ่นพับ): คอลัมน์ซ้าย [พับใน] • คอลัมน์กลาง [ปกหลัง + TROID] • คอลัมน์ขวา [ปกหน้า]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Outside Left / Inside Flap) -->
+    <div class="panel panel-inner panel-ivory">
+      <p>และดำรัสของพระองค์ที่ว่า:</p>
+      <p class="quote-indent">“จงกล่าวเถิด (โอนบี) ว่า: ‘ฉันมิได้กล่าวแก่พวกท่านว่า ณ ที่ฉันมีคลังสมบัติทั้งหลายของอัลลอฮ์ และฉันมิได้ล่วงรู้สิ่งเร้นลับ และฉันมิได้กล่าวแก่พวกท่านว่าฉันเป็นมลาอิกะฮ์ ฉันเพียงปฏิบัติตามสิ่งที่ถูกประทานวะฮีย์มายังฉันเท่านั้น’” <span class="cite">[อัล-อันอาม 6:50]</span></p>
+
+      <p>อัลลอฮ์ยังตรัสอีกว่า:</p>
+      <p class="quote-indent">“จงกล่าวเถิด (โอมุฮัมมัด) ว่า: ‘ฉันไม่มีอำนาจที่จะให้คุณหรือให้โทษแก่ตัวเองได้ เว้นแต่ตามที่อัลลอฮ์ทรงประสงค์ และหากฉันล่วงรู้สิ่งเร้นลับแล้ว ฉันก็คงจะกอบโกยความดีงามไว้ให้แก่ตนเองอย่างมากมาย และความชั่วร้ายก็คงจะไม่ประสบแก่ฉัน ฉันเป็นเพียงผู้ตักเตือนและผู้แจ้งข่าวดีแก่กลุ่มชนผู้ศรัทธาเท่านั้น’” <span class="cite">[อัล-อะอ์รอฟ 7:188]</span></p>
+
+      <p>ส่วนการวิงวอนขอความช่วยเหลือและการกอบกู้อันเป็นอำนาจเหนือธรรมชาตินั้น เราย่อมวิงวอนขอจากอัลลอฮ์แต่เพียงผู้เดียวเท่านั้น การวิงวอนขอความช่วยเหลือหรือการกอบกู้จากท่านเราะสูลุลลอฮ์ (ﷺ) ถือเป็นการตั้งภาคี (<strong>ชิรก์</strong>) อัลลอฮ์ตรัสไว้ในอัลกุรอานว่า:</p>
+
+      <p class="quote-indent">“และพระเจ้าของพวกเจ้าตรัสว่า: ‘จงวิงวอนขอต่อข้าเถิด ข้าจะตอบรับแก่พวกเจ้า’ แท้จริงบรรดาผู้ที่หยิ่งผยองต่อการเคารพสักการะข้านั้น พวกเขาจะต้องเข้านรกญะฮันนัมในสภาพที่ต่ำต้อยอัปยศ” <span class="cite">[ฆอฟิร 40:60]</span></p>
+
+      <p>และดำรัสของพระองค์ที่ว่า:</p>
+      <p class="quote-indent">“จงกล่าวเถิด (โอมุฮัมมัด) ว่า: ‘แท้จริงฉันไม่มีอำนาจที่จะให้โทษแก่พวกท่าน หรือนำพวกท่านไปสู่แนวทางที่ถูกต้องได้’ จงกล่าวเถิด (โอมุฮัมมัด) ว่า: ‘แท้จริงจะไม่มีผู้ใดสามารถปกป้องฉันให้พ้นจากการลงโทษของอัลลอฮ์ได้ และฉันจะไม่พบที่พึ่งพิงใด ๆ เลยเว้นแต่พระองค์เท่านั้น’” <span class="cite">[อัล-ญินน์ 72:21–22]</span></p>
+
+      <p>ท่านนบี (ﷺ) ได้กล่าวแก่บุตรสาวและครอบครัวของท่านเองว่า: <strong>“ฉันไม่สามารถช่วยเหลือพวกเจ้าให้พ้นจากการลงโทษของอัลลอฮ์ได้เลยแม้แต่น้อย”</strong> <span class="cite">[อัล-บุคอรี และ มุสลิม]</span> หากนี่คือสิ่งที่ท่านนบี (ﷺ) กล่าวแก่บุตรสาวของท่านเองคือท่านหญิงฟาฏิมะฮ์ (เราะฎิยัลลอฮุอันฮา) แล้วสำหรับบุคคลอื่นที่มิใช่ครอบครัวของท่านจะยิ่งเป็นจริงมากเพียงใด?!</p>
+
+      <h2>คำถามที่ 4: ท่านนบี (ﷺ) เสียชีวิตแล้วหรือยังมีชีวิตอยู่?</h2>
+      <p><span class="q-label">คำถามที่ 4:</span> ท่านนบี (ﷺ) ยังมีชีวิตอยู่ในตอนนี้หรือไม่? ท่านเคยเสียชีวิตหรือไม่? ผู้คนจำนวนมากกล่าวว่าท่านไม่เคยเสียชีวิตและยังคงมีชีวิตอยู่ในตอนนี้</p>
+    </div>
+
+    <!-- Column 2 (Outside Center / Back Cover): Deep Forest Green + TROID Footer -->
+    <div class="panel panel-inner panel-back">
+      <div>
+        <p><span class="a-label">คำตอบ:</span> ท่านนบีของเรา (ﷺ) มีชีวิตอยู่ในหลุมศพของท่าน โดยดำเนินชีวิตแบบ <strong>โลกบัรซัค (Barzakh)</strong> (ชีวิตที่อยู่ระหว่างโลกดุนยานี้กับโลกอาคิเราะฮ์) ซึ่งท่านกำลังได้รับความสุขสบายและความรื่นรมย์ที่อัลลอฮ์ทรงตระเตรียมไว้ให้แก่ท่าน แต่วิญญาณของท่านมิได้ถูกส่งกลับคืนสู่ร่างในลักษณะเดียวกับตอนที่ยังมีชีวิตอยู่ในโลกนี้ และมิใช่ในลักษณะที่จะเกิดขึ้นในวันกิยามะฮ์ หากแต่เป็นชีวิตแห่งโลกบัรซัคซึ่งมนุษย์ทุกคนจะต้องผ่าน</p>
+
+        <p>ด้วยเหตุนี้ จึงชัดเจนว่าท่านเราะสูลุลลอฮ์ (ﷺ) ได้เสียชีวิตแล้ว เช่นเดียวกับบรรดานบีก่อนหน้าท่าน เว้นแต่ท่านนบีอีซา อิบนุ มัรยัม (อะลัยฮิสสะลาม) ซึ่งถูกยกขึ้นสู่ฟากฟ้าและจะเสด็จลงมาในยุคสุดท้าย หลังจากนั้นท่านก็จะเสียชีวิต อัลลอฮ์ตรัสว่า:</p>
+
+        <p class="quote-indent">“และเรามิเคยกำหนดความเป็นอมตะให้แก่มนุษย์คนใดก่อนหน้าเจ้าเลย (โอมุฮัมมัด) แล้วหากเจ้าเสียชีวิตไป พวกเขาจะอยู่เป็นอมตะตลอดกาลกระนั้นหรือ?” <span class="cite">[อัล-อัมบิยาอ์ 21:34]</span></p>
+
+        <p class="quote-indent">“ทุกสิ่งที่อยู่บนแผ่นดินย่อมต้องดับสูญ และพระพักตร์แห่งพระเจ้าของเจ้าผู้ทรงความยิ่งใหญ่และทรงเกียรติเท่านั้นที่จะดำรงอยู่ตลอดกาล” <span class="cite">[อัร-เราะห์มาน 55:26–27]</span></p>
+
+        <p>และอัลลอฮ์ทรงแจ้งแก่ท่านนบีมุฮัมมัด (ﷺ) อย่างชัดเจนว่า: <strong>“แท้จริงเจ้า (โอมุฮัมมัด) จะต้องตาย และแท้จริงพวกเขาทั้งหลายก็จะตายเช่นกัน”</strong> <span class="cite">[อัซ-ซุมัร 39:30]</span> เหล่าศอฮาบะฮ์ได้อาบน้ำศพ ละหมาดญะนาซะฮ์ และฝังร่างของท่าน หากพวกเขาคิดว่าท่านยังมีชีวิตอยู่เช่นในโลกนี้ พวกเขาก็คงจะไม่ฝังร่างของท่านลงในดิน!</p>
+
+        <p>เมื่อท่านเราะสูลุลลอฮ์ (ﷺ) เสียชีวิต ท่านอะบู บักร อัศ-ศิดดีก (เราะฎิยัลลอฮุอันฮุ) ได้เข้าไปจูบที่หน้าผากของท่านแล้วกล่าวว่า: <strong>“ขอให้มารดาและบิดาของฉันเป็นค่าไถ่ให้แก่ท่านเถิด! ท่านช่างบริสุทธิ์งดงามทั้งยามมีชีวิตและยามสิ้นชีวิต”</strong> จากนั้นจึงกล่าวว่า:</p>
+
+        <p class="quote-indent">“ผู้ใดที่เคยเคารพสักการะมุฮัมมัด ก็จงรู้ไว้เถิดว่ามุฮัมมัดได้เสียชีวิตแล้ว แต่ผู้ใดที่เคารพสักการะอัลลอฮ์ แท้จริงอัลลอฮ์ทรงอยู่เหนือชั้นฟ้า พระองค์ทรงมีชีวิตอยู่และไม่ทรงสิ้นพระชนม์” <span class="cite">[อัด-ดาริมี]</span></p>
+
+        <p class="author-line">เรียบเรียงโดย อะบู เคาะดีญะฮ์ อับดุลวาฮิด อ้างอิงฟัตวาของเชค อิบนุ บาซ และเชค อิบนุ อุษัยมีน (เราะฮิมะฮุมัลลอฮ์)</p>
+      </div>
+
+      <footer class="troid-footer">
+        <div>
+          <div class="troid-brand">troid</div>
+          <div class="troid-sub">troid.org • ฉบับแปลภาษาไทย</div>
+        </div>
+        <div class="troid-divider"></div>
+        <div class="troid-info">
+          874-A Weston Rd. Toronto, Canada<br>
+          info@troid.org<br>
+          <strong>Salafi Publications &amp; @troidorg</strong>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Column 3 (Outside Right / Front Cover): Original Graphic -->
+    <div class="panel panel-cover">
+      <div class="cover-scrim"></div>
+      <div class="cover-vertical-wrap">
+        <div class="cover-v-black">ข้อสงสัยที่พบบ่อยเกี่ยวกับท่านนบี</div>
+        <div class="cover-v-green">มุฮัมมัด (ﷺ)</div>
+      </div>
+      <div class="cover-verse-box">
+        “และแท้จริงสำหรับเจ้า (โอ้มุฮัมมัด) ย่อมได้รับผลตอบแทนที่ไม่มีวันสิ้นสุด และแท้จริงเจ้าอยู่บนจริยธรรมอันสูงส่งยิ่ง”
+        <div class="cover-verse-ref">(อัลกุรอาน ซูเราะฮ์ อัล-เกาะลัม 68:3–4)</div>
+      </div>
+      <div class="cover-questions">
+        <div>วันคล้ายวันเกิดของท่าน<br>เป็นวันเฉลิมฉลองหรือไม่?</div>
+        <div>ท่านถูกสร้างจากแสงสว่างหรือไม่?</div>
+        <div>ท่านล่วงรู้สิ่งเร้นลับหรือไม่?</div>
+        <div>ท่านจะตอบรับคำวิงวอนขอ<br>ของท่านหรือไม่?</div>
+        <div>ท่านเสียชีวิตแล้วหรือยังมีชีวิตอยู่?</div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

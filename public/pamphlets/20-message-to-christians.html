@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สาส์นถึงชาวคริสต์: จงเคารพสักการะพระเจ้าเพียงพระองค์เดียว — แผ่นพับ 3 ตอน หน้า-หลัง (A4 แนวนอน)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1b1209;
+      color: #fbf3e8;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      padding: 1.25rem 1rem 3rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      max-width: 297mm;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #2f1e0e;
+      padding: 0.85rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #593818;
+    }
+    .toolbar-title {
+      font-weight: 700;
+      font-size: 0.96rem;
+      color: #f5b642;
+    }
+    .toolbar-hint {
+      font-size: 0.82rem;
+      color: #dec8ae;
+      margin-top: 2px;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .toolbar button, .toolbar a {
+      padding: 0.5rem 1rem;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #6e451e;
+      background: #422a13;
+      color: #fbf3e8;
+    }
+    .toolbar .btn-primary {
+      background: #d47218;
+      border-color: #d47218;
+      color: #ffffff;
+    }
+    .toolbar .btn-primary:hover { background: #b55e10; }
+
+    .sheet-label {
+      max-width: 297mm;
+      margin: 0 auto 0.5rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #e3ceb5;
+      letter-spacing: 0.02em;
+    }
+
+    /* ===== A4 LANDSCAPE TRIFOLD SHEET (297mm x 210mm) ===== */
+    .trifold-sheet {
+      width: 297mm;
+      height: 210mm;
+      margin: 0 auto 2rem;
+      display: grid;
+      grid-template-columns: 99mm 99mm 99mm;
+      grid-template-rows: 210mm;
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+      background: #fdf6ea;
+      position: relative;
+    }
+
+    .trifold-sheet::before,
+    .trifold-sheet::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 1px dashed rgba(128, 128, 128, 0.28);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .trifold-sheet::before { left: 99mm; }
+    .trifold-sheet::after { left: 198mm; }
+
+    .panel {
+      width: 99mm;
+      height: 210mm;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== PANEL CONTENT STYLES (calibrated for 99mm x 210mm) ===== */
+    .panel-inner {
+      padding: 5.6mm 5.5mm 4.8mm;
+      font-size: 7.15pt;
+      line-height: 1.4;
+    }
+    .panel-amber {
+      background: linear-gradient(180deg, #d87a1c 0%, #e0922b 100%);
+      color: #1c1104;
+    }
+    .panel-cream {
+      background: #fdf6ea;
+      color: #22180c;
+    }
+    .panel-back {
+      background: #4a2508;
+      color: #fbf2e4;
+      padding-bottom: 0;
+      justify-content: space-between;
+    }
+
+    .panel-inner .main-title {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 11pt;
+      font-weight: 800;
+      line-height: 1.28;
+      color: #1a1004;
+      text-align: center;
+      margin-bottom: 1.8mm;
+      padding-bottom: 1.4mm;
+      border-bottom: 1.5pt solid rgba(26, 16, 4, 0.25);
+    }
+
+    .panel-inner h2 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 8.7pt;
+      font-weight: 700;
+      line-height: 1.32;
+      margin-bottom: 1.5mm;
+    }
+    .panel-amber h2 { color: #ffffff; text-shadow: 0 1px 2px rgba(70, 32, 0, 0.4); }
+    .panel-cream h2 { color: #b85c0a; margin-top: 2mm; }
+    .panel-cream h2:first-child { margin-top: 0; }
+    .panel-back h2 { color: #f5b642; margin-top: 1.5mm; }
+    .panel-back h2:first-child { margin-top: 0; }
+
+    .panel-inner h3 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 7.7pt;
+      font-weight: 700;
+      margin-top: 1.4mm;
+      margin-bottom: 1mm;
+    }
+    .panel-amber h3 { color: #ffffff; }
+    .panel-cream h3 { color: #8c4206; }
+
+    .panel-inner p {
+      margin-bottom: 1.6mm;
+      text-align: left;
+    }
+
+    .quote-box {
+      margin: 1.4mm 0 1.8mm;
+      padding: 1.6mm 2.4mm;
+      border-left: 2pt solid #c46812;
+      background: rgba(196, 104, 18, 0.08);
+      font-weight: 500;
+      line-height: 1.38;
+    }
+    .panel-amber .quote-box {
+      border-left-color: #ffffff;
+      background: rgba(255, 255, 255, 0.18);
+      color: #1a0f04;
+    }
+    .panel-amber .quote-verse {
+      border-left-color: #fff3d6;
+      background: rgba(74, 37, 8, 0.22);
+      color: #ffffff;
+      font-style: italic;
+    }
+    .panel-back .quote-box {
+      border-left-color: #f5b642;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fbf2e4;
+    }
+    .quote-box .cite {
+      display: block;
+      margin-top: 0.6mm;
+      font-size: 6.4pt;
+      font-weight: 600;
+      opacity: 0.88;
+    }
+
+    sup {
+      font-size: 5.5pt;
+      line-height: 0;
+    }
+
+    .footnotes {
+      margin-top: 2mm;
+      padding-top: 1.6mm;
+      border-top: 1pt solid rgba(245, 182, 66, 0.35);
+      font-size: 6.2pt;
+      line-height: 1.34;
+      color: #eddcc4;
+    }
+    .footnotes h3 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 7pt;
+      font-weight: 700;
+      color: #f5b642;
+      margin-top: 0;
+      margin-bottom: 1mm;
+    }
+    .footnotes ol {
+      padding-left: 3.4mm;
+    }
+    .footnotes li {
+      margin-bottom: 0.6mm;
+    }
+    .more-links {
+      margin-top: 1.4mm;
+      font-size: 6.1pt;
+      color: #f5b642;
+    }
+    .author-line {
+      margin-top: 1.4mm;
+      font-size: 6.6pt;
+      color: #e8d3b5;
+    }
+
+    /* Authentic TROID bottom footer bar on Back Cover */
+    .troid-footer {
+      margin: 2.2mm -5.5mm 0;
+      padding: 3.4mm 5.4mm 3.8mm;
+      background: rgba(26, 12, 2, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.22);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3mm;
+      color: #fbf2e4;
+      font-size: 6.8pt;
+      line-height: 1.42;
+    }
+    .troid-brand {
+      font-family: Georgia, serif;
+      font-size: 18pt;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: #ffffff;
+    }
+    .troid-sub {
+      font-size: 6.5pt;
+      margin-top: 0.8mm;
+      opacity: 0.9;
+    }
+    .troid-divider {
+      width: 1.5pt;
+      height: 11mm;
+      background: #f5b642;
+      flex-shrink: 0;
+    }
+    .troid-info {
+      flex: 1;
+      font-size: 6.4pt;
+    }
+
+    /* ===== FRONT COVER (Page 2, Right Column) ===== */
+    .panel-cover {
+      background: url('assets/20-cover-bg.jpg') center center / cover no-repeat;
+      color: #ffffff;
+    }
+    /* Seamless masks covering original English text while leaving radiant golden mosque & desert footprints visible */
+    .cover-mask-left {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 31mm;
+      background: linear-gradient(180deg, #8f571c 0%, #bd711c 52%, #cf7017 100%);
+      box-shadow: 3mm 0 6mm rgba(143, 87, 28, 0.35);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .cover-mask-top {
+      position: absolute;
+      top: 0;
+      left: 28mm;
+      right: 0;
+      height: 38mm;
+      background: linear-gradient(180deg, #9d631e 0%, #ba7a26 76%, rgba(186, 122, 38, 0) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .cover-mask-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 28mm;
+      right: 0;
+      height: 66mm;
+      background: linear-gradient(180deg, rgba(210, 114, 24, 0) 0%, #d27218 13%, #cc6a14 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .cover-vertical-wrap {
+      position: absolute;
+      left: 2.8mm;
+      top: 6mm;
+      bottom: 6mm;
+      display: flex;
+      align-items: center;
+      gap: 1.2mm;
+      z-index: 2;
+    }
+    .cover-v-white {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 21pt;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: #ffffff;
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
+      line-height: 1.05;
+      white-space: nowrap;
+    }
+    .cover-v-dark {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 11.8pt;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #1c1004;
+      line-height: 1.08;
+      white-space: nowrap;
+    }
+
+    .cover-top-intro {
+      position: absolute;
+      top: 6mm;
+      left: 33.5mm;
+      right: 4.5mm;
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 8.2pt;
+      font-weight: 700;
+      line-height: 1.44;
+      color: #ffffff;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+      z-index: 2;
+    }
+
+    .cover-bottom-text {
+      position: absolute;
+      bottom: 5.5mm;
+      left: 33.5mm;
+      right: 4.5mm;
+      z-index: 2;
+      font-size: 6.95pt;
+      line-height: 1.42;
+      color: #1c1004;
+      font-weight: 500;
+    }
+    .cover-bottom-text p {
+      margin-bottom: 2.2mm;
+    }
+    .cover-bottom-text p:last-child { margin-bottom: 0; }
+    .cover-bottom-text .q-cite {
+      display: block;
+      margin-top: 0.6mm;
+      font-size: 6.5pt;
+      font-weight: 700;
+      color: #3a1a04;
+    }
+
+    /* ===== PRINT: EXACT 2-PAGE A4 LANDSCAPE DOUBLE-SIDED TRIFOLD ===== */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .no-print { display: none !important; }
+      .trifold-sheet {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .trifold-sheet:last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .trifold-sheet::before,
+      .trifold-sheet::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div>
+      <div class="toolbar-title">แผ่นพับที่ 20: สาส์นถึงชาวคริสต์: จงเคารพสักการะพระเจ้าเพียงพระองค์เดียว — Desktop Trifold 3 คอลัมน์ หน้า-หลัง (A4 แนวนอน)</div>
+      <div class="toolbar-hint">วิธีพิมพ์: กดปุ่มพิมพ์ → เลือก A4 แนวนอน (Landscape) → ตั้งค่าขอบกระดาษ None → เปิด Background graphics → พิมพ์ 2 หน้า (Flip on short edge)</div>
+    </div>
+    <div class="toolbar-actions">
+      <a href="/pamphlets">← สารบัญรวม</a>
+      <button class="btn-primary" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF (2 หน้า หน้า-หลัง)</button>
+    </div>
+  </div>
+
+  <!-- ==================== SHEET 1: INSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 1 (ด้านในแผ่นพับ): คอลัมน์ซ้าย [พื้นส้มอำพัน] • คอลัมน์กลาง [พื้นครีม] • คอลัมน์ขวา [พื้นครีม]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Inside Left): Burnt Amber -->
+    <div class="panel panel-inner panel-amber">
+      <div class="main-title">ศาสนาคริสต์ในมุมมองของอิสลาม</div>
+
+      <p>มวลการสรรเสริญเป็นสิทธิแด่อัลลอฮ์<sup>1</sup> พระเจ้าแห่งสากลโลก พระเจ้าของนบีนูห์ (โนอาห์) นบีอิบรอฮีม (อับราฮัม) นบีมูซา (โมเสส) นบีอีซา (พระเยซู) และท่านนบีมุฮัมมัด — ขอความสันติและความจำเริญจงมีแด่ท่านเหล่านั้นทั้งหมด</p>
+
+      <h3>นี่คือสิ่งที่ศาสนาคริสต์ซึ่งผสมผสานกับเทพปกรณัมนอกรีตของอียิปต์และโรมันอ้างให้แก่พระเจ้า:</h3>
+
+      <div class="quote-box">
+        “ข้าได้สร้างพวกเจ้าทุกคนขึ้นมาพร้อมกับภาระแห่งบาป — เป็นผู้มีความผิดตั้งแต่แรกเกิด ข้าได้ทำลายล้างประชาชาติของพวกเจ้าทั้งประชาชาติเพราะพวกเจ้าเป็นคนบาปที่ชั่วร้าย ต่อมาข้ารักพวกเจ้ามากเสียจนข้าทำให้หญิงคนหนึ่งตั้งครรภ์เพื่อให้นางให้กำเนิดข้า และข้าจะได้กลายเป็นบุตรชายของตัวเอง เพื่อที่ข้าจะได้ให้ตัวเองถูกสังหารเป็นเครื่องบูชายัญแด่ตัวเอง เพื่อไถ่ถอนพวกเจ้าคนบาปที่ชั่วร้ายให้พ้นจากภาระแห่งบาปที่ข้าเป็นผู้สร้างให้ติดตัวพวกเจ้ามาตั้งแต่แรก หากพวกเจ้าศรัทธาว่าข้าเป็นบิดาของตัวเอง ว่าข้าเป็นบุตรของตัวเอง และว่ามารดาของข้าคือหญิงคนเดียวกับที่ข้าทำให้ตั้งครรภ์ ว่าข้าคือสามบุคคลที่แยกจากกันซึ่งรวมอยู่ในหนึ่งเดียวอันไม่อาจแบ่งแยกได้ และว่าข้าได้ยอมให้ตัวเองถูกสังหารเพื่อบาปของพวกเจ้า ความรอดพ้นย่อมเป็นของพวกเจ้า — แม้ว่าพวกเจ้าจะกราบไหว้นักบุญ รูปปั้น และรูปเคารพ และละเมิดพระบัญญัติอันยิ่งใหญ่ที่สุดที่ข้าได้มอบไว้แก่บรรดาศาสดาแห่งวงศ์วานอิสรออีล (ยาโคบ) ที่ว่า: เจ้าอย่ามีพระเจ้าอื่นใดนอกเหนือจากข้า และเจ้าอย่าทำรูปเคารพแกะสลักหรือเทวรูปใด ๆ ก็ตาม”
+      </div>
+
+      <div class="quote-box quote-verse">
+        “และจงรำลึกถึงเมื่ออัลลอฮ์จะตรัส (ในวันฟื้นคืนชีพ) ว่า ‘โอ้ อีซา (เยซู) บุตรแห่งมัรยัม (มารีย์)! เจ้าได้กล่าวแก่ผู้คนกระนั้นหรือว่า จงยึดถือฉันและมารดาของฉันเป็นพระเจ้าสององค์นอกเหนือจากอัลลอฮ์?’ เขาจะกราบทูลว่า ‘มหาบริสุทธิ์แห่งพระองค์! มิใช่เรื่องที่สมควรแก่ข้าพระองค์เลยที่จะกล่าวในสิ่งที่ข้าพระองค์ไม่มีสิทธิ์จะกล่าว’”
+        <span class="cite">— อัลกุรอาน, ซูเราะฮ์ อัล-มาอิดะฮ์ (5:116–118)</span>
+      </div>
+    </div>
+
+    <!-- Column 2 (Inside Center): Warm Cream -->
+    <div class="panel panel-inner panel-cream">
+      <h3>นี่คือสิ่งที่อิสลามแห่งบรรดาศาสดาและศาสนทูตยืนยันแด่พระเจ้าผู้ทรงมหิทธานุภาพ (อัลลอฮ์):</h3>
+
+      <div class="quote-box">
+        “ข้าได้สร้างพวกเจ้าแต่ละคนขึ้นมาในฐานะทารกผู้บริสุทธิ์ปราศจากบาป ผู้มีจิตสำนึกโดยธรรมชาติ (ฟิฏเราะฮ์) ที่ตระหนักถึงความเป็นพระเจ้าแต่เพียงผู้เดียวของข้าเหนือสรรพสิ่งทั้งปวง มีความโน้มเอียงที่จะเคารพสักการะข้าเพียงผู้เดียว และมีอุปนิสัยที่รู้แจ้งและใฝ่ในการทำความดี จากนั้นข้าได้ส่งคัมภีร์และบรรดาศาสนทูตมายังพวกเจ้า (เพื่อพัฒนาและเติมเต็มธรรมชาติอันบริสุทธิ์นั้นผ่านวะฮีย์และสติปัญญา) และได้ชี้แจงหนทางทั้งสองสายไว้ให้แก่พวกเจ้า สายหนึ่งคือหนทางแห่งความปลอดภัย และอีกสายหนึ่งคือหนทางแห่งความเสียหาย หนทางแห่งความปลอดภัยคือการเคารพสักการะข้าเพียงผู้เดียวและประกอบคุณงามความดีโดยปฏิบัติตามแบบอย่างอันประเสริฐของบรรดาศาสดาและศาสนทูต ผู้ใดออกห่างจากสิ่งถูกเคารพจอมปลอม ยอมจำนนต่อข้าเพียงผู้เดียว และประกอบความดีงาม ไม่ว่าจะเป็นชายหรือหญิง ข้าจะไม่ทำให้การงานของพวกเขาสูญเปล่า หากเจ้ามาหาข้าพร้อมกับบาปที่เต็มแผ่นดิน โดยมิได้ตั้งภาคีใด ๆ ร่วมกับข้าในการเคารพสักการะ<sup>2</sup> ข้าก็จะมาหาเจ้าพร้อมกับการอภัยโทษที่มากพอ ๆ กัน”
+      </div>
+
+      <h2>การบิดเบือนสาส์นเอกเทวนิยมอันเคร่งครัดของพระเยซูคริสต์</h2>
+      <p>พระเยซู (นบีอีซา อะลัยฮิสสะลาม) เป็นบุคคลในหมู่ชาวยิว และถูกส่งมายังวงศ์วานอิสรออีล (ลูกหลานของยาโคบ) เพื่อยืนยันคัมภีร์เตารอต (โตราห์) และแก้ไขสิ่งที่ชาวยิวได้บิดเบือนไปจากสาส์นของบรรดาศาสดาที่ถูกแต่งตั้งขึ้นในหมู่พวกเขา ซึ่งสาส์นนั้นคือการเคารพสักการะและการยอมจำนนตามหลักเอกเทวนิยมอันเคร่งครัดแด่อัลลอฮ์เพียงพระองค์เดียว อันเนื่องมาจากการตกเป็นเชลยในอียิปต์และบาบิโลน พวกเขาจึงได้รับอิทธิพลจากลัทธินอกรีต ไสยศาสตร์ และโหราศาสตร์ และได้บิดเบือนเนื้อหาส่วนใหญ่ของคัมภีร์เตารอต</p>
+
+      <p>พระเยซูได้เรียกร้องเชิญชวนพวกเขาให้เคารพสักการะพระเจ้าผู้ทรงมหิทธานุภาพ (อัลลอฮ์) เพียงพระองค์เดียว และถูกข่มเหงและวางแผนปองร้ายโดยกลุ่มคนบางฝ่ายในหมู่พวกเขา หลังจากที่ท่านถูกยกขึ้นสู่ฟากฟ้า (ได้รับความรอดพ้นจากการถูกตรึงกางเขน) และรอดพ้นจากแผนการร้ายที่พวกเขาวางไว้ ก็ยังคงมีชนกลุ่มน้อยที่ซื่อสัตย์ต่อคำสอนของท่าน</p>
+
+      <p>ทว่าเมื่อสาส์นของพระคริสต์ถูกนำไปเผยแพร่แก่พวกนอกรีตในแถบเมดิเตอร์เรเนียน เทพปกรณัมของอารยธรรมเหล่านั้นก็ถูกถักทอและผนวกรวมเข้าไปในสาส์นของท่าน จนทำให้สาส์นดั้งเดิมเปลี่ยนแปลงไปโดยสิ้นเชิง แนวคิดเรื่อง <strong>“ตรีเอกานุภาพ” (Trinity)</strong>, <strong>“บุตรผู้บังเกิด” (Begotten Son)</strong>, <strong>“สุริยเทพ” (Sun-God)</strong>, <strong>“การฟื้นคืนชีพ” (Resurrection)</strong>, <strong>“การเกิดใหม่” (Rebirth)</strong> และ <strong>“ผู้ไถ่บาป” (Redeemer)</strong> ล้วนแพร่หลายอยู่แล้วในยุคนั้นในฐานะความเชื่อเกี่ยวกับเทพเจ้าของชาวอียิปต์ กรีก เปอร์เซีย และโรมัน เช่น โอซิริส (Osiris), ฮอรัส (Horus), ไอซิส (Isis), มิธรา (Mithra), ไดโอนีซัส (Dionysus), แอตทิส (Attis) และบาอัล (Bāl)</p>
+    </div>
+
+    <!-- Column 3 (Inside Right): Warm Cream -->
+    <div class="panel panel-inner panel-cream">
+      <p>จักรพรรดิคอนสแตนติน จักรพรรดิโรมันนอกรีต ได้บังคับใช้ศาสนาคริสต์ในฉบับของตนเองให้เป็นศาสนาประจำรัฐภายหลังการเปลี่ยนศาสนาเพียงแต่ภายนอก<sup>3</sup> ทำให้แทบจะเป็นไปไม่ได้เลยที่ “ชาวคริสต์” คนใดจะล่วงรู้และปฏิบัติตามแนวทางที่แท้จริงของพระเยซูได้ในเวลาเพียงไม่กี่ศตวรรษหลังจากท่าน หนทางเดียวที่ชาวคริสต์ในปัจจุบันจะสามารถปฏิบัติตามสาส์นของพระเยซูได้ คือการปฏิบัติตามศาสนทูตท่านสุดท้าย คือท่านนบีมุฮัมมัด (ﷺ) ผู้ซึ่งถูกส่งมาพร้อมกับศาสนาเดียวกันกับที่บรรดาศาสดาและศาสนทูตก่อนหน้านี้ได้นำมา นั่นคือ <strong>อิสลาม</strong></p>
+
+      <h2>สาส์นของท่านนบีมุฮัมมัดคือสาส์นเดียวกับอับราฮัม โมเสส และพระเยซู</h2>
+      <p>ท่านนบีมุฮัมมัด (ﷺ) กล่าวว่า:</p>
+      <div class="quote-box">
+        “ทั้งในโลกนี้และโลกหน้า ฉันคือผู้ที่ใกล้ชิดกับบุตรของมัรยัม (พระเยซู) มากที่สุดในหมู่มนุษย์ทั้งปวง และบรรดาศาสดาทั้งหลายล้วนเป็นพี่น้องร่วมบิดาเดียวกัน และไม่มีศาสดาคนใดระหว่างฉันกับเขา [พระเยซู]”<sup>4</sup>
+      </div>
+
+      <p>ท่านนบีมุฮัมมัด (ﷺ) ยังกล่าวอีกว่า:</p>
+      <div class="quote-box">
+        “ผู้ใดปฏิญาณว่าไม่มีพระเจ้าอื่นใดที่คู่ควรแก่การเคารพสักการะนอกจากอัลลอฮ์เพียงพระองค์เดียว ไม่มีภาคีใด ๆ สำหรับพระองค์ และมุฮัมมัดคือบ่าวและศาสนทูตของพระองค์ และอีซา (พระเยซู) คือบ่าวของอัลลอฮ์และศาสนทูตของพระองค์ และคือพระดำรัสของพระองค์ที่ทรงประทานลงมายังมัรยัม (มารีย์) และคือวิญญาณจากพระองค์ และสวรรค์นั้นมีจริง และนรกนั้นมีจริง แท้จริงอัลลอฮ์จะทรงให้เขาเข้าสวรรค์ทางประตูใดก็ได้ตามที่เขาปรารถนาจากประตูสวรรค์ทั้งแปดบาน”<sup>5</sup>
+      </div>
+
+      <h2>สาส์นแห่งเอกเทวนิยมของท่านนบีมุฮัมมัด พระเยซู และบรรดาศาสดาทั้งปวง</h2>
+      <p>ภายหลังการยืนยันความเป็นพระเจ้าแต่เพียงผู้เดียวของอัลลอฮ์เหนือสรรพสิ่งทั้งปวง ในฐานะที่พระองค์เพียงผู้เดียวทรงเป็นผู้สร้าง ผู้ประทานปัจจัยยังชีพ ผู้ดูแลรักษา และผู้เป็นเจ้า และยืนยันพระนามอันวิจิตรและคุณลักษณะอันสูงส่งของพระองค์ซึ่งเปี่ยมด้วยความสมบูรณ์แบบอย่างสูงสุดแล้ว แก่นแท้ของสาส์นแห่งบรรดาศาสดาและศาสนทูตทุกท่านคือ <strong>การให้เอกภาพแด่อัลลอฮ์เพียงพระองค์เดียวในการเคารพสักการะ</strong> และออกห่างจากการเคารพสักการะมลาอิกะฮ์ ญิน มนุษย์ ธาตุทั้งหลาย พลังธรรมชาติ ก้อนหิน ต้นไม้ ดวงอาทิตย์ ดวงจันทร์ และสิ่งถูกสร้างอื่น ๆ ทั้งปวง เพราะสิ่งนั้นคือความอธรรมอันใหญ่หลวงที่สุด กล่าวคือ การเคารพสักการะสิ่งอื่นเคียงข้างอัลลอฮ์ทั้ง ๆ ที่รู้ดีว่าอัลลอฮ์คือพระผู้สร้าง พระผู้ทรงบันดาล และพระผู้ทรงประทานความโปรดปรานแก่เจ้า</p>
+
+      <h2>คำตักเตือนอันเปี่ยมเมตตาจากพระเจ้าของพระเยซู</h2>
+      <p>อัลลอฮ์ผู้ทรงจำเริญและทรงสูงส่งตรัสไว้ในวิวรณ์ครั้งสุดท้ายของพระองค์คืออัลกุรอานว่า:</p>
+      <div class="quote-box">
+        “โอ้ ชาวคัมภีร์ทั้งหลาย! พวกเจ้าจงอย่ากระทำเกินเลยในศาสนาของพวกเจ้า และจงอย่ากล่าวเกี่ยวกับอัลลอฮ์เว้นแต่ความจริง แท้จริงอัล-มะซีห์ อีซา (พระเมสสิยาห์เยซู) บุตรแห่งมัรยัมนั้นเป็นเพียงศาสนทูตคนหนึ่งของอัลลอฮ์ และเป็นพระดำรัสของพระองค์ที่ทรงส่งไปยังมัรยัม และเป็นวิญญาณ [ที่ถูกสร้างขึ้นด้วยพระบัญชา] จากพระองค์ ดังนั้นพวกเจ้าจงศรัทธาต่ออัลลอฮ์และบรรดาศาสนทูตของพระองค์เถิด และจงอย่ากล่าวว่า ‘สาม’ จงยุติเสีย นั่นย่อมดีกว่าสำหรับพวกเจ้า แท้จริงอัลลอฮ์คือพระเจ้าเพียงองค์เดียวเท่านั้น พระองค์ทรงมหาบริสุทธิ์ยิ่งเกินกว่าที่จะมีพระบุตร ทุกสิ่งที่อยู่ในชั้นฟ้าทั้งหลายและทุกสิ่งที่อยู่ในแผ่นดินล้วนเป็นกรรมสิทธิ์ของพระองค์ และเพียงพอแล้วที่อัลลอฮ์เป็นผู้ทรงดูแลจัดการกิจการทั้งปวง”
+        <span class="cite">— อัลกุรอาน, ซูเราะฮ์ อัน-นิสาอ์ (4:171)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SHEET 2: OUTSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 2 (ด้านนอกแผ่นพับ): คอลัมน์ซ้าย [พับใน พื้นครีม] • คอลัมน์กลาง [ปกหลัง พื้นน้ำตาลมะฮอกกานี + TROID] • คอลัมน์ขวา [ปกหน้า กราฟิกต้นฉบับ]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Outside Left / Inside Flap): Warm Cream -->
+    <div class="panel panel-inner panel-cream">
+      <p>อายะฮ์นี้ถูกประทานลงมาเกี่ยวกับชาวคริสต์กลุ่มต่าง ๆ (เช่น กลุ่มยาโคไบต์ กลุ่มเนสโตเรียน และกลุ่มอื่น ๆ) พวกเขามีคำกล่าวต่าง ๆ กันไป เช่น “พระเยซูคือพระเจ้าผู้ทรงมหิทธานุภาพ (อัลลอฮ์)” บ้างก็กล่าวว่า “เขาคือบุตรของอัลลอฮ์” และบ้างก็กล่าวว่า “เขาคือหนึ่งในสาม”</p>
+
+      <p>บรรดานักอรรถาธิบายอัลกุรอาน (มุฟัสสิรูน) ได้อธิบายขยายความหมายของอายะฮ์นี้ไว้ดังนี้<sup>6</sup>:</p>
+
+      <div class="quote-box">
+        “โอ้ ชาวคัมภีร์อินญีล (พระกิตติคุณ) เอ๋ย จงอย่าล่วงเกินความเชื่ออันเที่ยงแท้ และจงอย่ากล่าวเกินจริงและกล่าวเกี่ยวกับอัลลอฮ์เว้นแต่ความจริง จงอย่าอ้างว่าพระองค์มีบุตรและภรรยา เพราะอีซา (พระเยซู) บุตรแห่งมัรยัมมิได้เป็นอะไรมากไปกว่าศาสนทูตคนหนึ่งเฉกเช่นบรรดาศาสนทูตมากมายก่อนหน้าเขา เขาคือพระดำรัสของอัลลอฮ์ ในความหมายที่ว่าเขาถูกสร้างขึ้นผ่านพระดำรัสที่อัลลอฮ์ตรัสซึ่งก็คือคำว่า <strong>‘จงเป็น!’ (กุน)</strong> มิใช่ว่าตัวเขา คือพระเยซู ในสารัตถะของเขาเป็นพระดำรัสของอัลลอฮ์จริง ๆ และผ่านพระดำรัสนี้เองที่ญิบรีล [กาเบรียล] ถูกส่งมาและเป่าจากวิญญาณ [รูห์] ที่ถูกส่งมาพร้อมกับท่านเข้าไปในมัรยัม (อะลัยฮัสสะลาม) วิญญาณนั้นมิใช่ส่วนหนึ่งจากสารัตถะ (ซาต) ของอัลลอฮ์ หากแต่เป็นสิ่งถูกสร้างอย่างหนึ่งซึ่งไม่มีผู้ใดล่วงรู้ถึงแก่นแท้ของมัน วิญญาณเดียวกันนี้เองที่ถูกเป่าเข้าไปในอาดัม (อะลัยฮิมุสสะลาม) ผู้ซึ่งถือกำเนิดโดยไม่มีทั้งบิดาและมารดา ด้วยเหตุนี้ พระเยซูจึงเป็นพระดำรัสและวิญญาณจากอัลลอฮ์ เขาถูกสร้างขึ้นผ่านพระดำรัสแห่งพระบัญชาของอัลลอฮ์ และผ่านการส่งและการเป่าวิญญาณที่ถูกสร้างขึ้นโดยผ่านญิบรีล
+      </div>
+
+      <div class="quote-box">
+        ดังนั้น โอ้ ชาวคัมภีร์อินญีล จงศรัทธาต่อสัจธรรมข้อนี้เกี่ยวกับพระเยซู บุตรแห่งมารีย์ และจงยอมจำนนต่ออัลลอฮ์เพียงพระองค์เดียว จงออกห่างจากการเคารพสักการะพระเจ้าอื่นทั้งปวง รวมถึงพระเยซูและมารดาของท่านคือมารีย์ และจงอย่ากล่าวว่า ‘มี [พระเจ้า] สามองค์’ เพราะมีเพียงพระเจ้าองค์เดียวเท่านั้นที่คู่ควรแก่การเคารพสักการะโดยเที่ยงแท้ พวกเจ้าได้ยกฐานะพระเยซูอย่างอธรรมจากตำแหน่งแห่งความเป็นศาสดาและศาสนทูตขึ้นไปสู่ตำแหน่งแห่งความเป็นพระเจ้า [รุบูบียะฮ์] ทั้งที่พระเยซูและมารดาของท่านคือมารีย์เป็นเพียงมนุษย์ปุถุชน พวกเขารับประทานอาหาร ดื่มน้ำ และเดินอยู่บนแผ่นดิน และมิได้ครอบครองหรือควบคุมสิ่งใดในชั้นฟ้าและแผ่นดินเลย เว้นแต่ว่าอัลลอฮ์ได้ประทานปาฏิหาริย์ (มุอ์ญิซาต) ให้แก่พระเยซูเพื่อเป็นสัญญาณยืนยันความเป็นศาสดาของเขาเท่านั้น จงยุติคำกล่าวที่ว่า ‘สาม’ นี้เสีย จงศรัทธาต่อเอกภาพอันสัมบูรณ์ของอัลลอฮ์ และจงเคารพสักการะพระองค์เพียงพระองค์เดียวเถิด นี่คือหนทางอันเที่ยงตรงที่ชี้แนะโดยวิวรณ์อันบริสุทธิ์ที่ไม่ถูกบิดเบือนและสติปัญญาอันเที่ยงธรรม”
+      </div>
+    </div>
+
+    <!-- Column 2 (Outside Center / Back Cover): Deep Mahogany Amber + TROID Footer -->
+    <div class="panel panel-inner panel-back">
+      <div>
+        <h2>สิ่งที่พระเยซูจะกล่าวในวันฟื้นคืนชีพ</h2>
+        <p>พระเจ้าแห่งสรรพสิ่ง อัลลอฮ์ผู้ทรงจำเริญและทรงสูงส่ง ตรัสไว้ในวิวรณ์ครั้งสุดท้ายของพระองค์คืออัลกุรอานว่า:</p>
+
+        <div class="quote-box">
+          “และจงรำลึกถึงเมื่ออัลลอฮ์จะตรัส [ในวันฟื้นคืนชีพ] ว่า ‘โอ้ อีซา (เยซู) บุตรแห่งมัรยัม (มารีย์)! เจ้าได้กล่าวแก่ผู้คนกระนั้นหรือว่า จงยึดถือฉันและมารดาของฉันเป็นพระเจ้าสององค์นอกเหนือจากอัลลอฮ์?’ เขาจะกราบทูลว่า ‘มหาบริสุทธิ์แห่งพระองค์! มิใช่เรื่องที่สมควรแก่ข้าพระองค์เลยที่จะกล่าวในสิ่งที่ข้าพระองค์ไม่มีสิทธิ์จะกล่าว หากข้าพระองค์ได้กล่าวเช่นนั้น แน่นอนพระองค์ย่อมทรงรู้ดีแล้ว พระองค์ทรงรู้สิ่งที่อยู่ในจิตใจของข้าพระองค์ แต่ข้าพระองค์ไม่รู้สิ่งที่อยู่ในพระองค์ แท้จริงพระองค์เท่านั้นคือผู้ทรงรอบรู้สิ่งเร้นลับทั้งปวง ข้าพระองค์มิได้กล่าวสิ่งใดแก่พวกเขาเลย เว้นแต่สิ่งที่พระองค์ (อัลลอฮ์) ทรงบัญชาให้ข้าพระองค์กล่าว นั่นคือ จงเคารพสักการะอัลลอฮ์ พระเจ้าของฉันและพระเจ้าของพวกท่าน และข้าพระองค์เป็นพยานต่อพวกเขาตราบเท่าที่ข้าพระองค์ยังพำนักอยู่ในหมู่พวกเขา แต่เมื่อพระองค์ทรงรับข้าพระองค์ขึ้นไป พระองค์ก็คือผู้ทรงเฝ้าดูพวกเขา และพระองค์ทรงเป็นพยานต่อทุกสิ่งทุกอย่าง หากพระองค์จะทรงลงโทษพวกเขา แท้จริงพวกเขาก็คือปวงบ่าวของพระองค์ และหากพระองค์จะทรงอภัยโทษให้แก่พวกเขา แท้จริงพระองค์เท่านั้นคือผู้ทรงเดชานุภาพ ผู้ทรงปรีชาญาณ’”
+          <span class="cite">— อัลกุรอาน, ซูเราะฮ์ อัล-มาอิดะฮ์ (5:116–118)</span>
+        </div>
+
+        <div class="footnotes">
+          <h3>เชิงอรรถและอ้างอิง</h3>
+          <ol>
+            <li>ในภาษาฮีบรู ภาษาซีรีแอก (อราเมอิก) และภาษาอาหรับ คำว่า <em>อิลาฮ์ (ilāh)</em>, <em>อิโลฮ์</em>, <em>อีล</em> และ <em>เอล</em> ล้วนหมายถึงพระเจ้า คำว่า <strong>อัลลอฮ์ (Allāh)</strong> ย่อมาจาก <em>อัล-อิลาฮ์</em> และคือพระนามของพระผู้สร้างในคัมภีร์เตารอต อินญีล และอัลกุรอาน</li>
+            <li>การตั้งภาคี (ชิรก์) คืออาชญากรรมที่ร้ายแรงที่สุดและจะไม่ได้รับการอภัยหากเสียชีวิตในสภาพนั้น คือการยกคุณลักษณะแห่งความเป็นพระเจ้าให้แก่สิ่งถูกสร้าง หรือผินการเคารพสักการะไปยังสิ่งอื่นนอกจากอัลลอฮ์</li>
+            <li>หลักฐานทางประวัติศาสตร์และโบราณคดีชี้ว่า จักรพรรดิคอนสแตนตินยังคงปฏิบัติตามลัทธินอกรีต ศาสนาคริสต์ในปัจจุบันส่วนใหญ่จึงเป็นศาสนาคริสต์ของคอนสแตนติน มิใช่สาส์นเอกเทวนิยมอันบริสุทธิ์ของพระเยซู</li>
+            <li>รายงานโดย อิมามอัล-บุคอรี</li>
+            <li>รายงานโดย อิมามมุสลิม</li>
+            <li>ดูตัฟซีรของ อิบนุ กะษีร, อัฏ-เฏาะบะรี และ อัล-บะเฆาะวี</li>
+          </ol>
+          <div class="more-links">JesusIslam.ws | SalafiSounds.com | Shariah.ws | SalafiBookstore.com | SalafiPublications.com</div>
+        </div>
+        <p class="author-line">เขียนโดย อบู อิยาฎ อัมญัด เราะฟีก (Abū ʿIyāḍ Amjad Rafīq) [ฮ.ศ. 1436 / ค.ศ. 2014]</p>
+      </div>
+
+      <footer class="troid-footer">
+        <div>
+          <div class="troid-brand">troid</div>
+          <div class="troid-sub">troid.org • ฉบับแปลภาษาไทย</div>
+        </div>
+        <div class="troid-divider"></div>
+        <div class="troid-info">
+          874-A Weston Rd. Toronto, Canada<br>
+          info@troid.org<br>
+          <strong>Salafi Publications &amp; @troidorg</strong>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Column 3 (Outside Right / Front Cover): Original Graphic + Seamless Masks -->
+    <div class="panel panel-cover">
+      <div class="cover-mask-left"></div>
+      <div class="cover-mask-top"></div>
+      <div class="cover-mask-bottom"></div>
+
+      <div class="cover-vertical-wrap">
+        <div class="cover-v-white">สาส์นถึงชาวคริสต์</div>
+        <div class="cover-v-dark">จงเคารพสักการะพระเจ้าเพียงพระองค์เดียว</div>
+      </div>
+
+      <div class="cover-top-intro">
+        อิสลามคือศาสนาและวิถีชีวิตที่เติบโตเร็วที่สุดในโลก เหตุใดผู้คนจำนวนมากจึงหันมาเป็นมุสลิม และเหตุใดอิสลามจึงดึงดูดใจชาวคริสต์ที่คลางแคลงใจ?
+      </div>
+
+      <div class="cover-bottom-text">
+        <p>ชายและหญิงชาวคริสต์ที่มีการศึกษาและมีสติปัญญาต่างกำลังยอมรับอิสลามแห่งนบีนูห์ นบีอิบรอฮีม นบีมูซา นบีอีซา และท่านนบีมุฮัมมัด หลังจากที่ได้ศึกษาจนประจักษ์ว่า สาส์นดั้งเดิมอันแท้จริงของพระคริสต์ได้ถูกหลอมรวมกับเทพปกรณัมของอียิปต์และโรมัน เพื่อสร้างศาสนาใหม่ให้เป็นที่ยอมรับของยุโรป [นอกรีต] แห่งจักรวรรดิโรมัน</p>
+        <p>“ข้าพเจ้าได้ศึกษาเรื่องราวของเขา (มุฮัมมัด) บุรุษผู้มหัศจรรย์ผู้นั้น และในทัศนะของข้าพเจ้า เขายิ่งกว่าห่างไกลจากการเป็นปฏิปักษ์ต่อพระคริสต์ แต่เขาสมควรได้รับการขนานนามว่าเป็นผู้กอบกู้มนุษยชาติ”
+          <span class="q-cite">— จอร์จ เบอร์นาร์ด ชอว์, The Genuine Islam</span>
+        </p>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

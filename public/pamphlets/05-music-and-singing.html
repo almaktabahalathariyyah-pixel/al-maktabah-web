@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ดนตรีและการขับร้องในแสงสว่างแห่งอัลกุรอานและซุนนะฮ์ — แผ่นพับ 3 ตอน หน้า-หลัง (A4 แนวนอน)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #161719;
+      color: #f2f2f2;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      padding: 1.25rem 1rem 3rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      max-width: 297mm;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #222428;
+      padding: 0.85rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #383b42;
+    }
+    .toolbar-title {
+      font-weight: 700;
+      font-size: 0.96rem;
+      color: #ff4d4d;
+    }
+    .toolbar-hint {
+      font-size: 0.82rem;
+      color: #c5c8ce;
+      margin-top: 2px;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .toolbar button, .toolbar a {
+      padding: 0.5rem 1rem;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #484c55;
+      background: #2e3137;
+      color: #f2f2f2;
+    }
+    .toolbar .btn-primary {
+      background: #c81010;
+      border-color: #c81010;
+      color: #ffffff;
+    }
+    .toolbar .btn-primary:hover { background: #a80d0d; }
+
+    .sheet-label {
+      max-width: 297mm;
+      margin: 0 auto 0.5rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #cfd2d8;
+      letter-spacing: 0.02em;
+    }
+
+    /* ===== A4 LANDSCAPE TRIFOLD SHEET (297mm x 210mm) ===== */
+    .trifold-sheet {
+      width: 297mm;
+      height: 210mm;
+      margin: 0 auto 2rem;
+      display: grid;
+      grid-template-columns: 99mm 99mm 99mm;
+      grid-template-rows: 210mm;
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+      background: #ffffff;
+      position: relative;
+    }
+
+    .trifold-sheet::before,
+    .trifold-sheet::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 1px dashed rgba(128, 128, 128, 0.28);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .trifold-sheet::before { left: 99mm; }
+    .trifold-sheet::after { left: 198mm; }
+
+    .panel {
+      width: 99mm;
+      height: 210mm;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== PANEL CONTENT STYLES (calibrated for 99mm x 210mm) ===== */
+    .panel-inner {
+      padding: 5.2mm 5.3mm 4.6mm;
+      font-size: 7.0pt;
+      line-height: 1.38;
+    }
+    .panel-white {
+      background: #ffffff;
+      color: #151515;
+    }
+    .panel-light {
+      background: #f7f7f8;
+      color: #151515;
+    }
+    .panel-charcoal {
+      background: #1b1c1f;
+      color: #eceef0;
+      padding-bottom: 0;
+      justify-content: space-between;
+    }
+
+    .panel-inner h2 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 9.2pt;
+      font-weight: 800;
+      line-height: 1.3;
+      margin-bottom: 1.4mm;
+      color: #c81010;
+    }
+
+    .bismillah {
+      font-size: 6.9pt;
+      font-style: italic;
+      color: #444444;
+      margin-bottom: 1.6mm !important;
+    }
+
+    .panel-inner p {
+      margin-bottom: 1.6mm;
+      text-align: left;
+    }
+
+    .quote-indent {
+      margin: 1.2mm 0 1.6mm 2mm !important;
+      padding-left: 2mm;
+      border-left: 2pt solid #c81010;
+      font-weight: 600;
+      line-height: 1.38;
+    }
+    .panel-charcoal .quote-indent {
+      border-left-color: #e32626;
+      color: #ffffff;
+    }
+
+    .callout-box {
+      margin: 1.5mm 0 1.8mm;
+      padding: 2mm 2.5mm;
+      background: #1b1c1f;
+      color: #ffffff;
+      border-left: 3pt solid #d41313;
+      border-radius: 2px;
+      text-align: center;
+    }
+    .callout-box p {
+      margin-bottom: 0.4mm;
+      text-align: center;
+      font-size: 7.2pt;
+    }
+    .callout-box .cite {
+      font-size: 6.5pt;
+      color: #f08080;
+    }
+
+    sup {
+      font-size: 5.5pt;
+      font-weight: 700;
+      color: #c81010;
+    }
+    .panel-charcoal sup {
+      color: #ff6b6b;
+    }
+
+    .fn-block {
+      margin-top: auto;
+      padding-top: 1.4mm;
+      border-top: 0.8pt solid #222222;
+      font-size: 5.85pt;
+      line-height: 1.32;
+      color: #3a3a3a;
+    }
+    .panel-charcoal .fn-block {
+      border-top-color: rgba(255, 255, 255, 0.25);
+      color: #c8ccd0;
+      margin-top: 1.5mm;
+    }
+    .fn-block p {
+      margin-bottom: 0.45mm;
+    }
+
+    .author-line {
+      margin-top: 1.2mm;
+      font-size: 6.6pt;
+      color: #ff7a7a;
+    }
+
+    /* Authentic TROID bottom footer bar on Back Cover */
+    .troid-footer {
+      margin: 2mm -5.3mm 0;
+      padding: 3.4mm 5.2mm 3.8mm;
+      background: rgba(10, 10, 12, 0.55);
+      border-top: 1px solid rgba(227, 38, 38, 0.35);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3mm;
+      color: #f4f4f4;
+      font-size: 6.7pt;
+      line-height: 1.4;
+    }
+    .troid-brand {
+      font-family: Georgia, serif;
+      font-size: 18pt;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: #ffffff;
+    }
+    .troid-sub {
+      font-size: 6.4pt;
+      margin-top: 1mm;
+      opacity: 0.88;
+    }
+    .troid-divider {
+      width: 1.5pt;
+      height: 11.5mm;
+      background: #e32626;
+      flex-shrink: 0;
+    }
+    .troid-info {
+      flex: 1;
+      font-size: 6.4pt;
+    }
+
+    /* ===== FRONT COVER (Page 2, Right Column) ===== */
+    .panel-cover {
+      background: url('assets/05-cover-bg.jpg') center center / cover no-repeat;
+      color: #141414;
+    }
+    .cover-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.68) 38%, rgba(255, 255, 255, 0.0) 56%, rgba(0, 0, 0, 0.06) 100%);
+      pointer-events: none;
+    }
+    .cover-vertical-wrap {
+      position: absolute;
+      left: 4mm;
+      top: 6.5mm;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.2mm;
+      z-index: 2;
+    }
+    .cover-v-black {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 23pt;
+      font-weight: 800;
+      color: #111111;
+      line-height: 1.04;
+      white-space: nowrap;
+    }
+    .cover-v-red {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 16.5pt;
+      font-weight: 800;
+      color: #d41313;
+      line-height: 1.06;
+      white-space: nowrap;
+    }
+    .cover-v-slate {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 8.6pt;
+      font-weight: 700;
+      color: #627380;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+    .cover-quote-block {
+      position: absolute;
+      top: 9mm;
+      right: 5mm;
+      width: 48mm;
+      z-index: 2;
+      text-align: left;
+    }
+    .cover-quote-text {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 10.6pt;
+      font-weight: 600;
+      line-height: 1.46;
+      color: #141414;
+      text-shadow: 0 1px 6px rgba(255, 255, 255, 0.9);
+    }
+    .cover-quote-ref {
+      margin-top: 2mm;
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 8.2pt;
+      font-weight: 600;
+      color: #3d4852;
+      text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9);
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .no-print { display: none !important; }
+      .trifold-sheet {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .trifold-sheet:last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .trifold-sheet::before,
+      .trifold-sheet::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div>
+      <div class="toolbar-title">แผ่นพับที่ 05: ดนตรีและการขับร้องในแสงสว่างแห่งอัลกุรอานและซุนนะฮ์ — Desktop Trifold A4 แนวนอน</div>
+      <div class="toolbar-hint">วิธีพิมพ์: กดปุ่มพิมพ์ → เลือก A4 แนวนอน (Landscape) → ตั้งค่าขอบกระดาษ None → เปิด Background graphics → พิมพ์ 2 หน้า (Flip on short edge)</div>
+    </div>
+    <div class="toolbar-actions">
+      <a href="/pamphlets">← สารบัญรวม</a>
+      <button class="btn-primary" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF (2 หน้า หน้า-หลัง)</button>
+    </div>
+  </div>
+
+  <!-- ==================== SHEET 1: INSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 1 (ด้านในแผ่นพับ): คอลัมน์ซ้าย • คอลัมน์กลาง • คอลัมน์ขวา [โทนขาว-แดงเลือดนกต้นฉบับ TROID]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Inside Left) -->
+    <div class="panel panel-inner panel-white">
+      <h2>ดนตรีและการขับร้องในแสงสว่างแห่งอัลกุรอานและซุนนะฮ์</h2>
+      <p class="bismillah">ด้วยพระนามของอัลลอฮ์ ผู้ทรงกรุณาปรานี ผู้ทรงเมตตาเสมอ</p>
+
+      <p>อัลลอฮ์ทรงให้เกียรติแก่บรรดามุสลิม และประทานความพอเพียงและความสุขให้แก่พวกเขาในศาสนาอิสลาม ดังนั้นจึงเป็นเรื่องน่าเศร้าใจยิ่งที่เห็นมุสลิมพยายามแสวงหาความเพลิดเพลินและความบันเทิงจากสิ่งที่ทำให้อัลลอฮ์ผู้ทรงสูงส่งไม่ทรงพอพระทัย — และในบรรดาความบันเทิงอันไร้สาระที่พวกเขาหันไปหานั้น คือการฟังดนตรีและเพลง รวมถึงการเล่นเครื่องดนตรี ตัวบทหลักฐานทางอิสลามระบุไว้อย่างชัดเจนว่าดนตรีและการขับร้อง<sup>1</sup> ทำให้ผู้คนหันเหออกจากการรำลึกถึงอัลลอฮ์ และห่างไกลจากอัลกุรอานและซุนนะฮ์ ผู้คนที่ดาวน์โหลดทำนองเพลงและฟังนักดนตรีรวมถึงนักร้องนั้น ย่อมห่างไกลจากอัลลอฮ์และมีอีมาน (ความศรัทธา) ที่อ่อนแอ ซึ่งมักปรากฏให้เห็นชัดเจนจากมารยาท พฤติกรรม การแต่งกาย และความขาดความมั่นคงยืนหยัดในศาสนาที่แท้จริงโดยทั่วไป<sup>2</sup> มุสลิมจึงควรได้รับการสั่งสอนให้รู้จักบทบัญญัติของอัลลอฮ์และเราะสูลของพระองค์ (ﷺ) เพื่อที่พวกเขาจะได้ละเว้นจากการตกไปสู่บาปใหญ่ทั้งหลาย</p>
+
+      <p>การฟังดนตรีเป็นสิ่งต้องห้าม (หะรอม) ในอิสลาม ตามหลักฐานจากอัลกุรอานและซุนนะฮ์ บรรดาเศาะฮาบะฮ์ของท่านนบี (ﷺ) และคำวินิจฉัยของบรรดานักนิติศาสตร์อิสลาม (ฟุเกาะฮาอ์) ที่มีชื่อเสียง<sup>3</sup> อัลลอฮ์ (ผู้ทรงเกรียงไกรและสูงส่ง) ตรัสว่า:</p>
+
+      <p class="quote-indent">“และในหมู่มนุษย์มีผู้ที่ซื้อคำพูดอันไร้สาระ เพื่อทำให้ผู้คนหลงออกจากแนวทางของอัลลอฮ์โดยปราศจากความรู้ และเขายึดเอาแนวทางของอัลลอฮ์เป็นเรื่องล้อเล่น สำหรับชนเหล่านั้นจะได้รับการลงโทษอันอัปยศ (ในไฟนรก)”<sup>4</sup></p>
+
+      <p>คำว่า <em>“คำพูดอันไร้สาระ”</em> (ละฮ์วัลหะดีษ) หมายถึงการขับร้องและการเล่นเครื่องดนตรี ดังที่กลุ่มหนึ่งจากบรรดาเศาะฮาบะฮ์และชนรุ่นตาบิอีนได้อธิบายไว้ ตัวอย่างเช่น อับดุลลอฮ์ อิบนุ อับบาส (เราะฎิยัลลอฮุอันฮุมา) กล่าวว่า: <strong>“มันหมายถึงการขับร้อง”</strong><sup>5</sup> อัล-หะสัน อัล-บัศรี (ฮ.ศ. 110) กล่าวว่า: <strong>“โองการนี้ถูกประทานลงมาเกี่ยวกับเครื่องเป่า (ขลุ่ย/ปี่) และการขับร้อง”</strong><sup>6</sup></p>
+
+      <div class="fn-block">
+        <p>1] มีข้อยกเว้นบางประการสำหรับการขับร้องที่อนุญาตให้แก่สตรีและเด็กหญิง ซึ่งจะกล่าวถึงต่อไป</p>
+        <p>2] เช่นเดียวกันกับมุสลิมที่รับชมภาพยนตร์และรายการโทรทัศน์ ซึ่งหลายคนเสพติดสิ่งเหล่านี้</p>
+        <p>3] มุสลิมไม่พึงใส่ใจต่อ “ฟัตวา” ที่ขัดแย้งกับวะห์ยูและสวนทางกับความเข้าใจของเหล่าเศาะฮาบะฮ์</p>
+        <p>4] ซูเราะฮ์ ลุกมาน 31:6 • 5] ตัฟซีร อัฏ-เฏาะบะรี • 6] ตัฟซีร อิบนุ กะษีร</p>
+      </div>
+    </div>
+
+    <!-- Column 2 (Inside Center) -->
+    <div class="panel panel-inner panel-light">
+      <p>อิบนุ มัสอูด (เราะฎิยัลลอฮุอันฮุ) กล่าวว่า: <strong>“ขอสาบานต่ออัลลอฮ์ ผู้ซึ่งไม่มีพระเจ้าอื่นใดที่คู่ควรแก่การเคารพสักการะนอกจากพระองค์ มันหมายถึงการขับร้อง”</strong> โดยท่านกล่าวย้ำเช่นนั้นถึงสามครั้ง และมีรายงานในทำนองเดียวกันนี้จาก อับดุลลอฮ์ อิบนุ อุมัร (เราะฎิยัลลอฮุอันฮุมา)<sup>7</sup> เหล่าเศาะฮาบะฮ์ย่อมเข้าใจความหมายของอัลกุรอานดีกว่าผู้ที่มาภายหลัง จึงไม่อนุญาตให้ผู้ใดโต้แย้งความเข้าใจของเหล่าเศาะฮาบะฮ์ด้วยอารมณ์ใฝ่ต่ำของตนเอง</p>
+
+      <p>ยิ่งไปกว่านั้น ท่านนบี (ﷺ) ยังได้กล่าวตักเตือนอย่างชัดแจ้งต่อดนตรีและเครื่องดนตรี โดยท่านกล่าวว่า:</p>
+
+      <p class="quote-indent">“จะมีกลุ่มชนหนึ่งปรากฏขึ้นในช่วงปลายยุคสมัย พวกเขาจะทำให้การผิดประเวณี ผ้าไหม (สำหรับผู้ชาย) การดื่มสุรา และเครื่องดนตรีเป็นสิ่งที่อนุมัติ อัลลอฮ์จะทรงให้แผ่นดินสูบพวกเขา”<sup>8</sup></p>
+
+      <p>ในหะดีษนี้ ท่านนบี (ﷺ) ได้วางเครื่องดนตรีไว้เคียงข้างกับการผิดประเวณี การสวมผ้าไหมสำหรับผู้ชาย และการดื่มสุรา ซึ่งทั้งหมดล้วนหะรอม จึงพิสูจน์ว่าดนตรีก็หะรอมเช่นเดียวกัน — รวมทั้งเครื่องดนตรีควบคู่กับการขับร้องด้วย<sup>9</sup> ท่าน (ﷺ) ยังกล่าวอีกว่า:</p>
+
+      <p class="quote-indent">“ในหมู่ประชาชาติของฉันจะมีผู้คนที่ถือว่าการผิดประเวณี การสวมใส่ผ้าไหม การดื่มเครื่องดื่มมึนเมา และการเล่นเครื่องดนตรีเป็นสิ่งที่อนุมัติ จะมีกลุ่มชนหนึ่งพักอยู่ใกล้เชิงเขา และในยามเย็นคนเลี้ยงแกะของพวกเขาจะมาหาพวกเขาพร้อมกับฝูงแกะเพื่อขอรับค่าตอบแทน พวกเขาจะกล่าวกับเขาว่า ‘พรุ่งนี้ค่อยกลับมาหาพวกเรา’ แล้วอัลลอฮ์จะทรงทำลายพวกเขาในยามค่ำคืน โดยจะทรงให้ภูเขาถล่มลงมาทับพวกเขา และจะทรงเปลี่ยนรูปร่างของคนอื่นๆ ให้กลายเป็นลิงและสุกร โดยพวกเขาจะคงอยู่ในสภาพนั้นจนถึงวันฟื้นคืนชีพ”<sup>10</sup></p>
+
+      <p>อิบนุล ก็อยยิม กล่าวว่า: <em>“บรรดาผู้วิพากษ์วิจารณ์ความถูกต้อง (ศอฮีฮ์) ของหะดีษบทนี้ไม่ได้ประสบความสำเร็จอันใดในการสนับสนุนจุดยืนอันเป็นเท็จของพวกเขาที่อนุญาตเรื่องดนตรี ดังเช่น อิบนุ หัซม์ ที่อ้างว่ารายงานนี้มีสายรายงานขาดตอน”</em> อิบนุศ เศาะลาห์ กล่าวว่า: <em>“ไม่พึงให้ความสำคัญแก่เขาในการปฏิเสธรายงานนี้ เขาได้ผิดพลาดจากหลายแง่มุม — รายงานของอัล-บุคอรีเป็นที่รู้กันดีว่าเป็นหะดีษศอฮีฮ์ที่มีสายรายงานต่อเนื่องตามเงื่อนไขของศอฮีฮ์ อัล-บุคอรี”</em><sup>11</sup></p>
+
+      <div class="fn-block">
+        <p>7] ดู <em>อิฆอษะตุล ลุฮ์ฟาน</em> ของ อิมาม อิบนุล ก็อยยิม</p>
+        <p>8, 10] ศอฮีฮ์ อัล-บุคอรี หะดีษหมายเลข 5590 • 9] <em>อัล-ญามิอ์ ฟี ฟิกฮ์ อิบนุ บาซ</em> หน้า 1203</p>
+        <p>11] <em>ฆิซาอุล อัลบาบ ฟี ชัรห์ มันซูมะฮ์ อัล-อาดาบ</em> ของ อิมาม อัส-สะฟารีนี</p>
+      </div>
+    </div>
+
+    <!-- Column 3 (Inside Right) -->
+    <div class="panel panel-inner panel-white">
+      <p>นาฟิอ์ (เราะฮิมะฮุลลอฮ์) เล่าว่า:</p>
+
+      <p class="quote-indent">“อิบนุ อุมัร (เราะฎิยัลลอฮุอันฮุ) ได้ยินเสียงเป่าขลุ่ย ท่านจึงเอานิ้วทั้งสองอุดหูและเดินเบี่ยงออกจากเส้นทางที่กำลังเดินอยู่ จากนั้นท่านถามฉันว่า ‘เธอยังได้ยินอะไรอยู่ไหม?’ ฉันตอบว่า ‘ไม่ครับ’ ท่านจึงดึงนิ้วออกจากหูแล้วกล่าวว่า ‘ฉันเคยอยู่กับท่านนบี (ﷺ) ในโอกาสหนึ่ง แล้วท่านก็ได้ยินเสียงคล้ายกับที่เราเพิ่งได้ยินนี้ และท่านก็ได้ทำอย่างที่ฉันทำ’”<sup>12</sup></p>
+
+      <p>อัล-กุรฏุบี (ฮ.ศ. 671) ให้ความเห็นว่า: <em>“นักวิชาการของเรากล่าวว่า ‘หากนี่คือปฏิกิริยาของพวกท่านต่อเสียงเครื่องดนตรีอันเรียบง่ายเพียงแค่นี้ แล้วการขับร้องและเครื่องดนตรีของผู้คนในยุคนี้จะเลวร้ายยิ่งกว่าเพียงใดกันเล่า!’”</em><sup>13</sup></p>
+
+      <p>อัล-อิมาม มุฮัมมัด นาศิรุดดีน อัล-อัลบานี (เราะฮิมะฮุลลอฮ์) อธิบายว่าหะดีษที่สั่งห้ามเครื่องดนตรีนั้นชัดเจนปราศจากความคลุมเครือ — ยกเว้นกลองรำมะนาแบบเรียบง่าย (ดุฟฟ์) ที่อนุญาตให้สตรีตีในงานแต่งงานหรือในวันอีดควบคู่กับการขับร้องของพวกนาง อัล-อัลบานี และ อิบนุล ก็อยยิม (ฮ.ศ. 751) ได้แสดงให้เห็นว่าบรรดาอิมามทั้งสี่ ได้แก่ อิมามอบู หะนีฟะฮ์ (ฮ.ศ. 150), อิมามมาลิก (ฮ.ศ. 179), อิมามอัช-ชาฟิอี (ฮ.ศ. 204) และ อิมามอะห์มัด (ฮ.ศ. 241) ล้วนมีมติเป็นเอกฉันท์ในการสั่งห้ามดนตรี เครื่องดนตรี และการขับร้อง<sup>14</sup></p>
+
+      <p>นักวิชาการกลุ่มหนึ่งได้รายงานมติเอกฉันท์ (อิจญ์มาอ์) ว่าดนตรีและเครื่องดนตรีเป็นสิ่งหะรอม เช่น อัล-กุรฏุบี, อิบนุศ เศาะลาห์ และ อิบนุ เราะญับ อิมามอัฏ-เฏาะบะรีกล่าวว่า: <strong>“บรรดานักวิชาการแห่งหัวเมืองต่างๆ ล้วนมีมติเอกฉันท์เกี่ยวกับความน่ารังเกียจของการขับร้อง (และดนตรี) และการเป็นสิ่งต้องห้ามของมัน”</strong> อิมามอัล-เอาซาอี (ฮ.ศ. 157) กล่าวว่า: <strong>“จงอย่าไปร่วมงานเลี้ยงแต่งงาน (วะลีมะฮ์) ที่มีเสียงขับร้องและดนตรี”</strong> อิมามอัล-หะสัน อัล-บัศรี (ฮ.ศ. 110) กล่าวว่า: <strong>“หากงานเลี้ยงแต่งงานใดมีการขับร้องและดนตรี ก็ไม่พึงตอบรับคำเชิญนั้น”</strong><sup>15</sup> ชัยคุลอิสลาม อิบนุ ตัยมียะฮ์ (ฮ.ศ. 728) กล่าวว่า: <strong>“จุดยืนของบรรดาอิมามแห่งมัซฮับทั้งสี่คือเครื่องดนตรีทุกชนิดเป็นสิ่งต้องห้าม (หะรอม)... และไม่มีรายงานว่าศิษย์ของบรรดาอิมามมีความเห็นขัดแย้งกันในเรื่องนี้”</strong><sup>16</sup></p>
+
+      <div class="fn-block">
+        <p>12] สุนัน อบีดาวูด 4924 (อัล-อัลบานี: ศอฮีฮ์) • 13] <em>อัล-ญามิอ์ ลิอะห์กาม อัลกุรอาน</em> ของ อัล-กุรฏุบี</p>
+        <p>14] ดู <em>อัส-ศอฮีฮะฮ์</em> 1/145 และ <em>อิฆอษะตุล ลุฮ์ฟาน</em> • 15] <em>อัล-ญามิอ์</em> ของ อัล-ก็อยเราะวานี</p>
+        <p>16] <em>มัจญ์มูอ์ อัล-ฟะตาวา</em></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SHEET 2: OUTSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 2 (ด้านนอกแผ่นพับ): คอลัมน์ซ้าย [พับใน พื้นเทาอ่อน] • คอลัมน์กลาง [ปกหลัง พื้นชาร์โคล + TROID] • คอลัมน์ขวา [ปกหน้า หูฟังและหัวใจร้าว]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Outside Left / Inside Flap) -->
+    <div class="panel panel-inner panel-light">
+      <p>มีรายงานจากอิมามอบู หะนีฟะฮ์ (เราะฮิมะฮุลลอฮ์) ว่า: <strong>“ดนตรีและการขับร้องเป็นส่วนหนึ่งของบาปใหญ่ที่ต้องละทิ้งในทันที”</strong> อิมามอัส-สะฟารีนี กล่าวว่า: <em>“อบู หะนีฟะฮ์ รังเกียจดนตรีและจัดให้มันอยู่ในหมู่บาปทั้งหลาย — และนั่นคือทัศนะของบรรดานักวิชาการแห่งกูฟะฮ์ ได้แก่ สุฟยาน, หัมมาด, อิบรอฮีม, อัช-ชะอ์บี และท่านอื่นๆ และไม่มีความเห็นขัดแย้งระหว่างนักวิชาการแห่งบัศเราะฮ์เช่นกัน”</em><sup>17</sup> อัล-เอาซาอี เล่าว่า อุมัร อิบนุ อับดิลอะซีซ (ฮ.ศ. 101) ได้เขียนจดหมายถึง อุมัร อิบนุ อัล-วะลีด ว่า: <strong>“การที่ท่านเปิดเผยและปล่อยให้มีเครื่องดนตรีและขลุ่ยปี่นั้นถือเป็นบิดอะฮ์ในอิสลาม ฉันกำลังคิดอยู่ว่าจะส่งคนไปตัดปอยผมด้านหน้าอันชั่วร้ายของท่านเสีย!”</strong><sup>18</sup></p>
+
+      <div class="callout-box">
+        <p><strong>“ความรักต่อคัมภีร์ของอัลลอฮ์ กับความรักต่อดนตรีและการขับร้อง ไม่อาจรวมอยู่ด้วยกันได้ในหัวใจของผู้ศรัทธา”</strong></p>
+        <div class="cite">— อิมาม อิบนุล ก็อยยิม</div>
+      </div>
+
+      <p>ย่อมไม่เป็นที่ปิดบังสำหรับผู้มีสติปัญญาเที่ยงตรงทุกคนว่า ดนตรีทำให้มนุษย์ไขว้เขวไปจากคุณประโยชน์อันนับไม่ถ้วน — และเมื่อพิจารณาบาปและการลงโทษจากอัลลอฮ์ด้วยแล้ว ย่อมไม่มีผู้มีคุณธรรมคนใดที่จะเข้าไปข้องเกี่ยวกับกิจกรรมอันเสื่อมทรามซึ่งนำมาซึ่งความโกรธกริ้วของอัลลอฮ์นี้ ท่านนบี (ﷺ) กล่าวว่า:</p>
+
+      <p class="quote-indent">“ผู้คนจากประชาชาติของฉันจะดื่มสุรา โดยพวกเขาจะเรียกชื่อมันด้วยชื่ออื่นที่ไม่ใช่ชื่อจริงของมัน เครื่องดนตรีจะถูกบรรเลงอยู่เหนือศีรษะของพวกเขาพร้อมกับบรรดานักร้องหญิง อัลลอฮ์จะทรงให้แผ่นดินสูบบางส่วนของพวกเขา และอีกส่วนหนึ่งพระองค์จะทรงเปลี่ยนรูปร่างพวกเขาให้กลายเป็นลิงและสุกร”<sup>19</sup></p>
+
+      <p>อัลลอฮ์ (ซุบฮานะฮูวะตะอาลา) ตรัสแก่ชัยฏอนว่า:</p>
+      <p class="quote-indent">“และเจ้าจงค่อยๆ ล่อลวงพวกเขา — ผู้ที่เจ้าสามารถล่อลวงได้ในหมู่พวกเขา — ด้วยเสียงของเจ้า (หมายถึงบทเพลงและดนตรี)”<sup>20</sup></p>
+
+      <p>มุญาฮิด กล่าวว่า: <em>“หมายถึง จงทำให้พวกเขาไขว้เขวด้วยคำพูดไร้สาระและการขับร้อง เพื่อที่พวกเขาจะได้ตกต่ำลง”</em> อัล-กุรฏุบี กล่าวว่า: <em>“โองการนี้พิสูจน์ถึงการสั่งห้ามขลุ่ยปี่ การขับร้อง และคำพูดอันไร้สาระ — และสิ่งใดก็ตามที่เป็นเสียงของชัยฏอนและการกระทำของมัน ย่อมจำเป็นต้องหลีกห่างจากมัน”</em><sup>21</sup></p>
+
+      <div class="fn-block">
+        <p>17] <em>ฆิซาอุล อัลบาบ</em> ของ อัส-สะฟารีนี • 18] สุนัน อัน-นะสาอี 4135 (ศอฮีฮ์)</p>
+        <p>19] สุนัน อิบนุมาญะฮ์ 1420, ดู <em>อัส-ศอฮีฮะฮ์</em> 1/138 • 20] อัล-อิสรออ์ 17:64 • 21] ตัฟซีร อัล-กุรฏุบี</p>
+      </div>
+    </div>
+
+    <!-- Column 2 (Outside Center / Back Cover): Dark Charcoal + TROID Footer -->
+    <div class="panel panel-inner panel-charcoal">
+      <div>
+        <p>ท่านเราะสูลุลลอฮ์ (ﷺ) กล่าวว่า:</p>
+        <p class="quote-indent">“เสียงสองประเภทที่ถูกสาปแช่งทั้งในโลกนี้และโลกหน้า คือ เสียงเครื่องดนตรีที่บรรเลงในโอกาสแห่งความรื่นเริง และเสียงระฆัง (หรือเสียงคร่ำครวญ) ที่ดังขึ้นในยามเกิดเภทภัย”<sup>22</sup></p>
+
+        <p>ท่านนบี (ﷺ) ยังกล่าวอีกว่า:</p>
+        <p class="quote-indent">“พวกท่านจงอย่าซื้อหรือขายบรรดานักร้องหญิง และจงอย่าสอนพวกนางให้เป็นนักร้อง ไม่มีความดีงามใดๆ ในธุรกิจนี้ และรายได้ที่มาจากมันเป็นสิ่งต้องห้าม (หะรอม)”<sup>23</sup></p>
+
+        <p>ข้อห้ามนี้ครอบคลุมถึงการซื้อ การขาย และการเผยแพร่แจกจ่ายมิวสิกวิดีโอ บทเพลง และอื่นๆ ในลักษณะเดียวกันด้วย</p>
+
+        <p>การแบ่งปันบทเพลงเหล่านี้ซึ่งยกย่องเชิดชูความชั่วและการผิดประเวณีนั้น ถือเป็นส่วนหนึ่งของบาปใหญ่ ทั้งอุตสาหกรรมภาพยนตร์และอุตสาหกรรมดนตรีต่างถูกสร้างขึ้นบนพื้นฐานของพฤติกรรมอันไร้ศีลธรรม ซึ่งนำไปสู่ความเสื่อมทรามอย่างใหญ่หลวงในสังคมต่างๆ ทั่วโลก อัลลอฮ์ (ผู้ทรงเกรียงไกรและสูงส่ง) ตรัสว่า:</p>
+
+        <p class="quote-indent">“แท้จริงบรรดาผู้ที่รักใคร่ให้สิ่งลามกอนาจารและพฤติกรรมผิดศีลธรรมทางเพศแพร่กระจายออกไปในหมู่บรรดาผู้ศรัทธา สำหรับพวกเขานั้นจะได้รับการลงโทษอันเจ็บปวดทั้งในโลกนี้และในโลกหน้า”<sup>24</sup></p>
+
+        <p>จึงเป็นหน้าที่ของแต่ละบุคคลที่จะต้องเริ่มต้นการปรับปรุงแก้ไขจากตัวของเขาเอง ครอบครัวของเขา และผู้ที่อยู่ใกล้ชิดกับเขา ผู้คนต่างมีความต้องการอย่างยิ่งยวดต่อความรู้ที่เป็นประโยชน์ การปรับปรุงแก้ไขตนเอง และทางนำจากอัลลอฮ์ จงเริ่มต้นตั้งแต่วันนี้ด้วยการเยี่ยมชม <strong>SalafiSounds.com</strong> และรับฟังคุฏบะฮ์ การบรรยาย และบทเรียนต่างๆ ที่อัปโหลดไว้ — ซึ่งทั้งหมดล้วนมาจากแหล่งอ้างอิงที่ถูกต้องแท้จริง</p>
+
+        <p>ท้ายที่สุดนี้เรากล่าวว่า: มวลการสรรเสริญเป็นสิทธิ์ของอัลลอฮ์ พระผู้อภิบาลแห่งสรรพสิ่ง — ขอความสันติสุขและความจำเริญจากอัลลอฮ์จงมีแด่ท่านเราะสูล ครอบครัว เหล่าเศาะฮาบะฮ์ และผู้ปฏิบัติตามท่านอย่างแท้จริง เยี่ยมชม <strong>AbuKhadeejah.com</strong> เพื่ออ่านบทความเพิ่มเติม</p>
+
+        <div class="fn-block">
+          <p>22] <em>มัจญ์มะอ์ อัซ-ซะวาอิด</em> 3/16 (อัล-อัลบานี: หะสัน, <em>ศอฮีฮ์ อัต-ตัรฆีบ</em> 3527)</p>
+          <p>23] สุนัน อัต-ติรมิซี 3195 (อัล-อัลบานี: หะสัน) • 24] ซูเราะฮ์ อัน-นูร 24:19</p>
+        </div>
+        <p class="author-line">เขียนโดย ชัยค์ อบู เคาะดีญะฮ์ (Shaykh Abū Khadījah)</p>
+      </div>
+
+      <footer class="troid-footer">
+        <div>
+          <div class="troid-brand">troid</div>
+          <div class="troid-sub">troid.org • ฉบับแปลภาษาไทย</div>
+        </div>
+        <div class="troid-divider"></div>
+        <div class="troid-info">
+          874-A Weston Rd. Toronto, Canada<br>
+          info@troid.org<br>
+          <strong>Salafi Publications &amp; @troidorg</strong>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Column 3 (Outside Right / Front Cover) -->
+    <div class="panel panel-cover">
+      <div class="cover-scrim"></div>
+      <div class="cover-vertical-wrap">
+        <div class="cover-v-black">ดนตรี</div>
+        <div class="cover-v-red">และการขับร้อง</div>
+        <div class="cover-v-slate">ในแสงสว่างแห่งอัลกุรอานและซุนนะฮ์</div>
+      </div>
+      <div class="cover-quote-block">
+        <div class="cover-quote-text">
+          “และในหมู่มนุษย์<br>
+          มีผู้ที่ซื้อคำพูดอันไร้สาระ<br>
+          เพื่อทำให้ผู้คนหลงออก<br>
+          จากแนวทางของอัลลอฮ์”
+        </div>
+        <div class="cover-quote-ref">(อัลกุรอาน, ซูเราะฮ์ ลุกมาน 31:6)</div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

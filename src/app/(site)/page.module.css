@@ -584,3 +584,120 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-dim);
 }
+
+/* ---------------- Series Album Card & Modal ---------------- */
+.albumBtn {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.albumCoverWrap {
+  box-shadow: 0 -4px 0 -1px var(--surface-3), 0 -8px 0 -3px var(--border-2);
+}
+.albumBadge {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--r-pill);
+  background: rgba(11, 14, 13, 0.86);
+  backdrop-filter: blur(6px);
+  color: var(--accent);
+  font-family: var(--text);
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid rgba(62, 230, 160, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+.albumBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(4, 7, 6, 0.78);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  animation: fadeIn 0.18s var(--ease-out) both;
+}
+.albumDialog {
+  width: min(860px, 100%);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: slideInUp 0.22s var(--ease-out) both;
+}
+.albumDialogHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.4rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.albumDialogTitle {
+  font-family: var(--display);
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  font-weight: 600;
+  line-height: 1.38;
+  color: var(--fg);
+  margin-top: 0.2rem;
+}
+.albumDialogGrid {
+  padding: 1.25rem 1.4rem 1.5rem;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: 1.1rem 0.9rem;
+}
+.albumEpCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.albumEpCover {
+  position: relative;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  transition: transform var(--dur) var(--spring), box-shadow var(--dur) var(--ease);
+}
+.albumEpCard:hover .albumEpCover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow), 0 0 0 1px var(--accent-glow);
+}
+.albumEpTag {
+  position: absolute;
+  bottom: 0.45rem;
+  left: 0.45rem;
+  padding: 0.16rem 0.5rem;
+  border-radius: var(--r-pill);
+  background: rgba(11, 14, 13, 0.86);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid rgba(62, 230, 160, 0.3);
+}
+.albumEpTitle {
+  font-family: var(--display);
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.38;
+  color: var(--fg-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.albumEpCard:hover .albumEpTitle {
+  color: var(--accent);
+}

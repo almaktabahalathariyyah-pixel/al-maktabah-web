@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>พระบัญญัติข้อแรกในคัมภีร์ไบเบิล — แผ่นพับ 3 ตอน หน้า-หลัง (A4 แนวนอน)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1c1813;
+      color: #f5f0e6;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      padding: 1.25rem 1rem 3rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      max-width: 297mm;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #2b241c;
+      padding: 0.85rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #45392a;
+    }
+    .toolbar-title {
+      font-weight: 700;
+      font-size: 0.96rem;
+      color: #dfc188;
+    }
+    .toolbar-hint {
+      font-size: 0.82rem;
+      color: #cdc3b4;
+      margin-top: 2px;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .toolbar button, .toolbar a {
+      padding: 0.5rem 1rem;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #594936;
+      background: #382e23;
+      color: #f5f0e6;
+    }
+    .toolbar .btn-primary {
+      background: #6c522e;
+      border-color: #6c522e;
+      color: #ffffff;
+    }
+    .toolbar .btn-primary:hover { background: #574123; }
+
+    .sheet-label {
+      max-width: 297mm;
+      margin: 0 auto 0.5rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #d8cebf;
+      letter-spacing: 0.02em;
+    }
+
+    /* ===== A4 LANDSCAPE TRIFOLD SHEET (297mm x 210mm) ===== */
+    .trifold-sheet {
+      width: 297mm;
+      height: 210mm;
+      margin: 0 auto 2rem;
+      display: grid;
+      grid-template-columns: 99mm 99mm 99mm;
+      grid-template-rows: 210mm;
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+      background: #faf7f0;
+      position: relative;
+    }
+
+    .trifold-sheet::before,
+    .trifold-sheet::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 1px dashed rgba(128, 128, 128, 0.28);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .trifold-sheet::before { left: 99mm; }
+    .trifold-sheet::after { left: 198mm; }
+
+    .panel {
+      width: 99mm;
+      height: 210mm;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== PANEL CONTENT STYLES (calibrated for 99mm x 210mm) ===== */
+    .panel-inner {
+      padding: 6mm 5.8mm 5.2mm;
+      font-size: 7.35pt;
+      line-height: 1.43;
+    }
+    .panel-ivory {
+      background: #faf7f0;
+      color: #1c1814;
+    }
+    .panel-ivory-alt {
+      background: #f4efe4;
+      color: #1c1814;
+    }
+    .panel-bronze {
+      background: #4b3a24;
+      color: #f7f2e7;
+      padding-bottom: 0;
+      justify-content: space-between;
+    }
+
+    .panel-inner h2 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 9.2pt;
+      font-weight: 700;
+      line-height: 1.34;
+      margin-bottom: 2.2mm;
+      color: #5b4526;
+    }
+    .panel-bronze h2 {
+      color: #e6cb94;
+      margin-top: 2mm;
+    }
+
+    .panel-inner p {
+      margin-bottom: 1.9mm;
+      text-align: left;
+    }
+
+    .callout-box {
+      margin: 1.8mm 0 2.2mm;
+      padding: 2.2mm 2.8mm;
+      background: #efe7d6;
+      border-left: 3pt solid #5b4526;
+      border-radius: 2px;
+    }
+    .callout-box .callout-title {
+      font-weight: 700;
+      font-size: 7.8pt;
+      color: #4a371c;
+      line-height: 1.38;
+      margin-bottom: 0.6mm;
+    }
+    .callout-box p {
+      margin-bottom: 0;
+      font-size: 7pt;
+      color: #5c4b34;
+    }
+
+    .shahadah-box {
+      margin: 1.6mm 0 2mm;
+      padding: 2.2mm 2.8mm;
+      background: rgba(255, 255, 255, 0.1);
+      border-left: 2.5pt solid #e6cb94;
+      border-radius: 2px;
+    }
+    .shahadah-box p {
+      margin-bottom: 0;
+      line-height: 1.44;
+    }
+
+    .fn-block {
+      margin-top: auto;
+      padding-top: 1.8mm;
+      border-top: 0.8pt solid rgba(91, 69, 38, 0.35);
+      font-size: 6.35pt;
+      line-height: 1.36;
+      color: #4f4231;
+    }
+    .panel-bronze .fn-block {
+      border-top-color: rgba(230, 203, 148, 0.3);
+      color: #e2d6c1;
+      margin-top: 2mm;
+    }
+    .fn-block p {
+      margin-bottom: 0.8mm;
+    }
+
+    sup {
+      font-size: 5.8pt;
+      font-weight: 700;
+      color: #5b4526;
+    }
+
+    .author-line {
+      margin-top: 1.6mm;
+      font-size: 6.9pt;
+      color: #e6cb94;
+    }
+
+    /* Authentic TROID bottom footer bar on Back Cover */
+    .troid-footer {
+      margin: 2.5mm -5.8mm 0;
+      padding: 3.5mm 5.6mm 4mm;
+      background: rgba(28, 21, 13, 0.44);
+      border-top: 1px solid rgba(230, 203, 148, 0.28);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3mm;
+      color: #f6f0e4;
+      font-size: 6.8pt;
+      line-height: 1.42;
+    }
+    .troid-brand {
+      font-family: Georgia, serif;
+      font-size: 18pt;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: #ffffff;
+    }
+    .troid-sub {
+      font-size: 6.5pt;
+      margin-top: 1mm;
+      opacity: 0.9;
+    }
+    .troid-divider {
+      width: 1.5pt;
+      height: 11.5mm;
+      background: #e6cb94;
+      flex-shrink: 0;
+    }
+    .troid-info {
+      flex: 1;
+      font-size: 6.5pt;
+    }
+
+    /* ===== FRONT COVER (Page 2, Right Column) ===== */
+    .panel-cover {
+      background: url('assets/03-cover-bg.jpg') center center / cover no-repeat;
+      color: #1f1a14;
+    }
+    .cover-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(247, 240, 224, 0.82) 0%, rgba(247, 240, 224, 0.55) 44%, rgba(247, 240, 224, 0.05) 68%, rgba(20, 15, 10, 0.1) 100%);
+      pointer-events: none;
+    }
+    .cover-vertical-wrap {
+      position: absolute;
+      left: 4.5mm;
+      top: 7mm;
+      display: flex;
+      align-items: flex-start;
+      gap: 1mm;
+      z-index: 2;
+    }
+    .cover-v-brown {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 15.5pt;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #4d391e;
+      text-shadow: 0 1px 6px rgba(255, 255, 255, 0.75);
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+    .cover-v-white {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 24pt;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      text-shadow: 0 3px 14px rgba(56, 40, 18, 0.72), 0 1px 3px rgba(56, 40, 18, 0.65);
+      line-height: 1.05;
+      white-space: nowrap;
+    }
+    .cover-quote-block {
+      position: absolute;
+      top: 10mm;
+      right: 5.5mm;
+      width: 52mm;
+      z-index: 2;
+      text-align: left;
+    }
+    .cover-quote-text {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 13pt;
+      font-weight: 800;
+      line-height: 1.38;
+      color: #1c1610;
+      text-shadow: 0 1px 8px rgba(255, 252, 245, 0.85);
+    }
+    .cover-quote-ref {
+      margin-top: 2.5mm;
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 9pt;
+      font-weight: 600;
+      color: #4d391e;
+      text-shadow: 0 1px 6px rgba(255, 252, 245, 0.85);
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .no-print { display: none !important; }
+      .trifold-sheet {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .trifold-sheet:last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .trifold-sheet::before,
+      .trifold-sheet::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div>
+      <div class="toolbar-title">แผ่นพับที่ 03: พระบัญญัติข้อแรกในคัมภีร์ไบเบิล — Desktop Trifold A4 แนวนอน</div>
+      <div class="toolbar-hint">วิธีพิมพ์: กดปุ่มพิมพ์ → เลือก A4 แนวนอน (Landscape) → ตั้งค่าขอบกระดาษ None → เปิด Background graphics → พิมพ์ 2 หน้า (Flip on short edge)</div>
+    </div>
+    <div class="toolbar-actions">
+      <a href="/pamphlets">← สารบัญรวม</a>
+      <button class="btn-primary" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF (2 หน้า หน้า-หลัง)</button>
+    </div>
+  </div>
+
+  <!-- ==================== SHEET 1: INSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 1 (ด้านในแผ่นพับ): คอลัมน์ซ้าย • คอลัมน์กลาง • คอลัมน์ขวา [โทนงาช้าง-น้ำตาลคลาสสิกต้นฉบับ TROID]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Inside Left) -->
+    <div class="panel panel-inner panel-ivory">
+      <h2>เหตุใดชาวคริสต์จึงหลงออกห่างจากพระบัญญัติข้อแรกในคัมภีร์ไบเบิล ขณะที่มุสลิมที่แท้จริงเคารพภักดีต่อพระเจ้าเพียงพระองค์เดียว</h2>
+
+      <p>ท่านศาสนทูตแห่งพระเจ้า มุฮัมมัด (ขอความสันติและความจำเริญจงมีแด่ท่าน) ได้ชี้แจงฐานะของท่านในหมู่มวลมนุษย์อย่างชัดเจนเมื่อท่านกล่าวว่า: <strong>“พวกท่านอย่าได้ยกย่องสรรเสริญฉันจนเกินเลย ดังที่ชาวคริสต์ได้ยกย่องสรรเสริญอีซา (เยซู) บุตรของมัรยัมจนเกินเลย เพราะแท้จริงฉันเป็นเพียงบ่าวคนหนึ่งเท่านั้น ดังนั้น จงกล่าวเถิดว่า ‘ท่านคือบ่าวของอัลลอฮ์และเราะสูลของพระองค์’”</strong><sup>1</sup> และพระเจ้า (ผู้ทรงสูงส่ง) ทรงตรัสไว้ในอัลกุรอานว่า: <strong>“จงกล่าวเถิดว่า ‘โอ้ ชาวคัมภีร์ (ชาวยิวและชาวคริสต์) เอ๋ย จงมาสู่ถ้อยคำอันเสมอภาคระหว่างเรากับพวกท่าน — นั่นคือเราจะไม่เคารพภักดีสิ่งใดนอกจากอัลลอฮ์ และจะไม่ตั้งสิ่งใดเป็นภาคีกับพระองค์ และบางส่วนในหมู่พวกเราจะไม่ยึดเอาอีกบางส่วนเป็นพระเจ้านอกจากอัลลอฮ์’”</strong> (อัลกุรอาน ซูเราะฮ์ อาลิ-อิมรอน 3:64)</p>
+
+      <p>พระบัญญัติข้อแรกตามที่ระบุไว้ในคัมภีร์ไบเบิลคือพระดำรัสของพระเจ้าที่ว่า: <strong>“เราคือพระยาห์เวห์พระเจ้าของเจ้า ผู้ได้นำเจ้าออกจากแผ่นดินอียิปต์ ออกจากแดนทาส <u>เจ้าอย่ามีพระเจ้าอื่นใดนอกเหนือจากข้า</u>”</strong> (อพยพ 20:2–3) ดังนั้น นี่คือพระเจ้าของท่านนบีมูซา (โมเสส — ขอความสันติจงมีแด่ท่าน) และเป็นพระเจ้าองค์เดียวกันกับที่ส่งท่านนบีอีซา (เยซู) มาในฐานะบ่าวและศาสนทูตของพระองค์ — มิใช่ในฐานะพระเจ้าที่จะถูกเคารพสักการะ (หรือในฐานะพระบุตรของพระองค์) ยิ่งไปกว่านั้น ในพันธสัญญาใหม่ พระบัญญัติข้อแรกนี้ก็ถูกกล่าวย้ำอีกครั้งว่า: <strong>“พระเยซูทรงตอบเขาว่า ‘จงรักองค์พระผู้เป็นเจ้าผู้เป็นพระเจ้าของท่านด้วยสุดใจของท่าน ด้วยสุดจิตของท่าน และด้วยสุดความคิดของท่าน’ นั่นแหละเป็นพระบัญญัติข้อสำคัญอันดับแรก”</strong> (มัทธิว 22:37–38) ดังนั้น ท่านนบีอีซา (ขอความสันติจงมีแด่ท่าน) จึงยืนยันถึงพระเจ้าของท่านนบีมูซา ผู้ทรงเป็นพระเจ้าเพียงพระองค์เดียวที่คู่ควรแก่การเคารพภักดีและความรัก</p>
+
+      <div class="fn-block">
+        <p>1] ศอฮีฮ์ อัล-บุคอรี, หะดีษหมายเลข 3445</p>
+      </div>
+    </div>
+
+    <!-- Column 2 (Inside Center) -->
+    <div class="panel panel-inner panel-ivory-alt">
+      <p>นักเทววิทยาและนักวิชาการคริสต์จำนวนมากต่างก็ยอมรับเช่นกันว่า มีเพียงพระเจ้าองค์เดียวเท่านั้น ผู้ทรงเป็นพระผู้อภิบาลและพระผู้สร้างสรรพสิ่งทั้งปวง ที่จะต้องได้รับการเคารพภักดี นักเทววิทยาชาวเยอรมัน มาร์ติน ลูเทอร์ (Martin Luther) บุคคลสำคัญในการปฏิรูปศาสนาฝ่ายโปรเตสแตนต์ (เสียชีวิต ค.ศ. 1546) กล่าวไว้ว่า: <strong>“[การบูชารูปเคารพ] มิได้หมายถึงเพียงการสร้างรูปปั้นขึ้นแล้วกราบไหว้มันเท่านั้น หากแต่อยู่ในหัวใจที่มัวแต่เหม่อมองไปยังสิ่งอื่น และแสวงหาความช่วยเหลือและการปลอบโยนจากสิ่งถูกสร้าง นักบุญ หรือปีศาจ โดยไม่ใส่ใจต่อพระเจ้า ไม่มองไปยังพระองค์เพื่อความดีงามจนเชื่อว่าพระองค์เต็มพระทัยที่จะช่วยเหลือ และไม่เชื่อว่าความดีงามใดๆ ที่ตนได้รับนั้นมาจากพระเจ้า”</strong><sup>2</sup></p>
+
+      <p>จอห์น คาลวิน (John Calvin) นักเทววิทยา ศิษยาภิบาล และนักปฏิรูปฝ่ายโปรเตสแตนต์ชาวฝรั่งเศส (เสียชีวิต ค.ศ. 1564) กล่าวว่า: <strong>“เราทราบดีว่าเมื่อชาวอิสราเอลบูชาพระบาอัลของพวกเขา (เทพเจ้าท้องถิ่นต่างๆ) พวกเขามิได้นำเทพเหล่านั้นมาแทนที่พระเจ้าจนผลักไสพระองค์ออกไปโดยสิ้นเชิงและมอบอำนาจสูงสุดให้แก่พวกมัน กระนั้นก็ตาม นี่ก็ถือเป็นการลบหลู่การนมัสการพระเจ้าที่ไม่อาจยอมรับได้”</strong><sup>3</sup> ในงานเขียนของเขา คาลวินได้ย้ำเตือนชาวคริสต์ถึงคำเตือนของท่านนบีมูซาแก่ชาวอิสราเอลต่อการบูชาพระเจ้าอื่นใดนอกจากพระเจ้าแห่งสรรพสิ่งทั้งปวงว่า: <strong>“เจ้าอย่าติดตามพระอื่นใด คือพระของชนชาติต่างๆ ที่อยู่รอบเจ้า เพราะพระยาห์เวห์พระเจ้าของเจ้าซึ่งสถิตอยู่ท่ามกลางเจ้าทรงเป็นพระเจ้าที่เรียกร้องความซื่อสัตย์และการนมัสการแต่เพียงผู้เดียว มิฉะนั้นพระพิโรธของพระยาห์เวห์พระเจ้าของเจ้าจะพลุ่งขึ้นต่อสู้เจ้า และพระองค์จะทรงทำลายเจ้าให้สูญสิ้นไปจากพื้นแผ่นดินโลก”</strong> (เฉลยธรรมบัญญัติ 6:14)</p>
+
+      <div class="callout-box">
+        <div class="callout-title">“เจ้าอย่าทำรูปเคารพสำหรับตน เป็นรูปสิ่งหนึ่งสิ่งใดซึ่งมีอยู่ในฟ้าเบื้องบน หรือซึ่งมีอยู่ที่แผ่นดินเบื้องล่าง”</div>
+        <p>พระธรรมอพยพ (Exodus) 20:4</p>
+      </div>
+
+      <div class="fn-block">
+        <p>2] <em>The Large Catechism III, Part First: The First Commandment</em>, แปลโดย F. Bente &amp; W.H.T. Dau, <em>Triglot Concordia</em>, St. Louis, 1921, หน้า 565–773.</p>
+        <p>3] John Calvin, <em>Harmony of the Law: Part 1, The Law: The First Commandment</em>.</p>
+      </div>
+    </div>
+
+    <!-- Column 3 (Inside Right) -->
+    <div class="panel panel-inner panel-ivory">
+      <p>ทั้งๆ ที่เป็นเช่นนี้ ชาวคริสต์ยังคงยืนกรานที่จะเคารพสักการะอีซา (เยซู) บุตรของมัรยัม (ขอความสันติจงมีแด่ทั้งสองท่าน) ในเรื่องนี้ พวกเขาขัดแย้งกับคัมภีร์ ขัดแย้งกับคำอ้างเรื่องเอกเทวนิยม (การนับถือพระเจ้าองค์เดียว) ของตนเอง และต่อต้านคำสอนของท่านนบีมูซา ท่านนบีอีซา และท่านนบีมุฮัมมัด (ขอความสันติจงมีแด่พวกท่านทั้งหมด) ยิ่งไปกว่านั้น คัมภีร์ไบเบิลยังระบุว่า: <strong>“เจ้าอย่าทำรูปเคารพสำหรับตน เป็นรูปสิ่งหนึ่งสิ่งใดซึ่งมีอยู่ในฟ้าเบื้องบน หรือซึ่งมีอยู่ที่แผ่นดินเบื้องล่าง หรือซึ่งมีอยู่ในน้ำใต้แผ่นดิน เจ้าอย่ากราบไหว้หรือปรนนิบัติรูปเหล่านั้น เพราะเราคือพระยาห์เวห์พระเจ้าของเจ้า เป็นพระเจ้าผู้หวงแหน”</strong> (อพยพ 20:4) และนี่คือรากฐานของพระบัญญัติข้อที่สอง</p>
+
+      <p>อย่างไรก็ตาม ชาวคริสต์กลับสร้างรูปภาพของพระคริสต์ เรียกท่านว่า “พระเจ้า” และ “พระเยซูเจ้า” และเคารพสักการะท่านอย่างเปิดเผย แต่กระนั้นก็ยังอ้างว่าตนเป็นผู้นับถือพระเจ้าองค์เดียวและเป็นผู้เคารพภักดีต่อพระเจ้าองค์เดียวผู้สร้างสรรพสิ่ง! ตามคัมภีร์ไบเบิล พระเจ้าตรัสแก่ท่านนบีมูซา (ขอความสันติจงมีแด่ท่าน) ว่า: <strong>“พวกเจ้าไม่เห็นรูปร่างอะไรเลยในวันที่พระยาห์เวห์ตรัสกับเจ้าจากท่ามกลางเพลิง”</strong> (เฉลยธรรมบัญญัติ 4:15) นักเทววิทยาและผู้นำกลุ่มพิวริตันชาวอังกฤษ โทมัส วัตสัน (Thomas Watson, ค.ศ. 1686) กล่าววิจารณ์ไว้ว่า: <strong>“ผู้ใดเล่าจะสามารถวาดภาพพระผู้เป็นเจ้าได้? พวกเขาสามารถสร้างรูปภาพของสิ่งที่ตนไม่เคยเห็นได้หรือ? เป็นไปไม่ได้ที่จะวาดภาพวิญญาณ หรือวาดภาพเหล่าทูตสวรรค์เพราะพวกเขามีธรรมชาติที่เป็นจิตวิญญาณ ยิ่งเป็นไปไม่ได้เลยที่เราจะวาดภาพพระเจ้าผู้ทรงไร้ขอบเขตด้วยรูปภาพ การนมัสการพระเจ้าผ่านรูปภาพจึงเป็นทั้งเรื่องไร้สาระและผิดกฎหมาย (ผิดบทบัญญัติ)”</strong> (<em>The Ten Commandments</em>, ค.ศ. 1692)</p>
+
+      <p>ในฐานะมุสลิม เราเชื่อว่ามลาอิกะฮ์ (ทูตสวรรค์) แท้จริงแล้วเป็นสิ่งถูกสร้างที่มีตัวตนทางกายภาพ แต่กระนั้นก็ตาม อิสลามห้ามมิให้สร้างรูปภาพและรูปปั้นของบรรดานบี มลาอิกะฮ์ หรือสิ่งถูกสร้างใดๆ ของพระเจ้าที่มีวิญญาณ ไม่ว่าจะเป็นมนุษย์หรือสัตว์ ชาวคริสต์ดูเหมือนจะไม่มีความตะขิดตะขวงใจเช่นนั้น พวกเขาสร้างรูปภาพของบรรดานบี ทูตสวรรค์ และพระเจ้า ทั้งๆ ที่ไม่เคยเห็นเลย ยิ่งไปกว่านั้น พวกเขายังถูกห้ามในคัมภีร์มิให้สร้างรูปจำลองเช่นนั้นด้วย สิ่งที่น่าฉงนยิ่งกว่าคือพวกเขาสร้างรูปปั้นและรูปภาพขึ้นมาจากการคาดเดาและจินตนาการล้วนๆ เนื่องจากพวกเขาไม่ทราบเลยว่าพระนางมัรยัม พระเยซูคริสต์ หรือเหล่าสาวกมีรูปลักษณ์อย่างไร แต่ละประเทศต่างก็มีภาพวาดในแบบของตนเอง ในบางประเทศ พระเยซูถูกวาดเป็นชาวยุโรปผิวขาวผมบลอนด์ ขณะที่ในอีกบางประเทศ ท่านถูกวาดเป็นชาวแอฟริกันผิวดำผมหยิกขอด หากนี่ไม่ใช่การบูชารูปเคารพแล้ว อะไรเล่าคือการบูชารูปเคารพ?!</p>
+    </div>
+  </section>
+
+  <!-- ==================== SHEET 2: OUTSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 2 (ด้านนอกแผ่นพับ): คอลัมน์ซ้าย [พับใน พื้นงาช้าง] • คอลัมน์กลาง [ปกหลัง พื้นน้ำตาลบรอนซ์ + TROID] • คอลัมน์ขวา [ปกหน้า คัมภีร์ไบเบิล]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Outside Left / Inside Flap) -->
+    <div class="panel panel-inner panel-ivory-alt">
+      <p>นักวิชาการคริสต์จำนวนมากยืนยันว่าพระเจ้าที่แท้จริงซึ่งจะต้องได้รับการเคารพภักดีคือพระเจ้าของบรรดานบีทุกท่าน พระผู้อภิบาลเพียงพระองค์เดียวแห่งสรรพสิ่ง — ชัยฏอนได้ล่อลวงชาวคริสต์จนพวกเขาตกสู่การตั้งภาคี (ชิรก์) ด้วยการกราบไหว้ท่านนบีอีซาและมารดาของท่านในรูปของรูปปั้น ภาพวาด และไม้กางเขน หรือเพียงแค่ยกท่านทั้งสองขึ้นเป็นพระเจ้าในหัวใจและความคิดของตน คัมภีร์ไบเบิลระบุว่า: <strong>“เจ้าทั้งหลายอย่าทำรูปเคารพสำหรับตน หรือตั้งรูปสลักหรือเสาศักดิ์สิทธิ์สำหรับตน และอย่าตั้งศิลาสลักไว้ในแผ่นดินของเจ้าเพื่อกราบไหว้มัน เพราะเราคือพระยาห์เวห์พระเจ้าของเจ้า”</strong> (เลวีนิติ 26:1)</p>
+
+      <div class="callout-box">
+        <div class="callout-title">“แท้จริงบรรดาผู้ที่กล่าวว่า: แท้จริงอัลลอฮ์คือหนึ่งในสาม [แห่งตรีเอกานุภาพ] นั้นได้ปฏิเสธศรัทธาแล้ว”</div>
+        <p>อัลกุรอาน ซูเราะฮ์ อัล-มาอิดะฮ์ 5:73</p>
+      </div>
+
+      <p>มีสถานที่มากเท่าใดแล้วทั่วโลกที่เราเห็นรูปปั้นหินของพระนางมัรยัมอุ้มทารกเยซูอยู่ในอ้อมแขน หรือรูปปั้นของพระคริสต์เองตามโบสถ์และสถานที่ต่างๆ — บางองค์สูงตระหง่านหลายเมตร และบางองค์เป็นรูปสลักขนาดเล็ก ท่านจะเห็นชาวคริสต์หลายพันคนมารวมตัวกันและกราบไหว้รูปภาพและรูปปั้นหินเหล่านี้ นี่แหละคือการบูชารูปเคารพที่ต้องห้ามทั้งในคัมภีร์และโดยสติปัญญาอันเที่ยงธรรม ซึ่งทำให้คำอ้างเรื่องการนับถือพระเจ้าองค์เดียวของพวกเขาเป็นโมฆะไป</p>
+
+      <p>ดังนั้น การหันเหการอิบาดะฮ์ในรูปแบบใดๆ ไปยังท่านนบีอีซา (ขอความสันติจากอัลลอฮ์จงมีแด่ท่าน) หรือมารดาของท่าน จึงเป็นการละเมิดพระบัญญัติที่เป็นที่ยอมรับร่วมกันโดยสากลนี้อย่างชัดเจน พระเจ้า (ภาษาอาหรับ: อัลลอฮ์) ทรงตรัสไว้ในอัลกุรอานว่า: <strong>“และส่วนหนึ่งจากสัญญาณทั้งหลายของพระองค์คือกลางคืนและกลางวัน ดวงอาทิตย์และดวงจันทร์ — ดังนั้น พวกเจ้าอย่าได้สุญูด (กราบ) ต่อดวงอาทิตย์และอย่าสุญูดต่อดวงจันทร์ แต่จงสุญูดต่ออัลลอฮ์ผู้ทรงสร้างพวกมัน หากพวกเจ้าเคารพภักดีต่อพระองค์อย่างแท้จริง”</strong> (ฟุศศิลัต 41:37) ยิ่งไปกว่านั้น พระเจ้าทรงตรัสว่า: <strong>“แท้จริงบรรดาผู้ที่กล่าวว่า: แท้จริงอัลลอฮ์คืออัล-มะซีฮ์บุตรของมัรยัมนั้นได้ปฏิเสธศรัทธาแล้ว”</strong> (อัล-มาอิดะฮ์ 5:72) และตรัสว่า: <strong>“อัล-มะซีฮ์บุตรของมัรยัมมิได้เป็นอื่นใดนอกจากเราะสูลคนหนึ่งของอัลลอฮ์ ซึ่งบรรดาเราะสูลก่อนหน้าเขาก็ได้ล่วงลับไปแล้ว และมารดาของเขาเป็นสตรีผู้สัตย์จริง — ทั้งสองต่างเคยรับประทานอาหาร”</strong> (อัล-มาอิดะฮ์ 5:75) ในโองการนี้ พระเจ้าทรงชี้แจงชัดเจนว่าทั้งสองล้วนเป็นมนุษย์เพราะต้องรับประทานอาหารและพึ่งพาพระเจ้าของตน สำหรับมุสลิม การหันเหการอิบาดะฮ์ไปยังนบี ก้อนหิน หลุมศพ มลาอิกะฮ์ หรือผู้ใดนอกจากอัลลอฮ์เพียงพระองค์เดียว ย่อมถือเป็นการตั้งภาคี (ชิรก์)</p>
+    </div>
+
+    <!-- Column 2 (Outside Center / Back Cover): Rich Bronze + TROID Footer -->
+    <div class="panel panel-inner panel-bronze">
+      <div>
+        <p>ท่านนบีอีซา (ขอความสันติจงมีแด่ท่าน) เป็นบ่าวผู้บริสุทธิ์ใจและนอบน้อมถ่อมตนต่อพระเจ้า: <strong>“และจงรำลึกถึงเมื่ออัลลอฮ์ทรงตรัสในวันแห่งการตัดสินว่า ‘โอ้ อีซาบุตรของมัรยัม! เจ้าได้กล่าวแก่มนุษย์ทั้งหลายหรือว่า จงยึดเอาข้าและมารดาของข้าเป็นพระเจ้าสององค์อื่นจากอัลลอฮ์?’ เขากล่าวตอบว่า ‘มหาบริสุทธิ์แด่พระองค์! ไม่เป็นการบังควรแก่ข้าพระองค์ที่จะกล่าวสิ่งที่ข้าพระองค์ไม่มีสิทธิ์จะกล่าว... ข้าพระองค์มิได้กล่าวแก่พวกเขาเว้นแต่สิ่งที่พระองค์ทรงบัญชาข้าพระองค์ไว้ นั่นคือ จงเคารพภักดีต่ออัลลอฮ์ ผู้เป็นพระเจ้าของข้าและเป็นพระเจ้าของพวกท่าน...’”</strong> (อัล-มาอิดะฮ์ 5:116–117)</p>
+
+        <p>แม้แต่ในคัมภีร์ไบเบิลเองก็มีถ้อยคำที่ชัดเจนซึ่งแสดงให้เห็นว่าท่านนบีอีซา (ขอความสันติจงมีแด่ท่าน) ทรงชี้แนะให้เคารพภักดีต่ออัลลอฮ์: <strong>“และพระเยซูตรัสกับเขาว่า: เหตุใดท่านจึงเรียกข้าว่าดี? ไม่มีผู้ใดดีนอกจากอัลลอฮ์เพียงพระองค์เดียว!”</strong> (มาระโก 10:18) ในพันธสัญญาเดิมของไบเบิลฉบับภาษาอาหรับ เราพบข้อความว่า: <strong>“ในปฐมกาล อัลลอฮ์ทรงเนรมิตสร้างฟ้าและแผ่นดิน”</strong> (ปฐมกาล ข้อ 1) ความเป็นจริงก็คือ อัลลอฮ์คือพระผู้อภิบาลและพระเจ้าผู้ทรงสร้างท่านนบีอาดัม และเป็นพระเจ้าองค์เดียวกันกับที่ส่งท่านนบีนูห์ อิบรอฮีม อิสหาก อิสมาอีล ยะอ์กูบ มูซา ยะห์ยา อีซา และมุฮัมมัด (ขอความสันติจงมีแด่พวกท่านทั้งหมด) พระนาม “อัลลอฮ์” หมายถึงพระเจ้าองค์เดียว พระผู้สร้างสรรพสิ่งทั้งปวง ผู้ทรงมีสิทธิ์แต่เพียงพระองค์เดียวที่จะได้รับการเคารพภักดี</p>
+
+        <h2>วิธีการเข้ารับอิสลาม (การเป็นมุสลิม)</h2>
+        <p>บุคคลหนึ่งจะกลายเป็นมุสลิมได้เพียงแค่กล่าวคำปฏิญาณว่า:</p>
+        <div class="shahadah-box">
+          <p><strong>“อัชฮะดุ อัน ลา อิลาฮะ อิลลัลลอฮ์ วะ อัชฮะดุ อันนะ มุฮัมมะดัน อับดุฮู วะ เราะสูลุฮู”</strong><br>
+          <em>(Ash-hadu an laa ilaaha illallaah, wa ash-hadu anna Muhammadan ʿabduhu wa rasooluhu)</em></p>
+        </div>
+        <p>หมายความว่า: <strong>“ข้าพเจ้าขอปฏิญาณว่าไม่มีพระเจ้าอื่นใดที่คู่ควรแก่การเคารพภักดีอย่างแท้จริงนอกจากอัลลอฮ์ และข้าพเจ้าขอปฏิญาณว่ามุฮัมมัดคือบ่าวและเราะสูลของพระองค์”</strong> คำปฏิญาณนี้กล่าวได้ทั้งโดยลำพังหรือต่อหน้าผู้อื่น และจะนำพาบุคคลเข้าสู่ศาสนาอิสลาม</p>
+
+        <div class="fn-block">
+          <p><strong>อ้างอิงเพิ่มเติม:</strong> <em>ชัรห์ อุศูล อัล-อีมาน</em> และ <em>นูร อะลัด-ดัรบ์ (4/8)</em> ของชัยค์ อิบนุ อุษัยมีน</p>
+        </div>
+        <p class="author-line">เขียนโดย ชัยค์ อบู เคาะดีญะฮ์ อับดุลวาหิด อาลัม (Shaykh Abū Khadījah)</p>
+      </div>
+
+      <footer class="troid-footer">
+        <div>
+          <div class="troid-brand">troid</div>
+          <div class="troid-sub">troid.org • ฉบับแปลภาษาไทย</div>
+        </div>
+        <div class="troid-divider"></div>
+        <div class="troid-info">
+          874-A Weston Rd. Toronto, Canada<br>
+          info@troid.org<br>
+          <strong>Salafi Publications &amp; @troidorg</strong>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Column 3 (Outside Right / Front Cover) -->
+    <div class="panel panel-cover">
+      <div class="cover-scrim"></div>
+      <div class="cover-vertical-wrap">
+        <div class="cover-v-brown">พระบัญญัติข้อแรก</div>
+        <div class="cover-v-white">ในคัมภีร์ไบเบิล</div>
+      </div>
+      <div class="cover-quote-block">
+        <div class="cover-quote-text">
+          “เจ้าอย่ามี<br>
+          พระเจ้าอื่นใด<br>
+          นอกเหนือจากข้า”
+        </div>
+        <div class="cover-quote-ref">พระธรรมอพยพ (Exodus) 20:2–3</div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

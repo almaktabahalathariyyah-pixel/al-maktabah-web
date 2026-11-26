@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>บทบัญญัติอิสลามว่าด้วยการสวมใส่เครื่องราง ของขลัง และตะกรุด — แผ่นพับ 3 ตอน หน้า-หลัง (A4 แนวนอน)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1816;
+      color: #f4f1ea;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      padding: 1.25rem 1rem 3rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      max-width: 297mm;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #26221e;
+      padding: 0.85rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #3c352d;
+    }
+    .toolbar-title {
+      font-weight: 700;
+      font-size: 0.96rem;
+      color: #f0b33b;
+    }
+    .toolbar-hint {
+      font-size: 0.82rem;
+      color: #c8bfb2;
+      margin-top: 2px;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .toolbar button, .toolbar a {
+      padding: 0.5rem 1rem;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #4c4339;
+      background: #332d27;
+      color: #f4f1ea;
+    }
+    .toolbar .btn-primary {
+      background: #d9822b;
+      border-color: #d9822b;
+      color: #ffffff;
+    }
+    .toolbar .btn-primary:hover { background: #c26f1d; }
+
+    .sheet-label {
+      max-width: 297mm;
+      margin: 0 auto 0.5rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #d7ccbc;
+      letter-spacing: 0.02em;
+    }
+
+    /* ===== A4 LANDSCAPE TRIFOLD SHEET (297mm x 210mm) ===== */
+    .trifold-sheet {
+      width: 297mm;
+      height: 210mm;
+      margin: 0 auto 2rem;
+      display: grid;
+      grid-template-columns: 99mm 99mm 99mm;
+      grid-template-rows: 210mm;
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+      background: #f2eadc;
+      position: relative;
+    }
+
+    /* Subtle fold guide lines on screen only */
+    .trifold-sheet::before,
+    .trifold-sheet::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 1px dashed rgba(128, 128, 128, 0.28);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .trifold-sheet::before { left: 99mm; }
+    .trifold-sheet::after { left: 198mm; }
+
+    .panel {
+      width: 99mm;
+      height: 210mm;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== PANEL CONTENT STYLES (calibrated for 99mm x 210mm) ===== */
+    .panel-inner {
+      padding: 7.5mm 6.8mm 6.5mm;
+      font-size: 8.65pt;
+      line-height: 1.54;
+    }
+    .panel-dark {
+      background: #23201c;
+      color: #ebe6dc;
+    }
+    .panel-cream {
+      background: #f2eadc;
+      color: #1e1b17;
+    }
+    .panel-taupe {
+      background: #7c6852;
+      color: #f8f4ec;
+      padding-bottom: 0;
+      justify-content: space-between;
+    }
+
+    .panel-inner h2 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 10.2pt;
+      font-weight: 700;
+      line-height: 1.38;
+      margin-bottom: 2.5mm;
+    }
+    .panel-dark h2 { color: #e8a035; }
+    .panel-cream h2 { color: #d66828; margin-top: 3mm; }
+
+    .panel-inner p {
+      margin-bottom: 2.3mm;
+      text-align: left;
+    }
+
+    .ar-verse {
+      font-family: 'Amiri', 'Traditional Arabic', serif;
+      direction: rtl;
+      text-align: center;
+      font-size: 11.2pt;
+      line-height: 1.85;
+      margin: 2.2mm 0 1.2mm;
+      color: #ffffff;
+    }
+
+    .quote-center {
+      text-align: center !important;
+      font-weight: 600;
+      margin: 0.8mm 1.5mm 2.8mm !important;
+      line-height: 1.48;
+    }
+
+    .quote-indent {
+      margin: 1.8mm 0 2.4mm 3.5mm !important;
+      font-weight: 700;
+      line-height: 1.48;
+    }
+    .panel-dark .quote-indent { color: #ffffff; }
+    .panel-cream .quote-indent { color: #191612; }
+
+    .cite {
+      font-weight: 400;
+      opacity: 0.88;
+    }
+
+    .author-line {
+      margin-top: 2.5mm;
+      font-size: 7.8pt;
+      color: #e8dfd1;
+    }
+
+    /* Authentic TROID bottom footer bar on Back Cover (Page 2, Center Column) */
+    .troid-footer {
+      margin: 3.5mm -6.8mm 0;
+      padding: 4mm 6mm 4.5mm;
+      background: rgba(38, 30, 22, 0.34);
+      border-top: 1px solid rgba(255, 255, 255, 0.22);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3mm;
+      color: #f4eee4;
+      font-size: 7pt;
+      line-height: 1.45;
+    }
+    .troid-brand {
+      font-family: Georgia, serif;
+      font-size: 19pt;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: #ffffff;
+    }
+    .troid-sub {
+      font-size: 6.8pt;
+      margin-top: 1mm;
+      opacity: 0.9;
+    }
+    .troid-divider {
+      width: 1.5pt;
+      height: 12mm;
+      background: #e87a38;
+      flex-shrink: 0;
+    }
+    .troid-info {
+      flex: 1;
+      font-size: 6.7pt;
+    }
+
+    /* ===== FRONT COVER (Page 2, Right Column) ===== */
+    .panel-cover {
+      background: url('assets/01-cover-bg.jpg') center center / cover no-repeat;
+      color: #ffffff;
+    }
+    .cover-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(22, 16, 12, 0.74) 0%, rgba(22, 16, 12, 0.25) 48%, rgba(22, 16, 12, 0.08) 100%);
+      pointer-events: none;
+    }
+    .cover-subtitle {
+      position: absolute;
+      top: 9mm;
+      right: 6mm;
+      width: 46mm;
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 10pt;
+      font-weight: 700;
+      line-height: 1.42;
+      color: #eb7a34;
+      text-align: left;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.78);
+      z-index: 2;
+    }
+    .cover-vertical-wrap {
+      position: absolute;
+      left: 5.5mm;
+      top: 8mm;
+      bottom: 8mm;
+      display: flex;
+      align-items: center;
+      gap: 2mm;
+      z-index: 2;
+    }
+    .cover-v-gold {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 13.5pt;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: #f0b138;
+      text-shadow: 0 3px 14px rgba(0, 0, 0, 0.85);
+      line-height: 1.12;
+      white-space: nowrap;
+    }
+    .cover-v-white {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 22.5pt;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.9);
+      line-height: 1.08;
+      white-space: nowrap;
+    }
+
+    /* ===== PRINT: EXACT 2-PAGE A4 LANDSCAPE DOUBLE-SIDED TRIFOLD ===== */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .no-print { display: none !important; }
+      .trifold-sheet {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .trifold-sheet:last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .trifold-sheet::before,
+      .trifold-sheet::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div>
+      <div class="toolbar-title">ต้นแบบแผ่นพับที่ 01: รูปแบบ Desktop Trifold 3 คอลัมน์ หน้า-หลัง (A4 แนวนอน)</div>
+      <div class="toolbar-hint">วิธีพิมพ์: กดปุ่มพิมพ์ → เลือก A4 แนวนอน (Landscape) → ตั้งค่าขอบกระดาษ None → เปิด Background graphics → พิมพ์ 2 หน้า (Flip on short edge)</div>
+    </div>
+    <div class="toolbar-actions">
+      <a href="/pamphlets">← สารบัญรวม</a>
+      <button class="btn-primary" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF (2 หน้า หน้า-หลัง)</button>
+    </div>
+  </div>
+
+  <!-- ==================== SHEET 1: INSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 1 (ด้านในแผ่นพับ): คอลัมน์ซ้าย [พื้นดำ] • คอลัมน์กลาง [พื้นครีม] • คอลัมน์ขวา [พื้นครีม]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Inside Left): Dark Charcoal -->
+    <div class="panel panel-inner panel-dark">
+      <h2>บทบัญญัติอิสลามว่าด้วยการสวมใส่เครื่องราง ของขลัง หรือตะกรุด (ตะอ์วีซ หรือ ตะมีมะฮ์)</h2>
+
+      <p>การเขียนโองการอัลกุรอาน บทขอดุอาอ์ บทซิกรุลลอฮ์ หรือพระนามของอัลลอฮ์ลงบนแผ่นกระดาษหรือผ้า แล้วนำมาแขวนหรือสวมใส่บนร่างกายในรูปของสร้อยคอ กำไลข้อมือ ถุงผ้า หรือสายรัดนั้น ไม่เคยมีรายงานมาจากท่านนบี (ﷺ) และไม่เคยมีรายงานมาจากเหล่าศอฮาบะฮ์ (เราะฎิยัลลอฮุอันฮุม) แต่อย่างใด มุสลิมทุกคนย่อมทราบดีว่าแบบอย่างทางศาสนาที่ดีงามที่สุดที่พึงปฏิบัติตามคือตัวท่านนบี (ﷺ) เอง ดังนั้น หากท่านนบี (ﷺ) และเหล่าศอฮาบะฮ์มิได้ใช้เครื่องรางเป็นสื่อคุ้มครองและปัดเป่าภยันตราย มุสลิมคนใดในยุคหลังก็ไม่พึงนำมาใช้เช่นกัน ศาสนาอิสลามได้รับการทำให้สมบูรณ์ครบถ้วนแล้วโดยอัลลอฮ์ (ตะบาเราะกะวะตะอาลา) ดังที่พระองค์ตรัสว่า:</p>
+
+      <div class="ar-verse" lang="ar">﴿الْيَوْمَ أَكْمَلْتُ لَكُمْ دِينَكُمْ وَأَتْمَمْتُ عَلَيْكُمْ نِعْمَتِي وَرَضِيتُ لَكُمُ الْإِسْلَامَ دِينًا﴾</div>
+      <p class="quote-center">“วันนี้ข้าได้ทำให้ศาสนาของพวกเจ้าสมบูรณ์แก่พวกเจ้าแล้ว และข้าได้ทำให้ความโปรดปรานของข้าครบถ้วนแก่พวกเจ้าแล้ว และข้าได้เลือกอิสลามให้เป็นศาสนาแก่พวกเจ้าแล้ว” <span class="cite">[อัล-มาอิดะฮ์ 5:3]</span></p>
+
+      <p>ศาสนาที่สมบูรณ์และครบถ้วนแล้วไม่จำเป็นต้องมีพิธีกรรมหรือการอิบาดะฮ์ที่ถูกประดิษฐ์คิดค้นขึ้นใหม่ มวลการสรรเสริญทั้งปวงเป็นสิทธิ์ของอัลลอฮ์ผู้ทรงประทานสิ่งที่เพียงพอแล้วด้วยอัลกุรอานและซุนนะฮ์ — และไม่มีผู้ใดเข้าใจวะฮีย์ทั้งสองนี้ได้ดีไปกว่าเหล่าศอฮาบะฮ์ (เราะฎิยัลลอฮุอันฮุม) ท่านนบี (ﷺ) กล่าวว่า:</p>
+
+      <p class="quote-indent">“ผู้ใดกระทำการงานหนึ่งที่มิได้มาจากกิจการของเรา (กล่าวคือ ศาสนาของเรา) การงานนั้นย่อมถูกปฏิเสธ” <span class="cite">[อัล-บุคอรี และมุสลิม]</span></p>
+
+      <p>หะดีษนี้พิสูจน์ว่าไม่สามารถประกอบการอิบาดะฮ์ใดๆ ได้ เว้นแต่มีหลักฐานจากอัลกุรอานและซุนนะฮ์ตามความเข้าใจของเหล่าศอฮาบะฮ์ เราควรถามตนเองอยู่เสมอว่า “เหล่าศอฮาบะฮ์ได้ทำสิ่งที่เรากำลังถูกเรียกร้องให้ทำนี้หรือไม่?” หากคำตอบคือ “ไม่” ท่านก็ไม่ควรกระทำเช่นกัน อัลลอฮ์ (ซุบฮานะฮูวะตะอาลา) ตรัสถึงเหล่าศอฮาบะฮ์ว่า:</p>
+
+      <div class="ar-verse" lang="ar">﴿فَإِنْ آمَنُوا بِمِثْلِ مَا آمَنْتُمْ بِهِ فَقَدِ اهْتَدَوْا وَإِنْ تَوَلَّوْا فَإِنَّمَا هُمْ فِي شِقَاقٍ﴾</div>
+      <p class="quote-center">“ดังนั้น หากพวกเขาศรัทธาเช่นเดียวกับที่พวกเจ้า (เหล่าศอฮาบะฮ์) ศรัทธา พวกเขาก็ย่อมได้รับทางนำ แต่หากพวกเขาผินหลังให้ แน่นอนพวกเขาย่อมอยู่ในความแตกแยก” <span class="cite">[อัล-บะเกาะเราะฮ์ 2:137]</span></p>
+    </div>
+
+    <!-- Column 2 (Inside Center): Warm Cream -->
+    <div class="panel panel-inner panel-cream">
+      <p>ไม่มีข้อสงสัยเลยว่าท่านนบี (ﷺ) ได้อนุญาตให้ทำการเป่าปัดรักษา (รุก็อยะฮ์) แก่ผู้ที่ประสบกับความเจ็บป่วย ตาริษยา (อัล-อัยน์) หรือไสยศาสตร์ โดยกระทำผ่านการอ่านอัลกุรอานหรือบทขอดุอาอ์ แต่ท่าน (ﷺ) ไม่เคยอนุญาตให้นำตะกรุดอัลกุรอานมาแขวนไว้บนร่างกาย บนสัตว์พาหนะ หรือในบ้านเรือนหรือสถานที่ทำงานแต่อย่างใด ไม่มีรายงานที่ศอฮีฮ์แม้แต่บทเดียวที่อนุญาตให้ใช้สิ่งเหล่านั้น ท่านเราะสูลุลลอฮ์ (ﷺ) กล่าวว่า:</p>
+
+      <p class="quote-indent">“จงนำบทเป่าปัด (รุก็อยะฮ์) ของพวกท่านมาแสดงแก่ฉันเถิด ไม่มีความผิดอันใดในรุก็อยะฮ์ที่ไม่มีชิรก์ (การตั้งภาคี) เจือปนอยู่” <span class="cite">[มุสลิม, 2200]</span></p>
+
+      <p>บรรดานักวิชาการเห็นพ้องต้องกันว่าการทำรุก็อยะฮ์เป็นที่อนุญาต ตราบใดที่สอดคล้องกับเงื่อนไขข้างต้น และเชื่อมั่นว่ารุก็อยะฮ์เป็นเพียงสาเหตุหนึ่งที่จะก่อให้เกิดประโยชน์ได้ด้วยอนุมัติและกำหนดของอัลลอฮ์เท่านั้น มีรายงานที่ยืนยันมั่นคงว่าท่านนบี (ﷺ) เคยขอความคุ้มครองให้แก่หะสันและหุสัยน์ หลานชายทั้งสองของท่าน ด้วยถ้อยคำว่า:</p>
+
+      <p class="quote-indent">“ฉันขอความคุ้มครองให้แก่เจ้าทั้งสองด้วยพระดำรัสอันสมบูรณ์ยิ่งของอัลลอฮ์ ให้พ้นจากชัยฏอนทุกตน สัตว์ร้ายมีพิษทุกชนิด และจากทุกสายตาอันชั่วร้ายที่น่ารังเกียจ” <span class="cite">[อัต-ติรมิซี และอบูดาวูด]</span></p>
+
+      <p>จากตรงนี้ย่อมเป็นที่ประจักษ์ชัดเจนแล้วว่า การแขวนโองการอัลกุรอานและบทดุอาอ์ไว้บนร่างกายเป็นบิดอะฮ์ที่ต้องห้าม หากผู้ใดปรารถนาความคุ้มครอง พึงอ่านจากคัมภีร์ของอัลลอฮ์และบทดุอาอ์ที่ถูกต้อง ส่วนการแขวนเครื่องราง ของขลัง หรือตะอ์วีซซึ่งมิได้มาจากอัลกุรอานนั้น ยิ่งอันตรายร้ายแรงกว่ามาก เพราะถือเป็นชิรก์ (การตั้งภาคีต่ออัลลอฮ์) ท่าน (ﷺ) กล่าวว่า:</p>
+
+      <p class="quote-indent">“ผู้ใดสวมใส่เครื่องราง (ตะมีมะฮ์) แท้จริงเขาได้กระทำการตั้งภาคี (ชิรก์) แล้ว” <span class="cite">[อัศ-ศอฮีฮะฮ์, 492]</span></p>
+
+      <p>ท่านนบี (ﷺ) ยังกล่าวอีกว่า:</p>
+
+      <p class="quote-indent">“อย่าได้ปล่อยให้มีสายธนูผูกคอหลงเหลืออยู่บนคออูฐตัวใด หรือสายคล้องคอชนิดใดๆ เว้นแต่จะต้องตัดมันทิ้งเสีย” <span class="cite">[อัล-บุคอรี และมุสลิม]</span></p>
+
+      <p>ในที่นี้ท่านเราะสูลกำลังสั่งใช้ให้ปลดและทำลายเครื่องรางเสีย ท่านรุวัยฟิอ์ (เราะฎิยัลลอฮุอันฮุ) เล่าว่า ท่านเราะสูลุลลอฮ์ (ﷺ) กล่าวกับฉันว่า:</p>
+    </div>
+
+    <!-- Column 3 (Inside Right): Warm Cream -->
+    <div class="panel panel-inner panel-cream">
+      <p class="quote-indent">“โอ้ รุวัยฟิอ์ บางทีท่านอาจจะมีอายุยืนยาว ดังนั้น จงแจ้งแก่ผู้คนเถิดว่า ผู้ใดผูกปมที่เคราของตน หรือสวมสายธนูคล้องคอ (เครื่องราง) หรือทำความสะอาดหลังการขับถ่ายด้วยมูลสัตว์หรือกระดูก แท้จริงมุฮัมมัดขอปลีกตัวออกจากเขา” <span class="cite">[อบูดาวูด, ศอฮีฮ์ อัล-ญามิอ์, 7910]</span></p>
+
+      <p>ท่านนบี (ﷺ) ยังกล่าวอีกว่า:</p>
+
+      <p class="quote-indent">“ผู้ใดแขวนสิ่งหนึ่งสิ่งใด (เป็นเครื่องราง) เขาก็จะถูกปล่อยให้พึ่งพาอยู่กับสิ่งนั้น” <span class="cite">[อะห์มัด และอัต-ติรมิซี]</span></p>
+
+      <p>ท่านสะอีด บิน ญุบัยร์ (เราะฮิมะฮุลลอฮ์) กล่าวว่า: <strong>“ผู้ใดตัดเครื่องรางออกจากตัวบุคคลหนึ่ง ก็เปรียบเสมือนการปลดปล่อยทาสคนหนึ่งให้เป็นไท”</strong> (รายงานโดย วะกีอ์) ชัยค์ อับดุลอะซีซ บิน บาซ (เราะฮิมะฮุลลอฮ์) อธิบายว่า: <strong>“ทั้งนี้เพราะเขากำลังปลดปล่อยบ่าวผู้นี้ให้พ้นจากไฟนรก และการเป็นอิสระจากชิรก์นั้นประเสริฐยิ่งกว่าการเป็นอิสระจากการเป็นทาส”</strong> ชัยค์ อะห์มัด อัน-นัจมี (เราะฮิมะฮุลลอฮ์) กล่าวว่า: <strong>“มีผู้คนจำนวนหนึ่งนำเครื่องรางไปแขวนไว้บนตัวของตนเองหรือลูกหลาน — และหัวใจของพวกเขาก็ผูกพันอยู่กับมันโดยเชื่อว่ามันปัดเป่าอันตรายได้ ทั้งหมดนี้ล้วนต้องห้ามสำหรับมุสลิม เพราะมันคือการผูกพันหัวใจและการพึ่งพาอาศัยต่อสิ่งอื่นนอกจากอัลลอฮ์”</strong></p>
+
+      <p>ในความเป็นจริง เครื่องรางเหล่านี้มีแต่จะเพิ่มความอ่อนแอให้แก่ผู้สวมใส่ ท่านเราะสูลุลลอฮ์ (ﷺ) เคยเห็นชายคนหนึ่งสวมห่วงทองเหลืองไว้ที่แขน ท่านถามว่า <strong>“นี่คืออะไร?”</strong> ชายผู้นั้นตอบว่า <strong>“เป็นสิ่งป้องกันจากโรคที่ทำให้ฉันอ่อนแรง”</strong> ท่านเราะสูล (ﷺ) จึงกล่าวว่า:</p>
+
+      <p class="quote-indent">“จงถอดมันออกเสีย เพราะมันจะไม่เพิ่มสิ่งใดแก่เจ้าเว้นแต่ความอ่อนแอ แท้จริงหากเจ้าเสียชีวิตลงในขณะที่สวมใส่มันอยู่ เจ้าจะไม่มีวันประสบความสำเร็จตลอดกาล” <span class="cite">(อะห์มัด; อิบนุหิบบาน อัล-หากิม ตัดสินว่าศอฮีฮ์ และอัซ-ซะฮะบีเห็นพ้อง)</span></p>
+
+      <h2>หมอดู ผู้ทำนายทายทัก และโหราจารย์</h2>
+
+      <p>ไม่อนุญาตให้มุสลิมไปหาหมอดูและผู้ทำนายทายทัก — คือบรรดาผู้ที่อ้างว่าล่วงรู้เรื่องเร้นลับและอนาคต ท่านนบี (ﷺ) กล่าวว่า:</p>
+    </div>
+  </section>
+
+  <!-- ==================== SHEET 2: OUTSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 2 (ด้านนอกแผ่นพับ): คอลัมน์ซ้าย [พับใน พื้นครีม] • คอลัมน์กลาง [ปกหลัง พื้นน้ำตาล + TROID] • คอลัมน์ขวา [ปกหน้า กราฟิกต้นฉบับ]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Outside Left / Inside Flap): Warm Cream -->
+    <div class="panel panel-inner panel-cream">
+      <p class="quote-indent">“ผู้ใดไปหาหมอดูแล้วสอบถามเขาเกี่ยวกับสิ่งหนึ่งสิ่งใด การละหมาดของเขาจะไม่ถูกรับเป็นเวลาสี่สิบวัน” <span class="cite">[มุสลิม, 2230]</span></p>
+
+      <p>และยังมีรายงานที่ถูกต้องอีกว่าท่าน (ﷺ) กล่าวว่า:</p>
+
+      <p class="quote-indent">“ผู้ใดไปหาหมอดูหรือผู้ทำนายทายทักแล้วเชื่อในสิ่งที่เขาพูด แท้จริงเขาได้ปฏิเสธศรัทธาต่อสิ่งที่ถูกประทานลงมาแก่มุฮัมมัดแล้ว” <span class="cite">[อบูดาวูด, 3904]</span></p>
+
+      <p>บรรดาหมอดูได้รับข้อมูลกระซิบกระซาบมาจากญินชัยฏอน ไม่ว่าพวกเขาจะรู้ตัวหรือไม่ก็ตาม ท่านนบี (ﷺ) กล่าวว่า:</p>
+
+      <p class="quote-indent">“เมื่ออัลลอฮ์ทรงกำหนดกิจการหนึ่งบนฟากฟ้า บรรดามลาอิกะฮ์จะกระพือปีกด้วยความนอบน้อมต่อพระดำรัสของพระองค์ ราวกับเสียงโซ่ที่ถูกลากไปบนหินเรียบจนพวกท่านตื่นตระหนก จากนั้นบรรดาผู้แอบฟัง [จากหมู่ญิน] จะได้ยินพระบัญชานี้ โดยซ้อนตัวกันเป็นชั้นๆ คนหนึ่งส่งต่อถ้อยคำให้ผู้ที่อยู่ต่ำกว่าเรื่อยไป จนกระทั่งคนสุดท้ายนำไปส่งยังลิ้นของนักไสยศาสตร์หรือหมอดู บางครั้งลูกไฟดาวตกพุ่งชนญินชัยฏอนก่อนทันส่งต่อ — และบางครั้งมันส่งต่อได้ก่อนถูกชน — เมื่อนั้นนักไสยศาสตร์หรือหมอดูก็จะแต่งเรื่องโกหกเพิ่มเข้าไปอีกหนึ่งร้อยเรื่อง แล้วผู้คนก็พากันกล่าวว่า ‘เขาไม่ได้บอกเราถึงเรื่องนั้นเรื่องนี้ในวันนั้นวันนี้หรอกหรือ?’ ด้วยเหตุนี้บรรดาหมอดูจึงได้รับความเชื่อถือเพราะถ้อยคำหนึ่งเดียวที่ถูกแอบฟังมาจากฟากฟ้านั้นเอง” <span class="cite">[อัล-บุคอรี, 4701 โดยสังเขป]</span></p>
+
+      <p>หะดีษนี้ชี้แจงชัดเจนว่าหมอดูได้ข้อมูลมาอย่างไรและเหตุใดส่วนใหญ่จึงเป็นเท็จ แต่ผู้คนจำนวนมากด้วยความเขลากลับจดจำคำพูดที่เป็นจริงเพียงหนึ่งคำจากคำโกหกนับร้อยคำ จนเกิดการพึ่งพาหมอดูอย่างอันตราย ในยุคนี้ไม่ใช่เรื่องแปลกที่จะพบผู้ทำนายทายทักที่อ้างตนเป็นมุสลิมและแสดงออกภายนอกราวกับเป็นผู้เคร่งครัด พวกเขาหลอกลวงมุสลิมที่รู้เท่าไม่ถึงการณ์ มุสลิมจึงจำเป็นต้องศึกษาหลักศรัทธาอิสลาม (อะกีดะฮ์) และยึดมั่นในแนวทางของท่านนบี (ﷺ) ด้วยการออกห่างจากสิ่งทั้งหลายที่ขัดแย้งกับการศรัทธาต่ออัลลอฮ์</p>
+    </div>
+
+    <!-- Column 2 (Outside Center / Back Cover): Warm Taupe + TROID Footer -->
+    <div class="panel panel-inner panel-taupe">
+      <div>
+        <p>ไม่มีผู้ใดล่วงรู้เรื่องเร้นลับหรืออนาคตได้นอกจากอัลลอฮ์เพียงพระองค์เดียว ดังที่พระองค์ทรงบัญชาให้ท่านเราะสูลของพระองค์ (ﷺ) ประกาศว่า:</p>
+
+        <div class="ar-verse" lang="ar">﴿قُلْ لَا أَقُولُ لَكُمْ عِنْدِي خَزَائِنُ اللَّهِ وَلَا أَعْلَمُ الْغَيْبَ وَلَا أَقُولُ لَكُمْ إِنِّي مَلَكٌ إِنْ أَتَّبِعُ إِلَّا مَا يُوحَىٰ إِلَيَّ﴾</div>
+        <p class="quote-center">“จงกล่าวเถิด [โอ้ นบี] ว่า ‘ฉันมิได้กล่าวแก่พวกท่านว่า ณ ที่ฉันมีคลังสมบัติของอัลลอฮ์ และฉันมิได้ล่วงรู้สิ่งเร้นลับ และฉันมิได้กล่าวแก่พวกท่านว่าฉันคือมลาอิกะฮ์ ฉันมิได้ปฏิบัติตามสิ่งใดนอกจากสิ่งที่ถูกประทานวะฮีย์ลงมาแก่ฉันเท่านั้น’” <span class="cite">[อัล-อันอาม 6:50]</span></p>
+
+        <p>อัลลอฮ์ (ซุบฮานะฮูวะตะอาลา) ยังทรงตรัสอีกว่า:</p>
+
+        <div class="ar-verse" lang="ar">﴿يَسْأَلُونَكَ عَنِ السَّاعَةِ أَيَّانَ مُرْسَاهَا ﴿٤٢﴾ فِيمَ أَنْتَ مِنْ ذِكْرَاهَا ﴿٤٣﴾ إِلَىٰ رَبِّكَ مُنْتَهَاهَا ﴿٤٤﴾ إِنَّمَا أَنْتَ مُنْذِرُ مَنْ يَخْشَاهَا ﴿٤٥﴾﴾</div>
+        <p class="quote-center">“พวกเขาถามเจ้า (โอ้ นบี) เกี่ยวกับยามอวสานว่า เมื่อใดมันจะมาถึง? เจ้าอยู่ในฐานะใดที่จะกล่าวถึงกำหนดเวลาของมัน? ยังพระเจ้าของเจ้านั่นแหละคือที่สุดแห่งความรู้ในกำหนดเวลาของมัน แท้จริงเจ้าเป็นเพียงผู้ตักเตือนแก่ผู้ที่เกรงกลัวยามอวสานนั้นเท่านั้น” <span class="cite">[อัน-นาซิอาต 79:42–45]</span></p>
+
+        <p>ดังนั้น หากแม้แต่ท่านนบีของอัลลอฮ์เองยังไม่ล่วงรู้เรื่องเร้นลับ แล้วผู้อื่นจะล่วงรู้ได้อย่างไร?! ข้อมูลเรื่องเร้นลับที่ท่านเราะสูล (ﷺ) แจ้งไว้ทั้งหมดล้วนมาจากการประทานวะฮีย์ ผู้ใดอ้างว่าล่วงรู้เรื่องเร้นลับย่อมคัดค้านอัลกุรอาน ซุนนะฮ์ และมติเอกฉันท์ของอะฮ์ลุสซุนนะฮ์ ยิ่งไปกว่านั้น หมอดูและนักไสยศาสตร์ยังขอความช่วยเหลือจากญินชัยฏอนซึ่งเป็นกุฟร์อันชัดแจ้ง จงออกห่างจากบุคคลเหล่านี้ มอบหมายต่ออัลลอฮ์ ขอความช่วยเหลือและขอความคุ้มครองจากพระองค์เพียงผู้เดียว แล้วพระองค์จะทรงประทานทางออกให้แก่ท่าน</p>
+
+        <p class="author-line">เขียนโดย ชัยค์ อบู เคาะดีญะฮ์ (X: @AbuKhadeejahSP)</p>
+      </div>
+
+      <footer class="troid-footer">
+        <div>
+          <div class="troid-brand">troid</div>
+          <div class="troid-sub">troid.org • ฉบับแปลภาษาไทย</div>
+        </div>
+        <div class="troid-divider"></div>
+        <div class="troid-info">
+          874-A Weston Rd. Toronto, Canada<br>
+          info@troid.org<br>
+          <strong>Salafi Publications &amp; @troidorg</strong>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Column 3 (Outside Right / Front Cover): Original Graphic -->
+    <div class="panel panel-cover">
+      <div class="cover-scrim"></div>
+      <div class="cover-subtitle">
+        และการไปหาหมอดู<br>ผู้ทำนายทายทัก<br>และโหราจารย์
+      </div>
+      <div class="cover-vertical-wrap">
+        <div class="cover-v-gold">บทบัญญัติอิสลามว่าด้วยการสวมใส่</div>
+        <div class="cover-v-white">เครื่องราง ของขลัง และตะกรุด</div>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

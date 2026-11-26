@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Search, Filter, X, User, Book, ArrowLeftRight, Building, Tag, FolderTree,
-  ChevronLeft, ChevronRight, Dices,
+  ChevronLeft, ChevronRight, Dices, Layers,
 } from 'lucide-react';
 import BookCover from '@/components/BookCover';
 import { useAuth } from '@/context/AuthContext';
@@ -18,6 +18,8 @@ import AuthorSidebar from '@/components/AuthorSidebar';
 import BackToTop from '@/components/BackToTop';
 import { asList, joinPeople, hasPerson, hasBookName, BOOK_NAME_ROLES } from '@/lib/people';
 import { matchesSearch, matchesSuggestion } from '@/lib/searchMatch';
+import { groupBooksIntoAlbums } from '@/lib/series';
+import { useBodyScrollLock } from '@/lib/bodyScrollLock';
 import { useCountUp } from '@/lib/useCountUp';
 import styles from './page.module.css';
 
@@ -123,6 +125,97 @@ function BookCard({ book }) {
   );
 }
 
+function AlbumCard({ album, onOpen }) {
+  const { coverBook, title, items, unit } = album;
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(album)}
+      className={`${styles.item} ${styles.albumBtn} hover-card reveal`}
+      aria-label={`เปิดอัลบั้ม ${title} (${items.length} ${unit})`}
+    >
+      <div className={`${styles.coverWrap} ${styles.albumCoverWrap}`}>
+        <BookCover src={coverBook.coverUrl} title={title} author={coverBook.author} />
+        <span className={styles.albumBadge}>
+          <Layers size={12} aria-hidden />
+          {items.length.toLocaleString('th-TH')} {unit}
+        </span>
+      </div>
+      <div className={styles.meta}>
+        <h3 className={styles.bookTitle} dir="auto">{title}</h3>
+        {joinPeople(coverBook.author) && (
+          <p className={styles.author} dir="auto">
+            <User size={12} className={styles.authorIcon} /> {joinPeople(coverBook.author)}
+          </p>
+        )}
+      </div>
+    </button>
+  );
+}
+
+function AlbumModal({ album, onClose }) {
+  useBodyScrollLock(Boolean(album));
+
+  useEffect(() => {
+    if (!album) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [album, onClose]);
+
+  if (!album) return null;
+
+  return (
+    <div
+      className={styles.albumBackdrop}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="album-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className={styles.albumDialog}>
+        <div className={styles.albumDialogHead}>
+          <div>
+            <p className="eyebrow">อัลบั้มชุดเดียวกัน · {album.items.length.toLocaleString('th-TH')} {album.unit}</p>
+            <h2 id="album-modal-title" className={styles.albumDialogTitle} dir="auto">
+              {album.title}
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={onClose}
+            aria-label="ปิดหน้าต่างอัลบั้ม"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className={styles.albumDialogGrid}>
+          {album.items.map(({ book, label }) => (
+            <Link
+              key={book.id}
+              href={`/book/${getLangPath(book.language)}/${book.id}`}
+              className={styles.albumEpCard}
+              onClick={onClose}
+            >
+              <div className={styles.albumEpCover}>
+                <BookCover src={book.coverUrl} title={book.title} author={book.author} />
+                <span className={styles.albumEpTag}>{label}</span>
+              </div>
+              <span className={styles.albumEpTitle} dir="auto">{book.title}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   // Starts empty so the server and the first client render agree; the address
   // bar is read once on mount, below.
@@ -138,6 +231,7 @@ export default function Home() {
   const [highlight, setHighlight] = useState(-1);
   const [page, setPage] = useState(1);
   const [jumpInput, setJumpInput] = useState('');
+  const [activeAlbum, setActiveAlbum] = useState(null);
   const [adminShelfView, setAdminShelfView] = useState('all'); // 'all' | 'public' | 'restricted'
 
   const [fullyLoaded, setFullyLoaded] = useState(false);
@@ -571,17 +665,23 @@ export default function Home() {
     }
   };
 
-  const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
+  const shelfEntries = useMemo(() => groupBooksIntoAlbums(results), [results]);
+
+  const pageCount = Math.max(1, Math.ceil(shelfEntries.length / PAGE_SIZE));
   // The shelf can shrink under a new filter while sitting on a high page.
   const current = Math.min(page, pageCount);
-  const shown = results.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const shown = shelfEntries.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
   // One book may appear in several roles, while the result total counts it once.
   const nameSections = filters.person
-    ? BOOK_NAME_ROLES.map((role) => ({
-      ...role,
-      books: results.filter((book) => hasPerson(book[role.key], filters.person)),
-    })).filter((section) => section.books.length > 0)
+    ? BOOK_NAME_ROLES.map((role) => {
+      const roleBooks = results.filter((book) => hasPerson(book[role.key], filters.person));
+      return {
+        ...role,
+        books: roleBooks,
+        entries: groupBooksIntoAlbums(roleBooks),
+      };
+    }).filter((section) => section.books.length > 0)
     : [];
 
   const goToPage = (next) => {
@@ -914,13 +1014,19 @@ export default function Home() {
             </div>
           ) : filters.person ? (
             <div className={styles.personSections}>
-              {nameSections.map(({ key, label, books: sectionBooks }) => (
+              {nameSections.map(({ key, label, books: sectionBooks, entries }) => (
                 <section key={key} aria-labelledby={`name-section-${key}`}>
                   <h2 id={`name-section-${key}`} className={styles.sectionHead}>
                     {label} <span className={styles.sectionCount}>({sectionBooks.length.toLocaleString('th-TH')} เล่ม)</span>
                   </h2>
                   <div className={`${styles.grid} stagger`}>
-                    {sectionBooks.map((book) => <BookCard key={book.id} book={book} />)}
+                    {entries.map((entry) =>
+                      entry.kind === 'album' ? (
+                        <AlbumCard key={entry.id} album={entry} onOpen={setActiveAlbum} />
+                      ) : (
+                        <BookCard key={entry.id} book={entry.book} />
+                      )
+                    )}
                   </div>
                 </section>
               ))}
@@ -928,7 +1034,13 @@ export default function Home() {
           ) : (
             <>
               <section className={`${styles.grid} stagger`}>
-                {shown.map((book) => <BookCard key={book.id} book={book} />)}
+                {shown.map((entry) =>
+                  entry.kind === 'album' ? (
+                    <AlbumCard key={entry.id} album={entry} onOpen={setActiveAlbum} />
+                  ) : (
+                    <BookCard key={entry.id} book={entry.book} />
+                  )
+                )}
               </section>
 
               {pageCount > 1 && (
@@ -1018,6 +1130,7 @@ export default function Home() {
           )}
         </div>
       </div>
+      <AlbumModal album={activeAlbum} onClose={() => setActiveAlbum(null)} />
       <BackToTop />
     </div>
   );

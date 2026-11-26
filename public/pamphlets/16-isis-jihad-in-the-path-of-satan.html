@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ไอซิส (ISIS): ญิฮาดในหนทางของชัยฏอน — แผ่นพับ 3 ตอน หน้า-หลัง (A4 แนวนอน)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Sarabun:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #111514;
+      color: #edf0ef;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      padding: 1.25rem 1rem 3rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      max-width: 297mm;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #1c2221;
+      padding: 0.85rem 1.25rem;
+      border-radius: 10px;
+      border: 1px solid #333d3b;
+    }
+    .toolbar-title {
+      font-weight: 700;
+      font-size: 0.96rem;
+      color: #d9ac64;
+    }
+    .toolbar-hint {
+      font-size: 0.82rem;
+      color: #bec7c5;
+      margin-top: 2px;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .toolbar button, .toolbar a {
+      padding: 0.5rem 1rem;
+      border-radius: 7px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #455250;
+      background: #27302e;
+      color: #edf0ef;
+    }
+    .toolbar .btn-primary {
+      background: #b98c4d;
+      border-color: #b98c4d;
+      color: #ffffff;
+    }
+    .toolbar .btn-primary:hover { background: #9e743b; }
+
+    .sheet-label {
+      max-width: 297mm;
+      margin: 0 auto 0.5rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #c5cecc;
+      letter-spacing: 0.02em;
+    }
+
+    /* ===== A4 LANDSCAPE TRIFOLD SHEET (297mm x 210mm) ===== */
+    .trifold-sheet {
+      width: 297mm;
+      height: 210mm;
+      margin: 0 auto 2rem;
+      display: grid;
+      grid-template-columns: 99mm 99mm 99mm;
+      grid-template-rows: 210mm;
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
+      background: #f4f1ea;
+      position: relative;
+    }
+
+    .trifold-sheet::before,
+    .trifold-sheet::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 0;
+      border-left: 1px dashed rgba(128, 128, 128, 0.28);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .trifold-sheet::before { left: 99mm; }
+    .trifold-sheet::after { left: 198mm; }
+
+    .panel {
+      width: 99mm;
+      height: 210mm;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== PANEL CONTENT STYLES (calibrated for 99mm x 210mm) ===== */
+    .panel-inner {
+      padding: 6.2mm 6.0mm 5.5mm;
+      font-size: 8.0pt;
+      line-height: 1.48;
+    }
+    .panel-storm {
+      background: #1c2120;
+      color: #e9eeed;
+    }
+    .panel-sand {
+      background: #f4f1ea;
+      color: #1c201f;
+    }
+    .panel-back {
+      background: #191e1d;
+      color: #eaefee;
+      padding-bottom: 0;
+      justify-content: space-between;
+    }
+
+    .intro-credit {
+      color: #e0b268;
+      font-weight: 700;
+    }
+
+    /* Iconic TROID ochre ribbon heading bars from 16-p2-orig.jpg */
+    .panel-inner h2 {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 9.0pt;
+      font-weight: 800;
+      line-height: 1.32;
+      margin: 2.8mm -6.0mm 2.0mm;
+      padding: 1.4mm 6.0mm;
+    }
+    .panel-inner h2:first-child { margin-top: 0; }
+    .panel-storm h2, .panel-back h2 {
+      background: #b98c4d;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(20, 16, 10, 0.35);
+    }
+    .panel-sand h2 {
+      background: #232a29;
+      color: #e6ba73;
+      border-left: 3pt solid #b98c4d;
+    }
+
+    .panel-inner p {
+      margin-bottom: 2.0mm;
+      text-align: left;
+    }
+
+    .panel-inner ol {
+      margin: 0.8mm 0 2.0mm 4.0mm;
+      padding: 0;
+    }
+    .panel-inner li {
+      margin-bottom: 1.3mm;
+      text-align: left;
+    }
+
+    .quote-box {
+      margin: 1.6mm 0 2.1mm;
+      padding: 1.6mm 2.6mm;
+      border-left: 2.2pt solid #b98c4d;
+      background: rgba(185, 140, 77, 0.11);
+      font-weight: 600;
+      line-height: 1.44;
+    }
+    .panel-storm .quote-box, .panel-back .quote-box {
+      background: rgba(185, 140, 77, 0.16);
+      color: #ffffff;
+    }
+
+    .cite {
+      font-weight: 400;
+      font-size: 7.2pt;
+      opacity: 0.85;
+    }
+
+    .footnotes-box {
+      margin-top: 2.5mm;
+      padding: 2.0mm 2.6mm;
+      background: rgba(185, 140, 77, 0.14);
+      border-top: 1pt solid #b98c4d;
+      font-size: 7.1pt;
+      line-height: 1.42;
+      color: #d9dfd9;
+    }
+    .footnotes-box p { margin-bottom: 1mm; }
+    .footnotes-box p:last-child { margin-bottom: 0; }
+
+    /* Authentic TROID bottom footer bar on Back Cover */
+    .troid-footer {
+      margin: 3.0mm -6.0mm 0;
+      padding: 3.6mm 6.0mm 4.0mm;
+      background: rgba(10, 12, 12, 0.55);
+      border-top: 1px solid rgba(185, 140, 77, 0.45);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 3mm;
+      color: #eaefee;
+      font-size: 6.8pt;
+      line-height: 1.44;
+    }
+    .troid-brand {
+      font-family: Georgia, serif;
+      font-size: 18pt;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: #ffffff;
+    }
+    .troid-sub {
+      font-size: 6.6pt;
+      margin-top: 0.9mm;
+      opacity: 0.9;
+    }
+    .troid-divider {
+      width: 1.5pt;
+      height: 11.5mm;
+      background: #b98c4d;
+      flex-shrink: 0;
+    }
+    .troid-info {
+      flex: 1;
+      font-size: 6.6pt;
+    }
+
+    /* ===== FRONT COVER (Page 2, Right Column) ===== */
+    /* Seamless storm-cloud dark bands cover English text while keeping the lightning bolt & desert footprints 100% visible */
+    .panel-cover {
+      background: url('assets/16-cover-bg.jpg') center center / cover no-repeat;
+      color: #ffffff;
+    }
+    .cover-left-strip {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 23.5mm;
+      background: linear-gradient(90deg, #0f1312 0%, #141918 78%, rgba(20, 25, 24, 0) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .cover-satan-cover {
+      position: absolute;
+      top: 0;
+      left: 17mm;
+      width: 27mm;
+      height: 85mm;
+      background: linear-gradient(180deg, #0d1110 0%, #141918 82%, rgba(20, 25, 24, 0.92) 90%, rgba(20, 25, 24, 0) 100%);
+      mask-image: linear-gradient(90deg, #000 0%, #000 84%, transparent 100%);
+      -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 84%, transparent 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .cover-top-right-cover {
+      position: absolute;
+      top: 0;
+      left: 39mm;
+      right: 0;
+      height: 69mm;
+      background: linear-gradient(180deg, #0d1110 0%, #141918 76%, rgba(20, 25, 24, 0.92) 88%, rgba(20, 25, 24, 0) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .cover-v-white {
+      position: absolute;
+      left: 3.5mm;
+      top: 6mm;
+      bottom: 6mm;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 20.5pt;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      text-shadow: 0 3px 14px rgba(0, 0, 0, 0.85);
+      line-height: 1.05;
+      white-space: nowrap;
+      z-index: 2;
+    }
+    .cover-v-gold {
+      position: absolute;
+      left: 19mm;
+      top: 6mm;
+      height: 76mm;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 28pt;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: #e6ba6b;
+      text-shadow: 0 3px 16px rgba(0, 0, 0, 0.9);
+      line-height: 1.05;
+      white-space: nowrap;
+      z-index: 2;
+    }
+    .cover-summary {
+      position: absolute;
+      top: 6.5mm;
+      left: 42.5mm;
+      right: 5mm;
+      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+      font-size: 7.45pt;
+      line-height: 1.42;
+      color: #d6dfdc;
+      z-index: 2;
+    }
+    .cover-summary-title {
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 8.1pt;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 1.2mm;
+      line-height: 1.32;
+    }
+
+    /* ===== PRINT: EXACT 2-PAGE A4 LANDSCAPE DOUBLE-SIDED TRIFOLD ===== */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .no-print { display: none !important; }
+      .trifold-sheet {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        break-after: page;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .trifold-sheet:last-of-type {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .trifold-sheet::before,
+      .trifold-sheet::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <div>
+      <div class="toolbar-title">แผ่นพับที่ 16: ไอซิส (ISIS): ญิฮาดในหนทางของชัยฏอน (A4 แนวนอน 3 คอลัมน์ หน้า-หลัง)</div>
+      <div class="toolbar-hint">วิธีพิมพ์: กดปุ่มพิมพ์ → เลือก A4 แนวนอน (Landscape) → ขอบกระดาษ None → เปิด Background graphics → พิมพ์ 2 หน้า (Flip on short edge)</div>
+    </div>
+    <div class="toolbar-actions">
+      <a href="/pamphlets">← สารบัญรวม</a>
+      <button class="btn-primary" onclick="window.print()">🖨️ พิมพ์ / บันทึกเป็น PDF (2 หน้า หน้า-หลัง)</button>
+    </div>
+  </div>
+
+  <!-- ==================== SHEET 1: INSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 1 (ด้านในแผ่นพับ): คอลัมน์ซ้าย [พื้นดำพายุ + แถบสีทองทราย] • คอลัมน์กลาง [พื้นครีมทราย] • คอลัมน์ขวา [พื้นครีมทราย]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Inside Left): Deep Storm Charcoal with Ochre Ribbon Headers -->
+    <div class="panel panel-inner panel-storm">
+      <p><span class="intro-credit">เชคศอลิห์ อัล-เฟาซาน กล่าวว่า:</span> มวลการสรรเสริญเป็นกรรมสิทธิ์ของอัลลอฮ์ และขอความสันติและความจำเริญจงมีแด่ท่านนบีมุฮัมมัดของเรา ครอบครัวของท่าน และเหล่าศอฮาบะฮ์ของท่าน</p>
+
+      <h2>ความจำเป็นของความปลอดภัยสาธารณะ</h2>
+      <p>ไม่ต้องสงสัยเลยว่าการแผ่ขยายความปลอดภัย (ในสังคม) คือเป้าหมายอันจำเป็นและสำคัญยิ่งต่อชีวิต และมนุษยชาติมีความต้องการความปลอดภัยมากกว่าอาหารและเครื่องดื่มเสียอีก ด้วยเหตุนี้ ท่านนบีอิบรอฮีม (อะลัยฮิสสะลาม) จึงได้ขอพรให้มีความปลอดภัยก่อนการขอปัจจัยยังชีพในดุอาอ์ของท่านว่า:</p>
+      <div class="quote-box">“ข้าแต่พระผู้เป็นเจ้า โปรดทรงทำให้ดินแดนนี้ปลอดภัย และโปรดทรงประทานพืชผล (อันเป็นปัจจัยยังชีพ) ให้แก่ชาวเมืองนี้ด้วยเถิด” <span class="cite">[อัล-บะเกาะเราะฮ์ 2:126]</span></div>
+      <p>ทั้งนี้เพราะผู้คนย่อมไม่สามารถเอร็ดอร่อยกับอาหารและเครื่องดื่มได้ท่ามกลางความหวาดกลัว เส้นทางที่ใช้ขนส่งปัจจัยยังชีพจากที่หนึ่งไปยังอีกที่หนึ่งย่อมถูกตัดขาดเพราะความหวาดกลัว ด้วยเหตุนี้ อัลลอฮ์จึงทรงกำหนดบทลงโทษที่รุนแรงที่สุด (ผ่านผู้มีอำนาจปกครอง) สำหรับบรรดาผู้ที่ (เป็นผู้ก่อการร้ายและอาชญากรที่) ตัดเส้นทางคมนาคม โดยตรัสว่า:</p>
+      <div class="quote-box">“แท้จริง การตอบแทนสำหรับบรรดาผู้ที่ทำสงครามกับอัลลอฮ์และเราะสูลของพระองค์ และพากเพียรในการก่อความเสียหายบนแผ่นดินนั้น ย่อมไม่มีสิ่งอื่นใดนอกจากการถูกประหารชีวิต หรือถูกตรึงกางเขน หรือถูกตัดมือและเท้าสลับข้างกัน หรือถูกเนรเทศออกจากแผ่นดิน นั่นคือความอัปยศสำหรับพวกเขาในโลกนี้ และสำหรับพวกเขาในโลกหน้าคือการลงโทษอันใหญ่หลวง” <span class="cite">[อัล-มาอิดะฮ์ 5:33]</span></div>
+
+      <h2>สิ่งจำเป็นห้าประการที่อิสลามคุ้มครอง</h2>
+      <p>อิสลามได้มาเพื่อพิทักษ์รักษาสิ่งจำเป็นห้าประการ อันได้แก่ ศาสนา ชีวิต สติปัญญา เกียรติยศ และทรัพย์สิน อิสลามได้กำหนดบทลงโทษอันรุนแรงสำหรับผู้ที่ละเมิดสิ่งจำเป็นเหล่านี้ ไม่ว่าสิ่งเหล่านั้นจะเป็นของมุสลิมหรือของผู้ที่อยู่ภายใต้พันธสัญญากับมุสลิมก็ตาม โดยกลุ่มหลังนี้มีสิทธิและหน้าที่เช่นเดียวกับมุสลิม ท่านนบี (ﷺ) ได้กล่าวว่า:</p>
+      <div class="quote-box">“ผู้ใดที่สังหาร [ต่างศาสนิก] ผู้ที่อยู่ภายใต้พันธสัญญา เขาจะไม่ได้กลิ่นไอของสรวงสวรรค์”</div>
+    </div>
+
+    <!-- Column 2 (Inside Center): Desert Sand Ivory -->
+    <div class="panel panel-inner panel-sand">
+      <p>และพระองค์ผู้ทรงสูงส่งตรัสว่า:</p>
+      <div class="quote-box">“และหากผู้ใดในหมู่ผู้ตั้งภาคีขอความคุ้มครองจากเจ้า เจ้าก็จงให้ความคุ้มครองแก่เขา เพื่อเขาจะได้ยินพระดำรัสของอัลลอฮ์ จากนั้นเจ้าจงส่งเขาไปยังสถานที่อันปลอดภัยของเขา” <span class="cite">[อัต-เตาบะฮ์ 9:6]</span></div>
+
+      <h2>ความยุติธรรมแม้กระทั่งกับศัตรูที่ทรยศ</h2>
+      <p>เมื่อมุสลิมเห็นสัญญาณแห่งการทรยศจากผู้ที่ตนมีพันธสัญญาด้วยและมีเหตุผลให้หวาดเกรง ก็ไม่อนุญาตให้พวกเขาเข้าต่อสู้กับฝ่ายนั้นจนกว่าจะแจ้งให้ทราบถึงการสิ้นสุดของพันธสัญญาระหว่างกันก่อน และไม่อนุญาตให้จู่โจมโดยไม่ทันตั้งตัวโดยปราศจากการแจ้งให้ทราบอย่างเปิดเผย พระองค์ผู้ทรงสูงส่งตรัสว่า:</p>
+      <div class="quote-box">“และหากเจ้าเกรงกลัวการทรยศจากกลุ่มชนใด เจ้าก็จงโยน (พันธสัญญา) คืนให้แก่พวกเขาอย่างเท่าเทียมกัน (เพื่อให้ทั้งสองฝ่ายรับรู้ทั่วกัน) แท้จริง อัลลอฮ์ไม่ทรงรักบรรดาผู้ทรยศ” <span class="cite">[อัล-อันฟาล 8:58]</span></div>
+
+      <h2>การคุ้มครองเลือดเนื้อ ทรัพย์สิน และเกียรติยศของพลเมืองต่างศาสนิก</h2>
+      <p>บรรดาผู้ที่เข้ามาอยู่ภายใต้สนธิสัญญากับมุสลิมมีอยู่สามประเภท ได้แก่:</p>
+      <ol>
+        <li><strong>ผู้ที่เข้ามาในดินแดนของมุสลิมโดยได้รับหลักประกันความปลอดภัย (มุสตะอ์มัน):</strong> เพื่อให้เขาสามารถปฏิบัติภารกิจบางอย่างและเดินทางกลับไปยังดินแดนของตนอย่างปลอดภัยเมื่อเสร็จสิ้นภารกิจ</li>
+        <li><strong>ผู้ที่อยู่ภายใต้สนธิสัญญาสันติภาพระหว่างมุสลิมกับผู้มิใช่มุสลิม (มุอาฮัด):</strong> บุคคลเช่นนี้ย่อมได้รับหลักประกันความปลอดภัยตราบจนกว่าสนธิสัญญาจะสิ้นสุดลงระหว่างทั้งสองฝ่าย ไม่อนุญาตให้ผู้ใดละเมิดเขา เช่นเดียวกับที่ไม่อนุญาตให้เขาละเมิดมุสลิมคนใด</li>
+        <li><strong>ผู้ที่เข้ามาอยู่ภายใต้การปกครองของมุสลิมโดยการจ่ายภาษีคุ้มครอง (ญิซยะฮ์ / อะฮ์ลุซซิมมะฮ์):</strong> ซึ่งเป็นการยกเว้นหน้าที่ทางทหารให้แก่เขา และกำหนดให้มุสลิมต้องให้ความคุ้มครองอย่างสมบูรณ์ต่อสิทธิในการปฏิบัติศาสนาของเขาโดยไม่ถูกทำร้าย ตลอดจนพิทักษ์เลือดเนื้อ ทรัพย์สิน และเกียรติยศของเขา</li>
+      </ol>
+
+      <h2>การละเมิดความปลอดภัยของต่างศาสนิกคือการทรยศ</h2>
+      <p>อิสลามรับรองความปลอดภัยแก่เลือดเนื้อ ทรัพย์สิน และเกียรติยศของต่างศาสนิกทั้งสามประเภทนี้ ผู้ใดในหมู่มุสลิมที่ละเมิดพวกเขาถือว่าได้ทรยศต่ออิสลามและสมควรได้รับบทลงโทษอันเป็นเยี่ยงอย่าง การยึดมั่นในความยุติธรรมเป็นสิ่งที่จำเป็นต้องปฏิบัติต่อทั้งมุสลิมและต่างศาสนิก แม้ว่าพวกเขาจะมิได้อยู่ภายใต้พันธสัญญา ไม่มีหลักประกันความปลอดภัย หรือมิได้อาศัยอยู่ภายใต้การปกครองของมุสลิมก็ตาม พระองค์ผู้ทรงสูงส่งตรัสว่า:</p>
+      <div class="quote-box">“และอย่าให้ความเกลียดชังต่อกลุ่มชนหนึ่ง เนื่องจากพวกเขาได้ขัดขวางพวกเจ้าจากมัสญิดอัล-หะรอม ชักนำพวกเจ้าให้ละเมิดเลย” <span class="cite">[อัล-มาอิดะฮ์ 5:2]</span></div>
+    </div>
+
+    <!-- Column 3 (Inside Right): Desert Sand Ivory -->
+    <div class="panel panel-inner panel-sand">
+      <p>และพระองค์ผู้ทรงสูงส่งตรัสว่า:</p>
+      <div class="quote-box">“โอ้บรรดาผู้ศรัทธาเอ๋ย จงเป็นผู้ยืนหยัดเพื่ออัลลอฮ์อย่างมั่นคง เป็นพยานด้วยความยุติธรรม และอย่าให้ความเกลียดชังต่อกลุ่มชนหนึ่ง [ที่เคยอธรรมต่อพวกเจ้า] ขัดขวางพวกเจ้าจากการกระทำอย่างยุติธรรมต่อพวกเขา จงยุติธรรมเถิด เพราะความยุติธรรมนั้นใกล้เคียงกับความยำเกรงยิ่งกว่า” <span class="cite">[อัล-มาอิดะฮ์ 5:8]</span></div>
+
+      <h2>ว่าด้วยผู้ที่สร้างความหวาดกลัวแก่สังคม</h2>
+      <p>สำหรับบรรดาผู้ที่ละเมิดความมั่นคงปลอดภัย (ของสังคม) พวกเขาคือพวกเคาะวาริจญ์ (พวกสุดโต่งผู้ละทิ้งแนวทาง) โจรปล้นสะดมตามเส้นทาง หรือพวกกบฏ บทลงโทษอันเด็ดขาดและเป็นเยี่ยงอย่างย่อมถูกนำมาใช้กับแต่ละกลุ่มเหล่านี้ เพื่อยับยั้งพวกเขา และเพื่อคุ้มครองทั้งมุสลิมและต่างศาสนิกที่อยู่ภายใต้พันธสัญญา ผู้ได้รับหลักประกันความปลอดภัย หรือพลเมืองทั้งหลายให้พ้นจากความชั่วร้าย บรรดาผู้ที่ก่อเหตุวางระเบิดในสถานที่ใดก็ตาม ทำลายชีวิตที่ได้รับการคุ้มครองและทรัพย์สินที่ต้องได้รับความเคารพ ไม่ว่าจะเป็นของมุสลิมหรือผู้มิใช่มุสลิม ทำให้สตรีต้องเป็นม่ายและเด็ก ๆ ต้องเป็นกำพร้า พวกเขาคือบุคคลที่อัลลอฮ์ได้ตรัสถึงไว้ว่า:</p>
+      <div class="quote-box">“และในหมู่มนุษย์นั้นมีผู้ที่คำพูดของเขาทำให้เจ้าพึงพอใจในชีวิตโลกนี้ และเขาอ้างอัลลอฮ์เป็นพยานต่อสิ่งที่อยู่ในหัวใจของเขา ทั้งที่เขาเป็นผู้โต้แย้งที่ดุร้ายที่สุด และเมื่อเขาหันหลังกลับไป เขาก็พากเพียรบนแผ่นดินเพื่อก่อความเสียหายในนั้น และทำลายพืชผลและปศุสัตว์ และอัลลอฮ์ไม่ทรงรักการก่อความเสียหาย และเมื่อมีผู้กล่าวแก่เขาว่า ‘จงยำเกรงอัลลอฮ์เถิด’ ความเย่อหยิ่งในบาปก็เข้าครอบงำเขา ดังนั้น นรกญะฮันนัมก็เพียงพอแล้วสำหรับเขา และมันช่างเป็นที่พำนักอันชั่วช้าเสียนี่กระไร” <span class="cite">[อัล-บะเกาะเราะฮ์ 2:204–206]</span></div>
+
+      <h2>การทรยศและการก่อความเสียหายมิใช่ญิฮาด</h2>
+      <p>และช่างน่าประหลาดใจที่บรรดาผู้ละเมิดซึ่งละทิ้งคำตัดสินของอิสลามเหล่านี้กลับเรียกการกระทำของตนว่า <strong>“ญิฮาดในหนทางของอัลลอฮ์”</strong> นี่คือหนึ่งในการกล่าวเท็จอันร้ายแรงที่สุดต่ออัลลอฮ์ เพราะอัลลอฮ์ทรงประกาศว่าการกระทำเช่นนี้คือ <strong>การก่อความเสียหาย (ฟะสาด)</strong> มิได้ทรงทำให้มันเป็น <strong>“ญิฮาด”</strong> อย่างไรก็ตาม เราไม่ควรแปลกใจ เพราะบรรพบุรุษ (ทางอุดมการณ์) ของคนเหล่านี้คือพวกเคาะวาริจญ์ ซึ่งได้กล่าวหาเหล่าศอฮาบะฮ์ของท่านนบีว่าตกศาสนา และได้สังหารทั้งท่านอุษมานและท่านอะลี (เราะฎิยัลลอฮุอันฮุมา) ซึ่งต่างเป็นเคาะลีฟะฮ์ผู้ทรงธรรมและเป็นสองท่านในสิบคนที่ได้รับข่าวดีแห่งสรวงสวรรค์ พวกเขาสังหารทั้งสองท่านและเรียกการกระทำนั้นของตนว่า “ญิฮาดในหนทางของอัลลอฮ์” ทว่าแท้จริงแล้ว มันคือ <strong>ญิฮาดในหนทางของชัยฏอน</strong></p>
+    </div>
+  </section>
+
+  <!-- ==================== SHEET 2: OUTSIDE (3 COLUMNS) ==================== -->
+  <div class="sheet-label no-print">หน้าที่ 2 (ด้านนอกแผ่นพับ): คอลัมน์ซ้าย [พับใน พื้นครีมทราย] • คอลัมน์กลาง [ปกหลัง พื้นดำพายุ + TROID] • คอลัมน์ขวา [ปกหน้า ภาพฟ้าผ่าทะเลทรายต้นฉบับ]</div>
+  <section class="trifold-sheet">
+    <!-- Column 1 (Outside Left / Inside Flap): Desert Sand Ivory -->
+    <div class="panel panel-inner panel-sand">
+      <p>อัลลอฮ์ผู้ทรงสูงส่งตรัสว่า:</p>
+      <div class="quote-box">“บรรดาผู้ศรัทธานั้นต่อสู้ในหนทางของอัลลอฮ์ ส่วนบรรดาผู้ปฏิเสธศรัทธานั้นต่อสู้ในหนทางของฏอฆูต (ชัยฏอน)” <span class="cite">[อัน-นิสาอ์ 4:76]</span></div>
+
+      <h2>อิสลามบริสุทธิ์จากการกระทำของเหล่าผู้ก่อการร้าย: ท่านนบีแห่งอิสลามสั่งให้สังหารพวกเขา</h2>
+      <p>อิสลามมิอาจถูกนำมาเป็นผู้รับผิดชอบต่อการกระทำของคนเหล่านี้ ดังที่ศัตรูของอิสลามในหมู่ผู้ปฏิเสธศรัทธาและพวกมุนาฟิก (คนกลับกลอก) กล่าวหาว่าศาสนาอิสลามคือศาสนาแห่งการก่อการร้าย โดยหยิบยกการกระทำของอาชญากรเหล่านี้มาเป็นหลักฐาน ทว่าการกระทำของพวกเขามิได้มาจากอิสลาม และไม่มีศาสนาใดหรืออิสลามรับรองการกระทำนั้น หากแต่มันคืออุดมการณ์นอกรีตที่ละทิ้งแนวทาง และท่านนบี (ﷺ) ได้ส่งเสริมให้สังหารผู้ที่ยึดถืออุดมการณ์นี้ โดยกล่าวว่า:</p>
+      <div class="quote-box">“ณ ที่ใดก็ตามที่พวกท่านพบพวกเขา จงสังหารพวกเขาเสีย [พวกเคาะวาริจญ์ผู้ละทิ้งแนวทาง]” <span class="cite">[ท่านนบีมุฮัมมัด ﷺ]</span></div>
+      <p>ท่านยังได้สัญญาถึงผลบุญอันมหาศาลสำหรับผู้ที่สังหารพวกเขา พวกเขาจะต้องถูกปราบปรามโดยผู้นำของมุสลิม ดังที่เหล่าศอฮาบะฮ์ของท่านนบีได้ต่อสู้กับพวกเขาภายใต้การนำของผู้นำบรรดาผู้ศรัทธา คือท่านอะลี อิบนุ อบีฏอลิบ (เราะฎิยัลลอฮุอันฮุ)</p>
+
+      <h2>ผู้ก่อการร้ายรับแนวคิดมาจากนักคิดสายการเมืองและกลุ่มหัวรุนแรง มิใช่จากสถาบันการศึกษาของมุสลิม</h2>
+      <p>พวกมุนาฟิกและคนเขลาบางส่วนอ้างว่าโรงเรียนของมุสลิมได้สอนอุดมการณ์นี้แก่พวกเขา และหลักสูตรการศึกษา (ในโรงเรียนของมุสลิม) มีอุดมการณ์ที่เบี่ยงเบนนี้แฝงอยู่ จากนั้นก็เรียกร้องให้แก้ไขเปลี่ยนแปลงหลักสูตรการศึกษาเหล่านี้ เราขอกล่าว (เพื่อตอบโต้) ว่า: แท้จริงแล้ว บรรดาผู้ที่ยึดถืออุดมการณ์ (แห่งการก่อการร้าย) นี้มิได้สำเร็จการศึกษาจากโรงเรียนของมุสลิม และมิได้ศึกษาความรู้จากนักวิชาการมุสลิมเลย เพราะพวกเขา (เอง) ต่างประกาศว่าการเรียนในโรงเรียน สถาบัน และคณะวิชาเหล่านี้เป็นสิ่งต้องห้าม (เนื่องจากพวกเขาถือว่าสังคมมุสลิมทั้งหมดได้หลุดพ้นจากอิสลามและตกศาสนาไปแล้ว)</p>
+
+      <h2>ผู้ก่อการร้ายบ่อนทำลายนักวิชาการมุสลิมเพื่อให้ชักจูงเยาวชนผู้เขลาได้ง่ายขึ้น</h2>
+      <p>พวกเขาดูแคลนนักวิชาการมุสลิม กล่าวหาว่านักวิชาการเป็นผู้โง่เขลา และเรียกขานนักวิชาการว่าเป็น “ลูกจ้างรับใช้ของผู้ปกครอง” แต่กลับไปรับความรู้จากนักอุดมการณ์แห่งแนวคิดที่เบี่ยงเบน และจากบรรดาผู้ที่มีอายุยังน้อยและสติปัญญาเขลาเช่นเดียวกับพวกเขา — ดังที่บรรพบุรุษ (บนแนวคิดที่เบี่ยงเบนนี้) ของพวกเขาเคยกล่าวหานักวิชาการในหมู่ศอฮาบะฮ์ของท่านนบีว่าโง่เขลาและประกาศว่าพวกเขาเป็นผู้ปฏิเสธศรัทธา</p>
+    </div>
+
+    <!-- Column 2 (Outside Center / Back Cover): Deep Storm Charcoal + TROID Footer -->
+    <div class="panel panel-inner panel-back">
+      <div>
+        <h2>หน้าที่ของนักวิชาการมุสลิมและผู้ปกครอง</h2>
+        <p>สิ่งที่เราหวังในวันนี้ก็คือ ให้บรรดาผู้ปกครองหันมาเอาใจใส่บุตรหลานของตนอย่างใกล้ชิด ไม่ปล่อยปละละเลยพวกเขาไว้กับบรรดาผู้เผยแพร่อุดมการณ์ทำลายล้างที่ชักนำพวกเขาไปสู่แนวคิดที่หลงผิดและแนวทางที่เบี่ยงเบน พวกเขาไม่ควรปล่อยให้บุตรหลานไปเข้าร่วมการชุมนุมที่น่าสงสัย เดินทางไปในทริปที่ไม่รู้ที่มาที่ไป และไปเข้า “ค่ายพักผ่อน” ซึ่งมิใช่สิ่งใดเลยนอกจากทุ่งหญ้าเลี้ยงสัตว์ของบรรดาผู้ชักนำสู่ความหลงผิด และเป็นเหยื่อให้แก่สุนัขจิ้งจอกนักล่า พวกเขาไม่ควรอนุญาตให้บุตรหลานเดินทางออกนอกประเทศในขณะที่ยังมีอายุน้อย และเป็นหน้าที่ของบรรดานักวิชาการเช่นกันที่จะต้องลุกขึ้นมาชี้นำแนวทางที่ถูกต้อง และสั่งสอนหลักศรัทธา [อิสลาม] ที่แท้จริงในโรงเรียน มัสญิด และผ่านสื่อต่าง ๆ เพื่อไม่ให้เปิดโอกาสใด ๆ แก่กลุ่มผู้หลงผิดซึ่งมักออกมาในความมืดมิดทุกครั้งที่ผู้แก้ไขฟื้นฟูสังคมเผลอเรอ</p>
+        <p>ขออัลลอฮ์ทรงประทานความสำเร็จให้แก่ทุกท่านในการแสวงหาความรู้อันเป็นประโยชน์และการปฏิบัติคุณงามความดี และขอความสันติและความจำเริญจงมีแด่ท่านนบีมุฮัมมัดของเรา ครอบครัวของท่าน และเหล่าศอฮาบะฮ์ของท่าน</p>
+
+        <div class="footnotes-box">
+          <p><strong>ผู้เขียน:</strong> อัล-อัลลามะฮ์ ศอลิห์ อิบนุ เฟาซาน อัล-เฟาซาน</p>
+          <p><strong>ผู้แปลฉบับภาษาอังกฤษ:</strong> อบู อิยาฎ อัมญัด เราะฟีก (Abū ʿIyāḍ Amjad Rafīq / @abuiyaadsp) — เดือนเศาะฟัร ฮ.ศ. 1437 / พฤศจิกายน ค.ศ. 2015</p>
+          <p><strong>แหล่งข้อมูลเพิ่มเติม:</strong> islamagainstextremism.com • takfiris.com • shariah.ws</p>
+        </div>
+      </div>
+
+      <footer class="troid-footer">
+        <div>
+          <div class="troid-brand">troid</div>
+          <div class="troid-sub">troid.org • ฉบับแปลภาษาไทย</div>
+        </div>
+        <div class="troid-divider"></div>
+        <div class="troid-info">
+          874-A Weston Rd. Toronto, Canada<br>
+          info@troid.org<br>
+          <strong>Salafi Publications &amp; @troidorg</strong>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Column 3 (Outside Right / Front Cover): Lightning & Desert Footprints + Seamless Storm Bands -->
+    <div class="panel panel-cover">
+      <div class="cover-left-strip"></div>
+      <div class="cover-satan-cover"></div>
+      <div class="cover-top-right-cover"></div>
+
+      <div class="cover-v-white">ไอซิส (ISIS) : ญิฮาดในหนทางของ</div>
+      <div class="cover-v-gold">ชัยฏอน</div>
+
+      <div class="cover-summary">
+        <div class="cover-summary-title">ผู้ก่อการร้ายต่อสู้ในหนทางของชัยฏอน:</div>
+        นักวิชาการมุสลิมอธิบายถึงความจำเป็นในการรักษาความปลอดภัยสาธารณะให้แก่ทั้งมุสลิมและผู้มิใช่มุสลิมอย่างเท่าเทียมกัน ว่าผู้ก่อการร้ายที่แพร่ความหวาดกลัวในสังคมนั้นกำลังต่อสู้ในหนทางของชัยฏอน ดังนั้นจึงเป็นหน้าที่จำเป็นเหนือบรรดานักวิชาการมุสลิมและผู้ปกครองที่จะต้องปกป้องเยาวชนของตนให้พ้นจากอุดมการณ์ของพวกสุดโต่งและผู้ก่อการร้ายกระหายเลือด ตลอดจนพิสูจน์ความบริสุทธิ์ของอิสลามจากการทรยศของกลุ่มผู้ก่อการร้ายเหล่านี้ต่อรากฐานอันสำคัญที่สุดของศาสนา
+      </div>
+    </div>
+  </section>
+</body>
+</html>
