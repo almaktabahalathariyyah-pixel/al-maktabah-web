@@ -26,7 +26,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 1;
+const CURATED_VERSION = 2;
 
 /**
  * Verified Thai Salafi / Ahlus-Sunnah Islamic book repositories, encyclopedias,
@@ -36,6 +36,48 @@ const CURATED_VERSION = 1;
  */
 export const RECOMMENDED_THAI_SALAFI_SOURCES = [
   // ===== ห้องสมุดออนไลน์และคลังไฟล์ PDF ภาษาไทย =====
+  {
+    id: 'curated-salafi-book-vercel',
+    kind: 'library',
+    title: 'คลังหนังสือสะลัฟประเทศไทย (خَزَانَةُ السَّلَفِ في تايلاند)',
+    description: 'เว็บคลังหนังสือและงานเขียนของบรรดาปราชญ์สะลัฟฉบับภาษาไทย พร้อมไฟล์ PDF และลิงก์ดาวน์โหลดฟรีสำหรับผู้แสวงหาความรู้',
+    url: 'https://salafi-book.vercel.app',
+  },
+  {
+    id: 'curated-genfa',
+    kind: 'library',
+    title: 'GenFa (เก็นฟา — E-Book และสื่ออิสลามสายซุนนะฮ์)',
+    description: 'เว็บไซต์และสำนักพิมพ์อิสลามสายซุนนะฮ์ รวบรวม E-Book แผนที่อัลกุรอาน อินโฟกราฟิก ดุอาอ์-อัซการ และประวัติศาสตร์อิสลาม',
+    url: 'https://genfa.co',
+  },
+  {
+    id: 'curated-pubhtml5-alislah',
+    kind: 'library',
+    title: 'หิ้งหนังสือ Al-Islah Bangkoknoi (PubHTML5)',
+    description: 'ชั้นหนังสือฟลิปบุ๊กออนไลน์ของอัล-อิศลาหฺสมาคม (บางกอกน้อย) รวบรวมเอกสารวิชาการและหนังสือศาสนาตามแนวทางกิตาบุลลอฮ์และซุนนะฮ์กว่า 190 เล่ม',
+    url: 'https://pubhtml5.com/bookcase/ysjh/',
+  },
+  {
+    id: 'curated-anyflip-islam-th',
+    kind: 'library',
+    title: 'AnyFlip — คลัง E-Book หนังสืออิสลามภาษาไทย',
+    description: 'แหล่งอ่านและดาวน์โหลด E-Book หนังสืออิสลามแปลไทย เช่น แนวทางสลัฟ อัลอะกีดะฮ์อัฏเฏาะฮาวียะฮ์ สอนอะกีดะฮ์หนูน้อย และฟิกฮุซซุนนะฮ์',
+    url: 'https://anyflip.com/explore?q=%E0%B8%AD%E0%B8%B4%E0%B8%AA%E0%B8%A5%E0%B8%B2%E0%B8%A1',
+  },
+  {
+    id: 'curated-islamicbooks19',
+    kind: 'library',
+    title: 'IslamicBooks19 (สำนักพิมพ์ดิจิทัลอิสลาม)',
+    description: 'คลังบทความ ดุอาอ์ และหนังสือแนะนำอิสลามภาษาไทยที่ถ่ายทอดความรู้คลาสสิกให้อ่านเข้าใจง่ายและนำไปใช้ได้จริง',
+    url: 'https://islamicbooks19.netlify.app',
+  },
+  {
+    id: 'curated-salafyvanguard',
+    kind: 'website',
+    title: 'เพื่อนร่วมแนวทางสะลัฟ (Salafy Vanguard)',
+    description: 'บล็อกรวบรวมบทความแปล เอกสารแจกฟรี และหลักการอะกีดะฮ์-มันฮัจญ์ตามแนวทางสะละฟุศศอลิห์',
+    url: 'https://salafyvanguard.wordpress.com',
+  },
   {
     id: 'curated-islamhouse-th',
     kind: 'library',
@@ -203,6 +245,34 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
   },
 
   // ===== สื่อวิดีโอ บรรยาย และแหล่งต้นฉบับสะละฟีสากลสำหรับงานแปล =====
+  {
+    id: 'curated-talib-club',
+    kind: 'youtube',
+    title: 'Talib Club / Talib Publisher (YouTube)',
+    description: 'ช่องนำเสนอการศึกษาอิสลามเชิงวิชาการ (Academic Islamic Studies) และรายการเสวนา Talib Talk ตามแนวทางที่ถูกต้อง',
+    url: 'https://www.youtube.com/@talibpublisher',
+  },
+  {
+    id: 'curated-assabiqoon-yt',
+    kind: 'youtube',
+    title: 'สำนักพิมพ์อัซซาบิกูน (YouTube)',
+    description: 'ช่องบรรยายหลักศรัทธา ซีรีส์อะกีดะฮ์แนวทางสะลัฟ การตอบข้อสงสัยต่างศาสนิก และรายการ Assabiqoon Islamic Forum',
+    url: 'https://www.youtube.com/@AssabiqoonPublisher',
+  },
+  {
+    id: 'curated-alhamdtv-yt',
+    kind: 'youtube',
+    title: 'Alhamdulillah Group / AlhamdTV (YouTube)',
+    description: 'สื่อกลางงานดะอ์วะฮ์ รวบรวมคลิปบรรยายศาสนธรรม หะดีษ เตาฮีด และข้อคิดอิสลามจากคณาจารย์สายซุนนะฮ์',
+    url: 'https://www.youtube.com/@AlhamdTV',
+  },
+  {
+    id: 'curated-alhamdtv-web',
+    kind: 'website',
+    title: 'AlhamdTV (อัลฮัมดุลิลลาฮฺ กรุ๊ป)',
+    description: 'เว็บไซต์รวบรวมสื่อบรรยาย บทความ และกิจกรรมดะอ์วะฮ์เพื่อส่งเสริมความรู้ศาสนาตามแนวทางอัลกุรอานและซุนนะฮ์',
+    url: 'https://alhamdtv.com',
+  },
   {
     id: 'curated-whiteflix',
     kind: 'youtube',
