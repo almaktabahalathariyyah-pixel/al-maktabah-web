@@ -27,7 +27,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 10;
+const CURATED_VERSION = 11;
 
 const MUNADIYA_DESC =
   'ห้องเรียนและแพลตฟอร์มการเรียนรู้อิสลามออนไลน์ตามแนวทางสะละฟุศศอลิห์ รวบรวมสื่อการสอน บทความ เอกสารวิชาการ และ E-Book แปลจากตำราปราชญ์สายสะละฟี ครอบคลุมอะกีดะฮ์ มันฮัจญ์ ฟิกฮ์ ตัฟซีร และตัรบียะฮ์';
@@ -179,7 +179,7 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     id: 'curated-thaiislamqa',
     kind: 'website',
     title: 'ThaiIslamQA (แปลฟัตวา IslamQA ภาษาไทย)',
-    description: 'แหล่งแปลคำถาม-คำตอบปัญหาศาสนาจาก IslamQA เป็นภาษาไทย อ้างอิงหลักฐานจากอัลกุรอานและซุนนะฮ์อย่างละเอียด',
+    description: 'แหล่งแปลคำถาม-คำตอบปัญหาศาสนาจาก IslamQA เป็นภาษาไทยกว่า 400 คำถาม อ้างอิงหลักฐานจากอัลกุรอานและซุนนะฮ์อย่างละเอียด',
     url: 'https://thaiislamqa.com',
   },
 
@@ -479,6 +479,13 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     title: 'Right Path Salafi (Instagram)',
     description: 'อินสตาแกรมของ Right Path Salafi เผยแพร่บทความสั้น อินโฟกราฟิกหักล้างข้อคลุมเครือ และสาระดะอ์วะฮ์',
     url: 'https://www.instagram.com/right_path.219/',
+  },
+  {
+    id: 'curated-pinionmoon-fb',
+    kind: 'facebook',
+    title: 'Pinion Moon (Facebook)',
+    description: 'สำนักพิมพ์และผู้เผยแพร่สื่อหนังสืออิสลามร่วมสมัย ครอบคลุมศาสนา วิทยาศาสตร์ สังคมวิทยา ประวัติศาสตร์ ปรัชญา และการตอบโต้กระแสโลกวิสัย',
+    url: 'https://www.facebook.com/profile.php?id=100075962754486',
   },
   {
     id: 'curated-alhaneefeeyah-yt',
