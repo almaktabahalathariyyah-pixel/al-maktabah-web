@@ -27,7 +27,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 7;
+const CURATED_VERSION = 8;
 
 const MUNADIYA_DESC =
   'ห้องเรียนและแพลตฟอร์มการเรียนรู้อิสลามออนไลน์ตามแนวทางสะละฟุศศอลิห์ รวบรวมสื่อการสอน บทความ เอกสารวิชาการ และ E-Book แปลจากตำราปราชญ์สายสะละฟี ครอบคลุมอะกีดะฮ์ มันฮัจญ์ ฟิกฮ์ ตัฟซีร และตัรบียะฮ์';
@@ -374,6 +374,13 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     title: 'ห้องสมุดอัลฮะนีฟียะฮ์ (الحنفية — Alhaneefeeyah)',
     description: 'ห้องสมุดอิสลามออนไลน์ภาษาไทย รวบรวมหนังสือ PDF บทความแปล ตำราสะลัฟ อะกีดะฮ์ หะดีษ และสื่อความรู้ศาสนาตามแนวทางสะละฟุศศอลิห์',
     url: 'https://www.alhaneefeeyah.net',
+  },
+  {
+    id: 'curated-rasypubs',
+    kind: 'library',
+    title: 'สำนักพิมพ์รอซี่ย์ (RasyPubs)',
+    description: 'คลังหนังสือและเอกสารวิชาการอิสลามภาษาไทยตามแนวทางสะละฟุศศอลิห์ ครอบคลุมหมวดอะกีดะฮ์ เตาฮีด ฟิกฮ์ และบทความแปลจากปราชญ์สะลัฟ',
+    url: 'https://rasypubs.pages.dev',
   },
   {
     id: 'curated-muslimfriend-web',
