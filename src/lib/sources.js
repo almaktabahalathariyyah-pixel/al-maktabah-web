@@ -27,7 +27,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 6;
+const CURATED_VERSION = 7;
 
 const MUNADIYA_DESC =
   'ห้องเรียนและแพลตฟอร์มการเรียนรู้อิสลามออนไลน์ตามแนวทางสะละฟุศศอลิห์ รวบรวมสื่อการสอน บทความ เอกสารวิชาการ และ E-Book แปลจากตำราปราชญ์สายสะละฟี ครอบคลุมอะกีดะฮ์ มันฮัจญ์ ฟิกฮ์ ตัฟซีร และตัรบียะฮ์';
@@ -367,6 +367,104 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     title: 'Yateem TV (เว็บไซต์)',
     description: 'สถานีโทรทัศน์และสื่อบรรยายศาสนาของคณาจารย์สายซุนนะฮ์ในไทย รวบรวมคลิปสอนศาสนา ตัฟซีร หะดีษ และตอบคำถามศาสนา',
     url: 'https://yateem.tv',
+  },
+  {
+    id: 'curated-alhaneefeeyah-web',
+    kind: 'library',
+    title: 'ห้องสมุดอัลฮะนีฟียะฮ์ (الحنفية — Alhaneefeeyah)',
+    description: 'ห้องสมุดอิสลามออนไลน์ภาษาไทย รวบรวมหนังสือ PDF บทความแปล ตำราสะลัฟ อะกีดะฮ์ หะดีษ และสื่อความรู้ศาสนาตามแนวทางสะละฟุศศอลิห์',
+    url: 'https://www.alhaneefeeyah.net',
+  },
+  {
+    id: 'curated-muslimfriend-web',
+    kind: 'website',
+    title: 'มูลนิธิเพื่อนมุสลิม (Muslim\'s Friend Foundation)',
+    description: 'องค์กรไม่แสวงหาผลกำไรด้านงานดะอ์วะฮ์และการศึกษาศาสนาตามแนวทางสะละฟี ("สู่สังคมที่ดี ด้วยหลักศรัทธา")',
+    url: 'https://muslimfriend.org',
+  },
+  {
+    id: 'curated-ibnbaz-th-fb',
+    kind: 'facebook',
+    title: 'สถาบันอิบนุบาซเพื่ออิสลามศึกษา — Ibn Baz Institute (Facebook)',
+    description: 'โครงการแปลตำราปราชญ์อิสลามและหลักสูตรศึกษาอิสลามแบบเป็นขั้นเป็นตอน (Step by Step) ตามแนวทางสะลัฟ',
+    url: 'https://www.facebook.com/IbnBazTh',
+  },
+  {
+    id: 'curated-truthislam-fb',
+    kind: 'facebook',
+    title: 'สำนักพิมพ์ผู้สนใจในอิสลาม — Truth Islam Publisher (Facebook)',
+    description: 'สำนักพิมพ์และสื่อวิชาการศาสนาอิสลามเชิงลึก ("ปฏิรูปสังคมมุสลิมผ่านความรู้วิชาการอิสลามที่ถูกต้อง")',
+    url: 'https://www.facebook.com/profile.php?id=61565389662125',
+  },
+  {
+    id: 'curated-humanwrite-fb',
+    kind: 'facebook',
+    title: 'สำนักพิมพ์ Human Write (Facebook)',
+    description: 'สำนักพิมพ์หนังสืออิสลามวิชาการตามแนวทางซุนนะฮ์ ("ปกปักรักษาศาสนาผ่านงานเขียน — เปลี่ยนมนุษย์ทีละคน เปลี่ยนสังคมทีละบรรทัด")',
+    url: 'https://www.facebook.com/profile.php?id=100063260017282',
+  },
+  {
+    id: 'curated-attaymiyyah-fb',
+    kind: 'facebook',
+    title: 'อัต-ตัยมียะฮ์ — التيمية (Facebook)',
+    description: 'เพจหนังสือ บทความวิชาการ และการชี้แจงตอบโต้ข้อคลุมเครือ (อัร-ร็อด วัดดะอ์วะฮ์) ตามแนวทางสะละฟุศศอลิห์',
+    url: 'https://www.facebook.com/profile.php?id=61572292302402',
+  },
+  {
+    id: 'curated-muslimsfriend-fb',
+    kind: 'facebook',
+    title: 'มูลนิธิเพื่อนมุสลิม (Facebook)',
+    description: 'เพจทางการของมูลนิธิเพื่อนมุสลิม เผยแพร่กิจกรรมดะอ์วะฮ์ คลิปบรรยาย และสื่อการเรียนรู้อิสลามสายสะละฟี',
+    url: 'https://www.facebook.com/muslimsfriendfoundation',
+  },
+  {
+    id: 'curated-punkwamro-fb',
+    kind: 'facebook',
+    title: 'มูลนิธิ ปันความรู้ — Sharing Knowledge Foundation (Facebook)',
+    description: 'สอนและเผยแพร่องค์ความรู้ที่เป็นประโยชน์ ให้ความกระจ่างแก่มุสลิมในเรื่องความเชื่อ การศรัทธา และการปฏิบัติ พร้อมรายการปันความรู้ทอล์ก',
+    url: 'https://www.facebook.com/punkwame.ro',
+  },
+  {
+    id: 'curated-abbas-salafi-fb',
+    kind: 'facebook',
+    title: 'Abbas Mtp (Facebook)',
+    description: 'เพจแบ่งปันบทความ คำสอนของบรรดาอุละมาอ์ และข้อคิดตามแนวทางสะละฟุศศอลิห์',
+    url: 'https://www.facebook.com/Abbas.M.salafi',
+  },
+  {
+    id: 'curated-alhaneefeeyah-yt',
+    kind: 'youtube',
+    title: 'ห้องสมุดอัลฮะนีฟียะฮ์ (YouTube)',
+    description: 'ช่องยูทูปของห้องสมุดอัลฮะนีฟียะฮ์ รวบรวมคลิปบรรยาย คุฏบะฮ์ และซีรีส์สอนตำราสะลัฟภาษาไทย',
+    url: 'https://www.youtube.com/@Alhaneefeeyah',
+  },
+  {
+    id: 'curated-ilmulnafi-yt',
+    kind: 'youtube',
+    title: 'ศูนย์การเรียนรู้อิลมุนนาเฟียอ์ — مركز العلم النافع (YouTube)',
+    description: 'เผยแพร่ความรู้ที่ยังประโยชน์จากตำราอุละมาอ์ที่เจริญรอยตามสะลัฟ ในรูปแบบบรรยายซีรีส์ระยะยาวและบทเรียนศาสนา',
+    url: 'https://www.youtube.com/@ilmulnafi',
+  },
+  {
+    id: 'curated-alflower-yt',
+    kind: 'youtube',
+    title: 'อัลฟะวาเอ็ด — alflower.1 (YouTube)',
+    description: 'ช่องบทเรียนศาสนา อรรถาธิบายพระนามอันวิจิตรของอัลลอฮ์ กฎเหล็กการขัดเกลาจิตใจ และสื่อหนังสือแปลภาษาไทย',
+    url: 'https://www.youtube.com/@alflower.1',
+  },
+  {
+    id: 'curated-alflower-ig',
+    kind: 'instagram',
+    title: 'อัลฟะวาเอ็ด — alflower.1 (Instagram)',
+    description: 'อินสตาแกรมของอัลฟะวาเอ็ด แนะนำหนังสือแปลอิสลามและข้อคิดศาสนาสายสะละฟี',
+    url: 'https://www.instagram.com/alflower.1/',
+  },
+  {
+    id: 'curated-evolution-about-yt',
+    kind: 'youtube',
+    title: 'Evolution-About : วิวัฒนาการตามจริง (YouTube)',
+    description: 'ช่องวิชาการให้ความรู้และวิพากษ์ทฤษฎีวิวัฒนาการตามข้อเท็จจริงทางวิทยาศาสตร์ สารคดีพากย์ไทย และพอดแคสต์เชิงศรัทธา',
+    url: 'https://www.youtube.com/@evolution-about7798',
   },
   {
     id: 'curated-troid',
