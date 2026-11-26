@@ -27,7 +27,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 9;
+const CURATED_VERSION = 10;
 
 const MUNADIYA_DESC =
   'ห้องเรียนและแพลตฟอร์มการเรียนรู้อิสลามออนไลน์ตามแนวทางสะละฟุศศอลิห์ รวบรวมสื่อการสอน บทความ เอกสารวิชาการ และ E-Book แปลจากตำราปราชญ์สายสะละฟี ครอบคลุมอะกีดะฮ์ มันฮัจญ์ ฟิกฮ์ ตัฟซีร และตัรบียะฮ์';
@@ -458,6 +458,27 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     title: 'Ibnu Yusuf (Instagram)',
     description: 'ช่องทางเผยแพร่ E-Book แปลจากโครงการสืบสานงานอุละมาอ์และบทความความรู้ศาสนาภาษาไทย',
     url: 'https://www.instagram.com/_ibnuyusuf/',
+  },
+  {
+    id: 'curated-rightpath-web',
+    kind: 'website',
+    title: 'Right Path (เว็บไซต์ — rightpath.info)',
+    description: 'แหล่งรวมบทความวิชาการหักล้างการบิดเบือนอิสลาม ตอบโต้ข้อคลุมเครือ และงานดะอ์วะฮ์สายสะละฟีภาษาไทย',
+    url: 'https://rightpath.info',
+  },
+  {
+    id: 'curated-rightpath-fb',
+    kind: 'facebook',
+    title: 'Right Path Salafi (Facebook)',
+    description: 'เพจหักล้างการบิดเบือนอิสลามอย่างเป็นวิชาการ และเผยแพร่บทความดะอ์วะฮ์สายสะละฟีเป็นประจำทุกวัน',
+    url: 'https://www.facebook.com/RightPath.219',
+  },
+  {
+    id: 'curated-rightpath-ig',
+    kind: 'instagram',
+    title: 'Right Path Salafi (Instagram)',
+    description: 'อินสตาแกรมของ Right Path Salafi เผยแพร่บทความสั้น อินโฟกราฟิกหักล้างข้อคลุมเครือ และสาระดะอ์วะฮ์',
+    url: 'https://www.instagram.com/right_path.219/',
   },
   {
     id: 'curated-alhaneefeeyah-yt',
