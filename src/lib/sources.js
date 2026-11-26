@@ -27,7 +27,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 11;
+const CURATED_VERSION = 12;
 
 const MUNADIYA_DESC =
   'ห้องเรียนและแพลตฟอร์มการเรียนรู้อิสลามออนไลน์ตามแนวทางสะละฟุศศอลิห์ รวบรวมสื่อการสอน บทความ เอกสารวิชาการ และ E-Book แปลจากตำราปราชญ์สายสะละฟี ครอบคลุมอะกีดะฮ์ มันฮัจญ์ ฟิกฮ์ ตัฟซีร และตัรบียะฮ์';
@@ -160,6 +160,13 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     title: 'QuranEnc ภาษาไทย (สารานุกรมแปลความหมายอัลกุรอาน)',
     description: 'แหล่งรวมคำแปลความหมายอัลกุรอานและอรรถาธิบายอัลกุรอานอย่างย่อ (อัลมุคตะศ็อร ฟี ตัฟซีร อัลกุรอาน) ฉบับภาษาไทยที่ตรวจสอบโดยคณะผู้รู้',
     url: 'https://quranenc.com/th/home',
+  },
+  {
+    id: 'curated-quranth',
+    kind: 'website',
+    title: 'QuranTH (อัลกุรอานแปลไทยและตัฟซีร)',
+    description: 'เว็บไซต์อ่านอัลกุรอานพร้อมความหมายภาษาไทยและตัฟซีร (คำอธิบายอัลกุรอาน) ค้นหาสูเราะฮ์และอายะฮ์ได้สะดวก',
+    url: 'https://www.quranth.com',
   },
   {
     id: 'curated-sunnahthai',
