@@ -27,7 +27,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 5;
+const CURATED_VERSION = 6;
 
 const MUNADIYA_DESC =
   'ห้องเรียนและแพลตฟอร์มการเรียนรู้อิสลามออนไลน์ตามแนวทางสะละฟุศศอลิห์ รวบรวมสื่อการสอน บทความ เอกสารวิชาการ และ E-Book แปลจากตำราปราชญ์สายสะละฟี ครอบคลุมอะกีดะฮ์ มันฮัจญ์ ฟิกฮ์ ตัฟซีร และตัรบียะฮ์';
@@ -313,6 +313,62 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     url: 'https://whiteflix.tv',
   },
   {
+    id: 'curated-thaisalafi-yt',
+    kind: 'youtube',
+    title: 'Salafiyoon — ชมรมอัซซะละฟิยูน (YouTube)',
+    description: 'รวบรวมคลิปบรรยาย คุฏบะฮ์วันศุกร์ และการสอนตำรา (เช่น กิตาบุตเตาฮีด) โดย อ.อิสฮาก พงษ์มณี, อ.อาบีดีณ โยธาสมุทร และคณาจารย์สายสะลัฟ',
+    url: 'https://www.youtube.com/@thaisalafi',
+  },
+  {
+    id: 'curated-sufumothman-yt',
+    kind: 'youtube',
+    title: 'ซุฟอัม อุษมาน | Suf-um Othman (YouTube)',
+    description: 'ช่องสอนศาสนา ตัฟซีรอัลกุรอานทีละสูเราะฮ์ อะกีดะฮ์ และคุฏบะฮ์ประจำสัปดาห์โดย อ.ซุฟอัม อุษมาน',
+    url: 'https://www.youtube.com/@sufumothman',
+  },
+  {
+    id: 'curated-alyaqeen-yt',
+    kind: 'youtube',
+    title: 'ALYAQEEN CHANNEL (YouTube)',
+    description: 'รวมคลิปบรรยายธรรมและหลักสูตรการเรียนรู้ซุนนะฮ์ โดย อ.ยูซุฟ พงกาวี, อ.มุสตอฟา อยู่เป็นสุข และคณาจารย์สายซุนนะฮ์',
+    url: 'https://www.youtube.com/@ALYAQEENCHANNEL',
+  },
+  {
+    id: 'curated-manarah-yt',
+    kind: 'youtube',
+    title: 'Manarah Channel (YouTube)',
+    description: 'ศูนย์รวมไลฟ์สดและคลิปสอนตำราอะกีดะฮ์และหะดีษ (เช่น อะกีดะฮ์อิบนุ ดะกีก, 40 หะดีษอันนะวะวีย์) โดย อ.ซอบรี นภากร และคณาจารย์สายซุนนะฮ์',
+    url: 'https://www.youtube.com/@manarah',
+  },
+  {
+    id: 'curated-arifsalafi-yt',
+    kind: 'youtube',
+    title: 'Arif Salafi (YouTube)',
+    description: 'ช่องบรรยายหลักศรัทธา แนวทางสะลัฟ และการชี้แจงประเด็นศาสนาภาษาไทย',
+    url: 'https://www.youtube.com/@ArifSalafi',
+  },
+  {
+    id: 'curated-whitechannel-yt',
+    kind: 'youtube',
+    title: 'White Channel (YouTube)',
+    description: 'ช่องยูทูปทางการของไวท์แชนแนล นำเสนอรายการตอบปัญหาศาสนาและการบรรยายตามแนวทางอัลกุรอานและซุนนะฮ์',
+    url: 'https://www.youtube.com/@whitechannel24hr',
+  },
+  {
+    id: 'curated-yateemtv-yt',
+    kind: 'youtube',
+    title: 'Yateem TV (YouTube)',
+    description: 'ช่องยูทูปทางการของยาตีมทีวี รวมคลิปบรรยายศาสนา ตัฟซีร หะดีษ และตอบคำถามศาสนาจากคณาจารย์สายซุนนะฮ์ในไทย',
+    url: 'https://www.youtube.com/@YateemTV1433',
+  },
+  {
+    id: 'curated-yateemtv',
+    kind: 'website',
+    title: 'Yateem TV (เว็บไซต์)',
+    description: 'สถานีโทรทัศน์และสื่อบรรยายศาสนาของคณาจารย์สายซุนนะฮ์ในไทย รวบรวมคลิปสอนศาสนา ตัฟซีร หะดีษ และตอบคำถามศาสนา',
+    url: 'https://yateem.tv',
+  },
+  {
     id: 'curated-troid',
     kind: 'website',
     title: 'TROID (The Reign of Islamic Daʿwah)',
@@ -325,103 +381,6 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     title: 'AbuKhadeejah.com (Salafi Publications)',
     description: 'คลังบทความ เอกสารแจกฟรี และหนังสือ PDF แนวทางสะละฟีภาษาอังกฤษ เหมาะสำหรับศึกษาค้นคว้าและนำมาแปลเผยแผ่เป็นภาษาไทย',
     url: 'https://abukhadeejah.com',
-  },
-  {
-    id: 'curated-yateemtv',
-    kind: 'youtube',
-    title: 'Yateem TV (ยาตีม ทีวี)',
-    description: 'สถานีโทรทัศน์และสื่อบรรยายศาสนาของคณาจารย์สายซุนนะฮ์ในไทย รวบรวมคลิปสอนศาสนา ตัฟซีร หะดีษ และตอบคำถามศาสนา',
-    url: 'https://yateem.tv',
-  },
-
-  // ===== เว็บไซต์ทางการของบรรดาอุละมาอ์สะละฟี (ภาษาอาหรับ) =====
-  {
-    id: 'curated-binbaz',
-    kind: 'website',
-    title: 'เว็บไซต์ทางการ ชัยค์ อับดุลอะซีซ บิน บาซ (BinBaz.org.sa)',
-    description: 'คลังฟัตวา ตำราวิชาการ และบทเรียนเสียงต้นฉบับภาษาอาหรับของอิหม่ามอับดุลอะซีซ บิน อับดิลลาฮ์ บิน บาซ (เราะฮิมะฮุลลอฮ์)',
-    url: 'https://binbaz.org.sa',
-  },
-  {
-    id: 'curated-binothaimeen',
-    kind: 'website',
-    title: 'เว็บไซต์ทางการ ชัยค์ มุฮัมมัด บิน ศอลิห์ อัล-อุษัยมีน (BinOthaimeen.net)',
-    description: 'คลังตำราชัรห์ ฟัตวานูรอะลัดดัรบ์ และชุดหนังสือครบชุดของชัยค์มุฮัมมัด บิน ศอลิห์ อัล-อุษัยมีน (เราะฮิมะฮุลลอฮ์) ฉบับภาษาอาหรับ',
-    url: 'https://binothaimeen.net',
-  },
-  {
-    id: 'curated-alfawzan',
-    kind: 'website',
-    title: 'เว็บไซต์ทางการ ชัยค์ ศอลิห์ อัล-เฟาซาน (AlFawzan.af.org.sa)',
-    description: 'แหล่งรวมบทเรียนชัรห์ตำราอะกีดะฮ์ ฟิกฮ์ และคำวินิจฉัยฟัตวาอย่างเป็นทางการของชัยค์ ดร.ศอลิห์ บิน เฟาซาน อัล-เฟาซาน',
-    url: 'https://alfawzan.af.org.sa',
-  },
-  {
-    id: 'curated-alalbani',
-    kind: 'website',
-    title: 'เว็บไซต์ผลงาน ชัยค์ มุฮัมมัด นาศิรุดดีน อัล-อัลบานี (Al-Albany.com)',
-    description: 'คลังรวบรวมตำราและบันทึกเสียงวิชาการด้านการตรวจสอบสายรายงานหะดีษ (ตัคญ์รีจญ์) และฟิกฮ์ของอิหม่ามอัล-อัลบานี (เราะฮิมะฮุลลอฮ์)',
-    url: 'https://al-albany.com',
-  },
-
-  // ===== ห้องสมุดและสารานุกรมอิสลามอ้างอิงสากล =====
-  {
-    id: 'curated-waqfeya',
-    kind: 'library',
-    title: 'Al-Waqfeya (المكتبة الوقفية — คลัง PDF ตำราอิสลาม)',
-    description: 'ห้องสมุดดิจิทัลภาษาอาหรับที่รวบรวมไฟล์ PDF ตำราอิสลามคลาสสิกและงานวิชาการสะละฟีสแกนฉบับพิมพ์หลายหมื่นเล่มให้ดาวน์โหลดฟรี',
-    url: 'https://waqfeya.net',
-  },
-  {
-    id: 'curated-dorar',
-    kind: 'library',
-    title: 'Ad-Dorar Al-Saniyyah (الدرر السنية — สารานุกรมหะดีษและอะกีดะฮ์)',
-    description: 'สารานุกรมวิชาการอิสลามภาษาอาหรับสำหรับตรวจสอบระดับความถูกต้องของหะดีษ (الموسوعة الحديثية) ตัฟซีร อะกีดะฮ์ และฟิกฮ์ตามแนวทางสะละฟี',
-    url: 'https://dorar.net',
-  },
-  {
-    id: 'curated-sunnah-com',
-    kind: 'library',
-    title: 'Sunnah.com (คลังตำราหะดีษ อาหรับ-อังกฤษ)',
-    description: 'คลังรวบรวมตำราหะดีษหลักครบชุด (ศอฮีฮ์อัลบุคอรี มุสลิม สุนันทั้ง 4 ฯลฯ) พร้อมระบบค้นหาและเทียบตัวบทอาหรับ-อังกฤษ',
-    url: 'https://sunnah.com',
-  },
-
-  // ===== เครือข่ายดะอ์วะฮ์และสื่อวิชาการสะละฟีสากล (ภาษาอังกฤษ) =====
-  {
-    id: 'curated-salafisounds',
-    kind: 'website',
-    title: 'SalafiSounds (คลังเสียงบรรยายและสอนตำราสะละฟี)',
-    description: 'คลังไฟล์เสียงบรรยาย ชัรห์ตำราอะกีดะฮ์ เตาฮีด และบทเรียนวิชาการภาษาอังกฤษจากครูและนักศึกษาศาสนาสายสะละฟี',
-    url: 'https://salafisounds.com',
-  },
-  {
-    id: 'curated-salaf-com',
-    kind: 'website',
-    title: 'Salaf.com (บทความและตำราแปลแนวทางสะละฟี)',
-    description: 'เว็บไซต์รวบรวมบทความแปลและเอกสารชี้แจงหลักอะกีดะฮ์ มันฮัจญ์ และคำสอนของอุละมาอ์สะละฟีเป็นภาษาอังกฤษ',
-    url: 'https://salaf.com',
-  },
-  {
-    id: 'curated-mpubs',
-    kind: 'website',
-    title: 'Mpubs — Muwahhideen Publications',
-    description: 'เครือข่ายดะอ์วะฮ์และสื่อวิชาการสะละฟีสากล รวบรวมการถ่ายทอดสดและคำแปลบทเรียนจากบรรดาอุละมาอ์ใหญ่สายสะละฟี',
-    url: 'https://mpubs.org',
-  },
-  {
-    id: 'curated-learnaboutislam',
-    kind: 'website',
-    title: 'LearnAboutIslam (บทเรียนความรู้พื้นฐานสะละฟี)',
-    description: 'คลังบทเรียนเสียง บทความ และเอกสาร PDF ความรู้อิสลามพื้นฐานตามแนวทางอัลกุรอานและซุนนะฮ์ เหมาะสำหรับศึกษาและแปลเผยแผ่',
-    url: 'https://learnaboutislam.co.uk',
-  },
-  {
-    id: 'curated-abuiyaad',
-    kind: 'website',
-    title: 'AbuIyaad.com (บทความวิชาการอะกีดะฮ์และมันฮัจญ์)',
-    description: 'คลังบทความวิชาการและเอกสาร PDF ชี้แจงหลักอะกีดะฮ์ เตาฮีด และแนวทางสะละฟุศศอลิห์ โดยชัยค์อะบูอิยาฎ อัมญัด รอฟีก',
-    url: 'https://abuiyaad.com',
   },
 ];
 
