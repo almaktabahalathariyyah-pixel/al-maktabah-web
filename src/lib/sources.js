@@ -27,7 +27,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 8;
+const CURATED_VERSION = 9;
 
 const MUNADIYA_DESC =
   'ห้องเรียนและแพลตฟอร์มการเรียนรู้อิสลามออนไลน์ตามแนวทางสะละฟุศศอลิห์ รวบรวมสื่อการสอน บทความ เอกสารวิชาการ และ E-Book แปลจากตำราปราชญ์สายสะละฟี ครอบคลุมอะกีดะฮ์ มันฮัจญ์ ฟิกฮ์ ตัฟซีร และตัรบียะฮ์';
@@ -437,6 +437,27 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     title: 'Abbas Mtp (Facebook)',
     description: 'เพจแบ่งปันบทความ คำสอนของบรรดาอุละมาอ์ และข้อคิดตามแนวทางสะละฟุศศอลิห์',
     url: 'https://www.facebook.com/Abbas.M.salafi',
+  },
+  {
+    id: 'curated-ruknulkitab-fb',
+    kind: 'facebook',
+    title: 'มุมหนังสือ ركن الكتاب (Facebook)',
+    description: 'เผยแพร่ความรู้ บทความ และหนังสือตามแนวทางสะละฟีย์',
+    url: 'https://www.facebook.com/furhan621411005',
+  },
+  {
+    id: 'curated-madrasahalwabil-fb',
+    kind: 'facebook',
+    title: 'Madrasah Al-wabil — مدرسة الوابل (Facebook)',
+    description: 'ช่องมัดเราะซะฮ์ อัลวาบิล เพื่อการศึกษาความรู้ศาสนาออนไลน์ บทความ ฟัตวาสำหรับสตรี หะดีษ คลิปสั้นอุละมาอ์ เรียนหนังสือออนไลน์ และ E-Book อัลวาบิล',
+    url: 'https://www.facebook.com/madrasahalwabil',
+  },
+  {
+    id: 'curated-ibnuyusuf-ig',
+    kind: 'instagram',
+    title: 'Ibnu Yusuf (Instagram)',
+    description: 'ช่องทางเผยแพร่ E-Book แปลจากโครงการสืบสานงานอุละมาอ์และบทความความรู้ศาสนาภาษาไทย',
+    url: 'https://www.instagram.com/_ibnuyusuf/',
   },
   {
     id: 'curated-alhaneefeeyah-yt',
