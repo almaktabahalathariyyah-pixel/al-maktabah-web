@@ -57,3 +57,8 @@ scripts/.telegram-*
 telegram-new-pdfs/
 *firebase-adminsdk*.json
 __pycache__/
+
+# Local public-book downloads and inspection artifacts
+/output/pdf/
+/tmp/pdfs/
+/scripts/book-download/
