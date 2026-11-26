@@ -26,7 +26,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 2;
+const CURATED_VERSION = 3;
 
 /**
  * Verified Thai Salafi / Ahlus-Sunnah Islamic book repositories, encyclopedias,
@@ -245,6 +245,13 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
   },
 
   // ===== สื่อวิดีโอ บรรยาย และแหล่งต้นฉบับสะละฟีสากลสำหรับงานแปล =====
+  {
+    id: 'curated-talib-club-web',
+    kind: 'website',
+    title: 'Talib Club (เว็บไซต์)',
+    description: 'แพลตฟอร์มและคลังความรู้การศึกษาอิสลามเชิงวิชาการ หนังสือ บทความ และสื่อดะอ์วะฮ์ตามแนวทางสะละฟี',
+    url: 'https://talibclub.org',
+  },
   {
     id: 'curated-talib-club',
     kind: 'youtube',
