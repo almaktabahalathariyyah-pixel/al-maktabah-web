@@ -27,7 +27,7 @@ export function kindOf(key) {
   return SOURCE_KINDS.find((k) => k.key === key) || OTHER_KIND;
 }
 
-const CURATED_VERSION = 12;
+const CURATED_VERSION = 13;
 
 const MUNADIYA_DESC =
   'ห้องเรียนและแพลตฟอร์มการเรียนรู้อิสลามออนไลน์ตามแนวทางสะละฟุศศอลิห์ รวบรวมสื่อการสอน บทความ เอกสารวิชาการ และ E-Book แปลจากตำราปราชญ์สายสะละฟี ครอบคลุมอะกีดะฮ์ มันฮัจญ์ ฟิกฮ์ ตัฟซีร และตัรบียะฮ์';
@@ -493,6 +493,13 @@ export const RECOMMENDED_THAI_SALAFI_SOURCES = [
     title: 'Pinion Moon (Facebook)',
     description: 'สำนักพิมพ์และผู้เผยแพร่สื่อหนังสืออิสลามร่วมสมัย ครอบคลุมศาสนา วิทยาศาสตร์ สังคมวิทยา ประวัติศาสตร์ ปรัชญา และการตอบโต้กระแสโลกวิสัย',
     url: 'https://www.facebook.com/profile.php?id=100075962754486',
+  },
+  {
+    id: 'curated-islamicadvisingcenter-fb',
+    kind: 'facebook',
+    title: 'ศูนย์แนะนำรู้จักอิสลาม — Islamic Advising Center (Facebook)',
+    description: 'ศูนย์ดะอ์วะฮ์อิสลามแห่งประเทศไทย (مركز الدعوة الإسلامية - دولة تايلاند) ถ่ายทอดหลักการอิสลามที่ถูกต้องแก่มุสลิมและผู้สนใจอิสลาม',
+    url: 'https://www.facebook.com/IslamicAdvisingCenter',
   },
   {
     id: 'curated-alhaneefeeyah-yt',
