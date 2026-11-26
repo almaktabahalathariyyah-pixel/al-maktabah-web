@@ -154,6 +154,7 @@ export default function AdminPage() {
   const [yearFilter, setYearFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState(''); // 'all', 'public', 'restricted'
   const [ownerFilter, setOwnerFilter] = useState('');
+  const [missingFilter, setMissingFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [sortOrder, setSortOrder] = useState('desc'); // 'desc' = Newest first, 'asc' = Oldest first
   const [currentPage, setCurrentPage] = useState(() => {
@@ -851,7 +852,26 @@ export default function AdminPage() {
       : healthFilter === 'unmirrored' ? book.driveUrl && !book.telegramFileId && canMirror(bookSizeBytes(book))
       : true;
 
-    return matchesSearchQuery && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus && matchesOwner && matchesHealth;
+    const noAuthor = asList(book.author).length === 0;
+    const noTranslator = asList(book.translator).length === 0;
+    const noPublisher = !String(book.publisher || '').trim();
+    const noYear = !String(book.year || '').trim();
+    const noPages = !Number(book.pages);
+    const noCover = !String(book.coverUrl || '').trim();
+    const matchesMissing =
+      !missingFilter ? true
+      : missingFilter === 'no-author' ? noAuthor
+      : missingFilter === 'no-translator' ? noTranslator
+      : missingFilter === 'no-publisher' ? noPublisher
+      : missingFilter === 'no-year' ? noYear
+      : missingFilter === 'no-pages' ? noPages
+      : missingFilter === 'no-cover' ? noCover
+      : missingFilter === 'no-author-publisher' ? (noAuthor && noPublisher)
+      : missingFilter === 'no-meta' ? (noAuthor && noTranslator && noPublisher && noYear)
+      : missingFilter === 'any-missing' ? (noAuthor || noPublisher || noPages || noCover)
+      : true;
+
+    return matchesSearchQuery && matchesCat && matchesAuthor && matchesTranslator && matchesPublisher && matchesLanguage && matchesType && matchesYear && matchesStatus && matchesOwner && matchesHealth && matchesMissing;
   });
 
   // Sort the filtered books based on sortOrder (books array is already 'desc' by default)
@@ -1004,7 +1024,7 @@ export default function AdminPage() {
               onClick={() => setShowFilters(!showFilters)}
               title="ตัวกรอง"
             >
-              <Filter size={18} /> <span className={styles.hideMobile}>ตัวกรอง {(categoryFilter || statusFilter || sortOrder !== 'desc') && '•'}</span>
+              <Filter size={18} /> <span className={styles.hideMobile}>ตัวกรอง {(categoryFilter || statusFilter || missingFilter || ownerFilter || sortOrder !== 'desc') && '•'}</span>
             </button>
           </div>
           
@@ -1232,11 +1252,47 @@ export default function AdminPage() {
               />
             </div>
 
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label style={{ fontSize: '0.8rem', color: 'var(--fg-2)', fontWeight: 600 }}>ข้อมูลที่ขาด</label>
+              <Select instanceId={"select-11"} styles={selectStyles}
+                options={[
+                  { value: '', label: 'ทั้งหมด' },
+                  { value: 'no-meta', label: 'ไม่มีข้อมูลเลย (ไม่มีผู้แต่ง+ผู้แปล+สนพ.+ปี)' },
+                  { value: 'no-author-publisher', label: 'ไม่มีทั้งผู้แต่งและสำนักพิมพ์' },
+                  { value: 'no-author', label: 'ไม่มีชื่อผู้แต่ง' },
+                  { value: 'no-translator', label: 'ไม่มีชื่อผู้แปล' },
+                  { value: 'no-publisher', label: 'ไม่มีสำนักพิมพ์' },
+                  { value: 'no-year', label: 'ไม่มีปีพิมพ์' },
+                  { value: 'no-pages', label: 'ไม่มีจำนวนหน้า' },
+                  { value: 'no-cover', label: 'ไม่มีรูปหน้าปก' },
+                  { value: 'any-missing', label: 'ขาดข้อมูลหลัก (ผู้แต่ง/สนพ./ปก/หน้า)' },
+                ]}
+                value={{
+                  value: missingFilter,
+                  label:
+                    missingFilter === 'no-meta' ? 'ไม่มีข้อมูลเลย (ไม่มีผู้แต่ง+ผู้แปล+สนพ.+ปี)'
+                    : missingFilter === 'no-author-publisher' ? 'ไม่มีทั้งผู้แต่งและสำนักพิมพ์'
+                    : missingFilter === 'no-author' ? 'ไม่มีชื่อผู้แต่ง'
+                    : missingFilter === 'no-translator' ? 'ไม่มีชื่อผู้แปล'
+                    : missingFilter === 'no-publisher' ? 'ไม่มีสำนักพิมพ์'
+                    : missingFilter === 'no-year' ? 'ไม่มีปีพิมพ์'
+                    : missingFilter === 'no-pages' ? 'ไม่มีจำนวนหน้า'
+                    : missingFilter === 'no-cover' ? 'ไม่มีรูปหน้าปก'
+                    : missingFilter === 'any-missing' ? 'ขาดข้อมูลหลัก (ผู้แต่ง/สนพ./ปก/หน้า)'
+                    : 'ทั้งหมด',
+                }}
+                onChange={(selected) => updateFilter(setMissingFilter, selected ? selected.value : '')}
+                placeholder="ทั้งหมด"
+                isSearchable={false}
+                classNamePrefix="react-select"
+              />
+            </div>
+
             <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
               <button className="btn" onClick={() => {
                 setCategoryFilter(''); setAuthorFilter(''); setTranslatorFilter('');
                 setPublisherFilter(''); setTypeFilter(''); setLanguageFilter('');
-                setYearFilter(''); setStatusFilter(''); setOwnerFilter(''); setSearchQuery('');
+                setYearFilter(''); setStatusFilter(''); setOwnerFilter(''); setMissingFilter(''); setSearchQuery('');
                 setSortOrder('desc');
                 setCurrentPage(1);
               }}>ล้างตัวกรองทั้งหมด</button>
