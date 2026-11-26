@@ -1,55 +1,75 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Download, FileText, Search, X, ExternalLink } from 'lucide-react';
-import { PAMPHLETS, PAMPHLET_CATEGORIES } from '@/lib/pamphlets';
+import { PAMPHLETS, PAMPHLET_CATEGORIES, PAMPHLET_BUNDLES } from '@/lib/pamphlets';
 import styles from './page.module.css';
 
 export default function PamphletsPage() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
+  const [collection, setCollection] = useState('');
+
+  const collections = useMemo(() => {
+    const counts = new Map();
+    for (const p of PAMPHLETS) {
+      if (!p.collection) continue;
+      counts.set(p.collection, (counts.get(p.collection) || 0) + 1);
+    }
+    return Array.from(counts, ([name, count]) => ({ name, count }));
+  }, []);
 
   const needle = query.trim().toLowerCase();
   const shown = PAMPHLETS.filter((p) => {
     if (category && p.category !== category) return false;
+    if (collection && p.collection !== collection) return false;
     if (!needle) return true;
-    return `${p.num} ${p.titleTh} ${p.titleEn} ${p.author}`.toLowerCase().includes(needle);
+    return `${p.num} ${p.titleTh} ${p.titleEn || ''} ${p.author || ''} ${p.collection || ''}`
+      .toLowerCase()
+      .includes(needle);
   });
 
-  const filtering = Boolean(needle || category);
+  const filtering = Boolean(needle || category || collection);
 
   return (
     <div className="container">
       <header className={`${styles.header} rise`}>
-        <p className="eyebrow">TROID Digital Daʿwah · ไฟล์ PDF ภาษาไทย</p>
+        <p className="eyebrow">คลังแผ่นพับดะอ์วะฮ์ · ไฟล์ PDF พร้อมพิมพ์</p>
         <h1 className={styles.title}>
-          แผ่นพับดะอ์วะฮ์ <em>PDF พร้อมพิมพ์</em> ครบ 25 เรื่อง
+          แผ่นพับดะอ์วะฮ์ <em>PDF พร้อมพิมพ์</em>
         </h1>
         <p className="lede">
-          แปลฉบับสมบูรณ์จากคลังแผ่นพับของ TROID และ Salafi Publications
-          จัดหน้าเป็นไฟล์ <strong>PDF 3 คอลัมน์ หน้า-หลัง (A4 แนวนอน)</strong> บนกราฟิกต้นฉบับ
-          สามารถเปิดอ่าน ดาวน์โหลด และสั่งพิมพ์ 2 หน้าพับแจกจ่ายได้ทันที
+          รวบรวมแผ่นพับความรู้ศาสนาอิสลามฉบับภาษาไทย จัดหน้าเป็นไฟล์{' '}
+          <strong>PDF พร้อมพิมพ์ 3 คอลัมน์ หน้า-หลัง (A4 แนวนอน)</strong>{' '}
+          สามารถเปิดอ่าน ดาวน์โหลด และสั่งพิมพ์พับแจกจ่ายได้ทันที (ปัจจุบันมี{' '}
+          {PAMPHLETS.length.toLocaleString('th-TH')} เรื่อง)
         </p>
 
-        <div className={styles.heroActions}>
-          <a
-            href="/pamphlets/pdf/all-trifolds-print.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-solid"
-          >
-            <FileText size={16} aria-hidden />
-            เปิดไฟล์รวม PDF (ครบ 25 เรื่อง / 50 หน้า)
-          </a>
-          <a
-            href="/pamphlets/pdf/all-trifolds-print.pdf"
-            download="TROID-Pamphlets-TH-All-25.pdf"
-            className="btn"
-          >
-            <Download size={16} aria-hidden />
-            ดาวน์โหลดฉบับรวม PDF
-          </a>
-        </div>
+        {PAMPHLET_BUNDLES.length > 0 && (
+          <div className={styles.heroActions}>
+            {PAMPHLET_BUNDLES.map((bundle) => (
+              <div key={bundle.id} style={{ display: 'flex', gap: '0.55rem', flexWrap: 'wrap' }}>
+                <a
+                  href={bundle.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-solid"
+                >
+                  <FileText size={16} aria-hidden />
+                  {bundle.label}
+                </a>
+                <a
+                  href={bundle.pdfUrl}
+                  download={bundle.downloadName}
+                  className="btn"
+                >
+                  <Download size={16} aria-hidden />
+                  ดาวน์โหลดชุดรวม PDF
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
       </header>
 
       <div className={styles.searchWrap}>
@@ -58,7 +78,7 @@ export default function PamphletsPage() {
           type="text"
           className={styles.search}
           value={query}
-          placeholder="ค้นหาชื่อเรื่องภาษาไทย, ภาษาอังกฤษ หรือชื่อผู้เขียน…"
+          placeholder="ค้นหาชื่อเรื่องภาษาไทย, ภาษาอังกฤษ, ผู้เขียน หรือชุดแผ่นพับ…"
           onChange={(e) => setQuery(e.target.value)}
           aria-label="ค้นหาแผ่นพับ"
         />
@@ -82,6 +102,7 @@ export default function PamphletsPage() {
         </button>
         {PAMPHLET_CATEGORIES.map((cat) => {
           const count = PAMPHLETS.filter((p) => p.category === cat.key).length;
+          if (count === 0) return null;
           return (
             <button
               key={cat.key}
@@ -93,6 +114,26 @@ export default function PamphletsPage() {
           );
         })}
       </div>
+
+      {collections.length > 1 && (
+        <div className={styles.chips} role="group" aria-label="กรองตามชุดแผ่นพับ">
+          <button
+            className={`chip ${!collection ? 'chip-on' : ''}`}
+            onClick={() => setCollection('')}
+          >
+            ทุกชุด
+          </button>
+          {collections.map((col) => (
+            <button
+              key={col.name}
+              className={`chip ${collection === col.name ? 'chip-on' : ''}`}
+              onClick={() => setCollection(collection === col.name ? '' : col.name)}
+            >
+              {col.name} <span className={styles.chipCount}>{col.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {filtering && (
         <p className={styles.resultNote}>
@@ -106,15 +147,15 @@ export default function PamphletsPage() {
           <p className={styles.emptyBody}>ลองเปลี่ยนคำค้น หรือเลือกดูหมวดหมู่อื่น</p>
           <button
             className="btn btn-solid"
-            onClick={() => { setQuery(''); setCategory(''); }}
+            onClick={() => { setQuery(''); setCategory(''); setCollection(''); }}
           >
-            ดูทั้งหมด 25 เรื่อง
+            ดูทั้งหมด ({PAMPHLETS.length} เรื่อง)
           </button>
         </div>
       ) : (
         <section className={`${styles.grid} stagger`}>
           {shown.map((item) => (
-            <article key={item.num} className={styles.card}>
+            <article key={item.slug} className={styles.card}>
               <a
                 href={item.pdfUrl}
                 target="_blank"
@@ -128,7 +169,9 @@ export default function PamphletsPage() {
                   className={styles.coverImg}
                   loading="lazy"
                 />
-                <span className={styles.coverBadge}>PDF · แผ่นพับที่ {item.num}</span>
+                <span className={styles.coverBadge}>
+                  PDF{item.num ? ` · #${item.num}` : ''}
+                </span>
               </a>
 
               <div className={styles.cardBody}>
@@ -137,8 +180,12 @@ export default function PamphletsPage() {
                     {item.titleTh}
                   </a>
                 </h2>
-                <p className={styles.cardEn}>{item.titleEn}</p>
-                <p className={styles.cardAuthor}>โดย: {item.author}</p>
+                {item.titleEn && <p className={styles.cardEn}>{item.titleEn}</p>}
+                <p className={styles.cardAuthor}>
+                  {item.author ? `โดย: ${item.author}` : ''}
+                  {item.author && item.collection ? ' · ' : ''}
+                  {item.collection || ''}
+                </p>
 
                 <div className={styles.cardActions}>
                   <a
@@ -158,16 +205,18 @@ export default function PamphletsPage() {
                   >
                     <Download size={14} aria-hidden />
                   </a>
-                  <a
-                    href={item.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.btnSource}
-                    title="ต้นฉบับภาษาอังกฤษที่ troid.org"
-                    aria-label="ต้นฉบับภาษาอังกฤษที่ troid.org"
-                  >
-                    <ExternalLink size={14} aria-hidden />
-                  </a>
+                  {item.sourceUrl && (
+                    <a
+                      href={item.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.btnSource}
+                      title="แหล่งต้นฉบับ"
+                      aria-label="แหล่งต้นฉบับ"
+                    >
+                      <ExternalLink size={14} aria-hidden />
+                    </a>
+                  )}
                 </div>
               </div>
             </article>
