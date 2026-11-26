@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   UserCheck,
   BarChart3,
+  CopyCheck,
   FolderTree,
   Compass,
   Contact,
@@ -25,6 +26,7 @@ import styles from './AdminShell.module.css';
 
 const ADMIN_NAV = [
   { label: 'คลังหนังสือ', href: '/admin', icon: LayoutGrid },
+  { label: 'ตรวจรายการซ้ำ', href: '/admin/duplicates', icon: CopyCheck },
   { label: 'แหล่งหนังสืออื่นๆ', href: '/admin/sources', icon: Compass },
   { label: 'สถิติและสุขภาพคลัง', href: '/admin/stats', icon: BarChart3 },
   { label: 'อนุมัติสมาชิก', href: '/admin/approvals', icon: UserCheck },

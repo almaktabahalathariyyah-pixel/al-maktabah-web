@@ -1,0 +1,227 @@
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 4rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0.25rem 0 0.45rem;
+}
+.sub {
+  color: var(--fg-2);
+  font-size: var(--t-small);
+  max-width: 68ch;
+}
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.tabCount {
+  margin-left: 0.4rem;
+  padding-left: 0.4rem;
+  border-left: 1px solid currentColor;
+  font-size: var(--t-micro);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.searchRow {
+  position: relative;
+  max-width: 420px;
+  margin-bottom: 1.25rem;
+}
+.searchIcon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--fg-3);
+  pointer-events: none;
+}
+.searchInput {
+  padding-left: 2.3rem !important;
+}
+
+.empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--fg-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.groupList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.groupCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 1.1rem 1.25rem;
+}
+.groupHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+.groupTitle {
+  font-family: var(--display);
+  font-size: 1rem;
+  color: var(--fg);
+}
+.reasonRow {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+.reasonPill {
+  font-size: 0.74rem;
+  padding: 0.14rem 0.55rem;
+  border-radius: var(--r-pill);
+  background: var(--hot-dim);
+  color: var(--hot);
+  font-weight: 600;
+}
+
+.bookItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.bookRow {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.miniCover {
+  width: 48px;
+  flex: none;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.bookInfo {
+  flex: 1;
+  min-width: 0;
+}
+.bookName {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.bestTag {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--r-pill);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 700;
+}
+.bookMeta {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--fg-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+}
+.bookActions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.btnDanger {
+  color: var(--hot);
+  border-color: rgba(255, 131, 96, 0.35);
+}
+.btnDanger:hover {
+  background: var(--hot-dim);
+}
+
+/* Name variant merging */
+.nameGroupHead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.variantList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.variantChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.75rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 0.86rem;
+}
+.variantChip:hover {
+  border-color: var(--accent);
+}
+.variantChosen {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.variantCount {
+  font-size: 0.74rem;
+  opacity: 0.75;
+  padding-left: 0.4rem;
+  border-left: 1px solid currentColor;
+}
+.mergeControls {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.targetInput {
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+}
