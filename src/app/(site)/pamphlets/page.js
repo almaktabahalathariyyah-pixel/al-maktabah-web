@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Printer, BookOpen, Search, X, ExternalLink, FileText } from 'lucide-react';
+import { Download, FileText, Search, X, ExternalLink } from 'lucide-react';
 import { PAMPHLETS, PAMPHLET_CATEGORIES } from '@/lib/pamphlets';
 import styles from './page.module.css';
 
@@ -21,30 +21,33 @@ export default function PamphletsPage() {
   return (
     <div className="container">
       <header className={`${styles.header} rise`}>
-        <p className="eyebrow">TROID Digital Daʿwah · ฉบับภาษาไทย</p>
+        <p className="eyebrow">TROID Digital Daʿwah · ไฟล์ PDF ภาษาไทย</p>
         <h1 className={styles.title}>
-          แผ่นพับดะอ์วะฮ์<em>พร้อมพิมพ์</em>ครบ 25 เรื่อง
+          แผ่นพับดะอ์วะฮ์ <em>PDF พร้อมพิมพ์</em> ครบ 25 เรื่อง
         </h1>
         <p className="lede">
           แปลฉบับสมบูรณ์จากคลังแผ่นพับของ TROID และ Salafi Publications
-          จัดวางบนกราฟิกต้นฉบับในรูปแบบ <strong>Desktop Trifold 3 คอลัมน์ หน้า-หลัง (A4 แนวนอน)</strong>{' '}
-          สำหรับพิมพ์ 2 หน้าแล้วพับแจกจ่ายได้ทันที
+          จัดหน้าเป็นไฟล์ <strong>PDF 3 คอลัมน์ หน้า-หลัง (A4 แนวนอน)</strong> บนกราฟิกต้นฉบับ
+          สามารถเปิดอ่าน ดาวน์โหลด และสั่งพิมพ์ 2 หน้าพับแจกจ่ายได้ทันที
         </p>
 
         <div className={styles.heroActions}>
           <a
-            href="/pamphlets/all-trifolds-print.html"
+            href="/pamphlets/pdf/all-trifolds-print.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn btn-solid"
           >
-            <Printer size={16} aria-hidden />
-            เปิดฉบับรวมพิมพ์ 3 คอลัมน์ (ครบ 25 เรื่อง / 50 หน้า)
+            <FileText size={16} aria-hidden />
+            เปิดไฟล์รวม PDF (ครบ 25 เรื่อง / 50 หน้า)
           </a>
           <a
-            href="/pamphlets/all-pamphlets-print.html"
+            href="/pamphlets/pdf/all-trifolds-print.pdf"
+            download="TROID-Pamphlets-TH-All-25.pdf"
             className="btn"
           >
-            <BookOpen size={16} aria-hidden />
-            ฉบับรวมเล่มอ่านยาว (A4 แนวตั้ง)
+            <Download size={16} aria-hidden />
+            ดาวน์โหลดฉบับรวม PDF
           </a>
         </div>
       </header>
@@ -112,7 +115,12 @@ export default function PamphletsPage() {
         <section className={`${styles.grid} stagger`}>
           {shown.map((item) => (
             <article key={item.num} className={styles.card}>
-              <a href={item.trifoldUrl} className={styles.coverLink}>
+              <a
+                href={item.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.coverLink}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.cover}
@@ -120,27 +128,35 @@ export default function PamphletsPage() {
                   className={styles.coverImg}
                   loading="lazy"
                 />
-                <span className={styles.coverBadge}>แผ่นพับที่ {item.num}</span>
+                <span className={styles.coverBadge}>PDF · แผ่นพับที่ {item.num}</span>
               </a>
 
               <div className={styles.cardBody}>
                 <h2 className={styles.cardTitle}>
-                  <a href={item.trifoldUrl}>{item.titleTh}</a>
+                  <a href={item.pdfUrl} target="_blank" rel="noopener noreferrer">
+                    {item.titleTh}
+                  </a>
                 </h2>
                 <p className={styles.cardEn}>{item.titleEn}</p>
                 <p className={styles.cardAuthor}>โดย: {item.author}</p>
 
                 <div className={styles.cardActions}>
-                  <a href={item.trifoldUrl} className={styles.btnOpen}>
+                  <a
+                    href={item.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.btnOpen}
+                  >
                     <FileText size={14} aria-hidden />
-                    เปิด / พิมพ์ 3 คอลัมน์
+                    เปิดอ่าน PDF
                   </a>
                   <a
-                    href={`/pamphlets/all-trifolds-print.html#trifold-${item.num}`}
+                    href={item.pdfUrl}
+                    download={`${item.slug}.pdf`}
                     className={styles.btnJump}
-                    title="ดูในหน้าฉบับรวม 25 เรื่อง"
+                    title="ดาวน์โหลดไฟล์ PDF"
                   >
-                    ในฉบับรวม
+                    <Download size={14} aria-hidden />
                   </a>
                   <a
                     href={item.sourceUrl}

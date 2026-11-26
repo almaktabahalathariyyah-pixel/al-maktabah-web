@@ -15,7 +15,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'aqeedah',
     cover: '/pamphlets/assets/01-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/01-wearing-charms-amulets-talismans.html',
+    pdfUrl: '/pamphlets/pdf/01-wearing-charms-amulets-talismans.pdf',
     sourceUrl: 'https://www.troid.org/the-islamic-ruling-on-wearing-charms-talismans-and-amulets-and-visiting-fortune-tellers-soothsayers-and-astrologers/',
   },
   {
@@ -26,7 +26,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'worship',
     cover: '/pamphlets/assets/02-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/02-obligation-of-following-the-sunnah.html',
+    pdfUrl: '/pamphlets/pdf/02-obligation-of-following-the-sunnah.pdf',
     sourceUrl: 'https://www.troid.org/the-obligation-of-following-the-sunnah-of-the-prophet-muhammad/',
   },
   {
@@ -37,7 +37,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'interfaith',
     cover: '/pamphlets/assets/03-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/03-first-commandment-of-the-bible.html',
+    pdfUrl: '/pamphlets/pdf/03-first-commandment-of-the-bible.pdf',
     sourceUrl: 'https://www.troid.org/the-first-commandment-of-the-bible/',
   },
   {
@@ -48,7 +48,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'interfaith',
     cover: '/pamphlets/assets/04-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/04-response-to-the-atheists.html',
+    pdfUrl: '/pamphlets/pdf/04-response-to-the-atheists.pdf',
     sourceUrl: 'https://www.troid.org/a-response-to-the-atheist/',
   },
   {
@@ -59,7 +59,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'worship',
     cover: '/pamphlets/assets/05-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/05-music-and-singing.html',
+    pdfUrl: '/pamphlets/pdf/05-music-and-singing.pdf',
     sourceUrl: 'https://www.troid.org/music-and-singing-in-light-of-the-quran-and-sunnah/',
   },
   {
@@ -70,7 +70,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'worship',
     cover: '/pamphlets/assets/06-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/06-fasting-in-ramadan.html',
+    pdfUrl: '/pamphlets/pdf/06-fasting-in-ramadan.pdf',
     sourceUrl: 'https://www.troid.org/fasting-in-ramadan/',
   },
   {
@@ -81,7 +81,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'society',
     cover: '/pamphlets/assets/07-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/07-racism-oppression-injustice.html',
+    pdfUrl: '/pamphlets/pdf/07-racism-oppression-injustice.pdf',
     sourceUrl: 'https://www.troid.org/racism-oppression-injustice-and-the-teachings-of-islam/',
   },
   {
@@ -92,7 +92,7 @@ export const PAMPHLETS = [
     author: 'TROID / Salafi Publications',
     category: 'extremism',
     cover: '/pamphlets/assets/08-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/08-combatting-violent-extremism.html',
+    pdfUrl: '/pamphlets/pdf/08-combatting-violent-extremism.pdf',
     sourceUrl: 'https://www.troid.org/combatting-21st-century-violent-extremism/',
   },
   {
@@ -103,7 +103,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'aqeedah',
     cover: '/pamphlets/assets/09-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/09-salafism-and-who-are-the-salafis.html',
+    pdfUrl: '/pamphlets/pdf/09-salafism-and-who-are-the-salafis.pdf',
     sourceUrl: 'https://www.troid.org/salafism-and-who-are-the-salafis-in-this-era/',
   },
   {
@@ -114,7 +114,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'aqeedah',
     cover: '/pamphlets/assets/10-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/10-common-doubts-regarding-prophet-muhammad.html',
+    pdfUrl: '/pamphlets/pdf/10-common-doubts-regarding-prophet-muhammad.pdf',
     sourceUrl: 'https://www.troid.org/common-doubts-regarding-the-prophet-muhammad/',
   },
   {
@@ -125,7 +125,7 @@ export const PAMPHLETS = [
     author: 'TROID / Salafi Publications',
     category: 'interfaith',
     cover: '/pamphlets/assets/11-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/11-jesus-son-of-mary.html',
+    pdfUrl: '/pamphlets/pdf/11-jesus-son-of-mary.pdf',
     sourceUrl: 'https://www.troid.org/jesus-the-messiah-son-of-mary-between-christianity-and-islam/',
   },
   {
@@ -136,7 +136,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'society',
     cover: '/pamphlets/assets/12-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/12-women-in-islam.html',
+    pdfUrl: '/pamphlets/pdf/12-women-in-islam.pdf',
     sourceUrl: 'https://www.troid.org/women-in-islam-separating-fact-from-fiction-islaam-ca/',
   },
   {
@@ -147,7 +147,7 @@ export const PAMPHLETS = [
     author: 'TROID / Salafi Publications',
     category: 'worship',
     cover: '/pamphlets/assets/13-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/13-islamic-funeral.html',
+    pdfUrl: '/pamphlets/pdf/13-islamic-funeral.pdf',
     sourceUrl: 'https://www.troid.org/islamic-funeral/',
   },
   {
@@ -158,7 +158,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'extremism',
     cover: '/pamphlets/assets/14-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/14-islam-between-extremism-and-neglect.html',
+    pdfUrl: '/pamphlets/pdf/14-islam-between-extremism-and-neglect.pdf',
     sourceUrl: 'https://www.troid.org/islam-between-extremism-neglect/',
   },
   {
@@ -169,7 +169,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'extremism',
     cover: '/pamphlets/assets/15-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/15-understanding-terrorism.html',
+    pdfUrl: '/pamphlets/pdf/15-understanding-terrorism.pdf',
     sourceUrl: 'https://www.troid.org/understanding-terrorism-a-guide-for-teachers-and-students/',
   },
   {
@@ -180,7 +180,7 @@ export const PAMPHLETS = [
     author: 'อัล-อัลลามะฮ์ ศอลิห์ อิบนุ เฟาซาน อัล-เฟาซาน',
     category: 'extremism',
     cover: '/pamphlets/assets/16-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/16-isis-jihad-in-the-path-of-satan.html',
+    pdfUrl: '/pamphlets/pdf/16-isis-jihad-in-the-path-of-satan.pdf',
     sourceUrl: 'https://www.troid.org/isis-jihad-in-the-path-of-satan/',
   },
   {
@@ -191,7 +191,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'society',
     cover: '/pamphlets/assets/17-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/17-living-alongside-non-muslims.html',
+    pdfUrl: '/pamphlets/pdf/17-living-alongside-non-muslims.pdf',
     sourceUrl: 'https://www.troid.org/living-alongside-non-muslims-in-the-west/',
   },
   {
@@ -202,7 +202,7 @@ export const PAMPHLETS = [
     author: 'TROID / Salafi Publications',
     category: 'aqeedah',
     cover: '/pamphlets/assets/18-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/18-the-prophet-muhammad.html',
+    pdfUrl: '/pamphlets/pdf/18-the-prophet-muhammad.pdf',
     sourceUrl: 'https://www.troid.org/the-prophet-muhammad/',
   },
   {
@@ -213,7 +213,7 @@ export const PAMPHLETS = [
     author: 'TROID / Salafi Publications',
     category: 'aqeedah',
     cover: '/pamphlets/assets/19-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/19-fundamentals-of-tawhid.html',
+    pdfUrl: '/pamphlets/pdf/19-fundamentals-of-tawhid.pdf',
     sourceUrl: 'https://www.troid.org/the-fundamentals-of-tawhid-islamic-monotheism/',
   },
   {
@@ -224,7 +224,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อะบู อิยาฎ',
     category: 'interfaith',
     cover: '/pamphlets/assets/20-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/20-message-to-christians.html',
+    pdfUrl: '/pamphlets/pdf/20-message-to-christians.pdf',
     sourceUrl: 'https://www.troid.org/a-message-to-christians-to-worship-only-one-god/',
   },
   {
@@ -235,7 +235,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ อบู เคาะดีญะฮ์',
     category: 'society',
     cover: '/pamphlets/assets/21-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/21-dress-code-of-the-muslim-woman.html',
+    pdfUrl: '/pamphlets/pdf/21-dress-code-of-the-muslim-woman.pdf',
     sourceUrl: 'https://www.troid.org/the-dress-code-of-the-muslim-woman/',
   },
   {
@@ -246,7 +246,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ หะซัน อัศ-ศูมาลี',
     category: 'society',
     cover: '/pamphlets/assets/22-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/22-community-cohesion.html',
+    pdfUrl: '/pamphlets/pdf/22-community-cohesion.pdf',
     sourceUrl: 'https://www.troid.org/community-cohesion-from-an-islamic-perspective-islaam-ca/',
   },
   {
@@ -257,7 +257,7 @@ export const PAMPHLETS = [
     author: 'TROID / islaam.ca',
     category: 'aqeedah',
     cover: '/pamphlets/assets/23-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/23-seven-fundamental-questions.html',
+    pdfUrl: '/pamphlets/pdf/23-seven-fundamental-questions.pdf',
     sourceUrl: 'https://www.troid.org/seven-fundamental-questions-regarding-islam/',
   },
   {
@@ -268,7 +268,7 @@ export const PAMPHLETS = [
     author: 'ชัยค์ หะซัน อัศ-ศูมาลี',
     category: 'extremism',
     cover: '/pamphlets/assets/24-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/24-uprooting-the-forces-of-evil.html',
+    pdfUrl: '/pamphlets/pdf/24-uprooting-the-forces-of-evil.pdf',
     sourceUrl: 'https://www.troid.org/uprooting-the-forces-of-evil-islam-s-war-on-terror-islaam-ca/',
   },
   {
@@ -279,7 +279,7 @@ export const PAMPHLETS = [
     author: 'TROID / islaam.ca',
     category: 'aqeedah',
     cover: '/pamphlets/assets/25-cover-bg.jpg',
-    trifoldUrl: '/pamphlets/25-common-misconceptions-about-god.html',
+    pdfUrl: '/pamphlets/pdf/25-common-misconceptions-about-god.pdf',
     sourceUrl: 'https://www.troid.org/common-misconceptions-about-god/',
   },
 ];
