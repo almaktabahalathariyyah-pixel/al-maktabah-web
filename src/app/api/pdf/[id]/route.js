@@ -13,11 +13,57 @@ function driveIdFrom(url) {
   return byQuery ? byQuery[1] : null;
 }
 
-function textError(message, status) {
-  return new Response(message, {
-    status,
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-  });
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function errorResponse(message, status, action) {
+  if (action === 'download') {
+    return new Response(message, {
+      status,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+  const showLogin = status === 401 || status === 403;
+  const html = `<!DOCTYPE html>
+<html lang="th"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ไม่สามารถเปิดหนังสือได้</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: grid; place-items: center; min-height: 100vh;
+    background: #141716; color: #eef4f1; padding: 2rem; line-height: 1.75;
+  }
+  .box {
+    max-width: 28rem; width: 100%; text-align: center;
+    background: #1c2220; border: 1px solid #2b3530;
+    border-radius: 18px; padding: 2.25rem 1.75rem;
+  }
+  h1 { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.65rem; }
+  p { color: #b5c4bd; font-size: 0.94rem; }
+  .acts { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.5rem; }
+  a { display: block; text-decoration: none; border-radius: 999px; padding: 0.75rem 1.4rem; font-weight: 600; font-size: 0.9rem; }
+  .primary { background: #3ee6a0; color: #04140d; }
+  .ghost { background: transparent; color: #b5c4bd; border: 1px solid #35423c; }
+</style>
+</head><body>
+  <div class="box">
+    <h1>ไม่สามารถเปิดหนังสือได้</h1>
+    <p>${escapeHtml(message)}</p>
+    <div class="acts">
+      ${showLogin ? '<a class="primary" href="/login" target="_top">เข้าสู่ระบบ / ตรวจสอบบัญชี</a>' : ''}
+      <a class="ghost" href="/" target="_top">กลับหน้าหลัก</a>
+    </div>
+  </div>
+</body></html>`;
+  return htmlPage(html, status);
 }
 
 function htmlPage(html, status = 200) {
@@ -211,7 +257,7 @@ export async function GET(request, { params }) {
     const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
     const reader = await resolveReader(tokenFrom(request));
-    if (reader.error) return textError(reader.error, reader.status);
+    if (reader.error) return errorResponse(reader.error, reader.status, action);
 
     // Fetch the book before deciding on access: a public title only needs a
     // signed-in reader; approval is what unlocks the restricted shelf.
@@ -219,14 +265,14 @@ export async function GET(request, { params }) {
     const docRes = await fetchDocAsUser(projectId, `books/${id}`, tokenFrom(request));
 
     if (!docRes.ok) {
-      if (docRes.status === 404) return textError('ไม่พบหนังสือเล่มนี้', 404);
-      return textError('ฐานข้อมูลขัดข้อง', 500);
+      if (docRes.status === 404) return errorResponse('ไม่พบหนังสือเล่มนี้', 404, action);
+      return errorResponse('ฐานข้อมูลขัดข้อง', 500, action);
     }
 
     const fields = (await docRes.json())?.fields || {};
 
     if (fields.restricted?.booleanValue === true && !reader.isApproved) {
-      return textError('หนังสือเล่มนี้เปิดให้เฉพาะสมาชิกที่ได้รับอนุมัติ', 403);
+      return errorResponse('หนังสือเล่มนี้เปิดให้เฉพาะสมาชิกที่ได้รับอนุมัติ', 403, action);
     }
 
     const telegramFileId = fields.telegramFileId?.stringValue;
@@ -317,6 +363,6 @@ export async function GET(request, { params }) {
     );
   } catch (error) {
     console.error('PDF Proxy Error:', error);
-    return textError('เกิดข้อผิดพลาดภายในระบบ', 500);
+    return errorResponse('เกิดข้อผิดพลาดภายในระบบ', 500, action);
   }
 }

@@ -49,8 +49,8 @@ function readValue(field) {
 export async function resolveReader(token) {
   if (!token) return { error: 'ต้องเข้าสู่ระบบก่อน', status: 401 };
 
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  const projectId = (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '').trim();
+  const apiKey = (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '').trim();
   if (!projectId || !apiKey) {
     return { error: 'เซิร์ฟเวอร์ยังตั้งค่าไม่ครบ', status: 500 };
   }
@@ -76,8 +76,20 @@ export async function resolveReader(token) {
     firestoreDocUrl(projectId, `users/${uid}`),
     { headers: { Authorization: `Bearer ${token}` } }
   );
+
+  // If the signed-in reader's Firestore profile document does not exist yet
+  // (e.g. fresh login race or deleted profile), treat them as a regular
+  // non-approved reader so public books still open while restricted books and
+  // admin routes remain protected.
+  if (userRes.status === 404) {
+    return { uid, isAdmin: false, isApproved: false };
+  }
+
   if (!userRes.ok) {
-    return { error: 'ไม่พบข้อมูลบัญชีผู้ใช้', status: 403 };
+    return {
+      error: `ไม่สามารถตรวจสอบข้อมูลบัญชีผู้ใช้ได้ (HTTP ${userRes.status}) กรุณาออกจากระบบแล้วเข้าสู่ระบบใหม่`,
+      status: 403,
+    };
   }
 
   const fields = (await userRes.json())?.fields || {};
