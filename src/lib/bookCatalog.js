@@ -27,18 +27,66 @@ import { readCatalogRev } from './catalogRev';
  * a browser spends on it and let the two drift apart on the next change to
  * the shape.
  */
-export const CACHE_VERSION = 2;
+export const CACHE_VERSION = 3;
 export const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const cacheKey = (scope) => `al-maktabah:books:${scope}:v${CACHE_VERSION}`;
 
+// In-memory cache avoids re-parsing JSON from localStorage on back-navigation
+// within the same tab session (0ms shelf restore).
+const memoryCache = new Map();
+
+/**
+ * Strips bulky fields that are never needed on the homepage shelf or admin
+ * dropdowns (such as long descriptions or OCR dumps) so 2,000+ books fit
+ * comfortably inside the ~5MB localStorage budget without silently evicting.
+ * Detail pages and the PDF reader always fetch the full document by ID.
+ */
+function slimBook(book) {
+  const {
+    id,
+    title,
+    author,
+    translator,
+    publisher,
+    category,
+    type,
+    language,
+    year,
+    coverUrl,
+    restricted,
+    createdAt,
+    driveUrl,
+    sourceFile,
+    sizeBytes,
+    downloadCount,
+  } = book;
+  const out = { id, title, createdAt };
+  if (author) out.author = author;
+  if (translator) out.translator = translator;
+  if (publisher) out.publisher = publisher;
+  if (category) out.category = category;
+  if (type) out.type = type;
+  if (language) out.language = language;
+  if (year) out.year = year;
+  if (coverUrl) out.coverUrl = coverUrl;
+  if (restricted) out.restricted = true;
+  if (driveUrl) out.driveUrl = driveUrl;
+  if (sourceFile) out.sourceFile = sourceFile;
+  if (sizeBytes) out.sizeBytes = sizeBytes;
+  if (downloadCount) out.downloadCount = downloadCount;
+  return out;
+}
+
 export function readBookCache(scope) {
   if (typeof window === 'undefined') return null;
+  if (memoryCache.has(scope)) return memoryCache.get(scope);
   try {
     const raw = window.localStorage.getItem(cacheKey(scope));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed.books) || typeof parsed.fetchedAt !== 'number') return null;
+    memoryCache.set(scope, parsed);
     return parsed;
   } catch {
     return null;
@@ -47,14 +95,24 @@ export function readBookCache(scope) {
 
 export function writeBookCache(scope, books, rev) {
   if (typeof window === 'undefined') return;
+  const entry = { books: books.map(slimBook), rev, fetchedAt: Date.now() };
+  memoryCache.set(scope, entry);
+  const payload = JSON.stringify(entry);
   try {
-    window.localStorage.setItem(
-      cacheKey(scope),
-      JSON.stringify({ books, rev, fetchedAt: Date.now() })
-    );
+    window.localStorage.setItem(cacheKey(scope), payload);
   } catch {
-    // Quota exceeded or storage disabled (private browsing) — caching is an
-    // optimization, not a requirement, so just skip it.
+    // Quota exceeded: clear older cache versions and the alternate scope, then retry once.
+    try {
+      const otherScope = scope === 'full' ? 'public' : 'full';
+      window.localStorage.removeItem(cacheKey(otherScope));
+      for (let v = 1; v < CACHE_VERSION; v += 1) {
+        window.localStorage.removeItem(`al-maktabah:books:public:v${v}`);
+        window.localStorage.removeItem(`al-maktabah:books:full:v${v}`);
+      }
+      window.localStorage.setItem(cacheKey(scope), payload);
+    } catch {
+      // Storage disabled (private browsing) or still full — memoryCache still serves this tab.
+    }
   }
 }
 

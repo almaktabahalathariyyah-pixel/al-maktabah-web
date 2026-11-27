@@ -1,5 +1,5 @@
 import { resolveReader, tokenFrom, fetchDocAsUser } from '@/lib/serverAuth';
-import { probeDrive, driveDownloadUrl, BLOCK_REASONS } from '@/lib/driveHealth';
+import { driveDownloadUrl, BLOCK_REASONS } from '@/lib/driveHealth';
 import { unavailableHtml } from '@/lib/unavailablePage';
 
 export const runtime = 'edge';
@@ -151,44 +151,53 @@ async function serveFromTelegram({ telegramFileId, title, action }) {
 }
 
 /**
- * Streams the Drive copy through this origin.
- *
- * Redirecting to Drive's /preview page was handing the reader Google's viewer
- * inside our iframe, chrome and all — including its pop-out button, which took
- * them straight out of the library and into Drive. Serving the bytes ourselves
- * means the browser's own PDF viewer renders it: no Drive branding, no way out
- * of the site, and the Drive file id is never exposed to the page.
- *
- * Returns null when Drive does not hand over a file, so the caller can fail
- * over to the mirror exactly as before.
+ * Fetches the Drive copy in a SINGLE round trip (instead of probing first and
+ * fetching again). Streams the PDF bytes immediately when Drive serves the file;
+ * otherwise classifies the block reason so the caller can fail over to Telegram
+ * or show an explanatory page.
  */
-async function serveFromDrive({ driveId, title, action }) {
+async function fetchDriveOrClassify({ driveId, title, action }) {
   try {
-    const res = await fetch(driveDownloadUrl(driveId), { redirect: 'follow' });
-    if (!res.ok) return null;
+    const res = await fetch(driveDownloadUrl(driveId), {
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (res.status === 404) return { ok: false, reason: BLOCK_REASONS.missing };
+    if (res.status === 403) return { ok: false, reason: BLOCK_REASONS.quota };
 
     const type = (res.headers.get('content-type') || '').toLowerCase();
-    // An HTML body here is a Drive interstitial, not a book.
-    if (type.includes('text/html')) return null;
+
+    if (type.includes('text/html')) {
+      const body = await res.text().catch(() => '');
+      if (/quota|too many users|can't view or download|cannot be downloaded/i.test(body)) {
+        return { ok: false, reason: BLOCK_REASONS.quota };
+      }
+      if (/sign in|permission|request access|need access/i.test(body)) {
+        return { ok: false, reason: BLOCK_REASONS.permission };
+      }
+      return { ok: false, reason: BLOCK_REASONS.quota };
+    }
+
+    if (!res.ok) return { ok: false, reason: BLOCK_REASONS.network };
 
     const disposition = action === 'download' ? 'attachment' : 'inline';
     const safeName = encodeURIComponent(`${title}.pdf`);
 
-    return new Response(res.body, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `${disposition}; filename*=UTF-8''${safeName}`,
-        'Cache-Control': 'private, no-store',
-        // The reader's ID token travels in this URL — an <iframe src> and a
-        // window.open() cannot carry an Authorization header, which is why
-        // tokenFrom() accepts ?token= at all. Nothing this document loads may
-        // therefore be allowed to send a Referer, or the token rides along.
-        'Referrer-Policy': 'no-referrer',
-        'X-Maktabah-Source': 'drive',
-      },
-    });
+    return {
+      ok: true,
+      response: new Response(res.body, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `${disposition}; filename*=UTF-8''${safeName}`,
+          'Cache-Control': 'private, no-store',
+          'Referrer-Policy': 'no-referrer',
+          'X-Maktabah-Source': 'drive',
+        },
+      }),
+    };
   } catch {
-    return null;
+    return { ok: false, reason: BLOCK_REASONS.network };
   }
 }
 
@@ -298,19 +307,13 @@ export async function GET(request, { params }) {
       );
     }
 
-    // ---- 2. Google Drive, but only if it will actually serve --------------
+    // ---- 2. Google Drive in a single round trip ----------------------------
     if (driveUrl) {
       const driveId = driveIdFrom(driveUrl);
 
       if (driveId) {
-        const health = await probeDrive(driveId);
-
-        if (health.ok) {
-          // Proxied, not redirected — see serveFromDrive. A redirect is what
-          // put Google's viewer (and its "open in Drive" button) on the page.
-          const served = await serveFromDrive({ driveId, title, action });
-          if (served) return served;
-        }
+        const result = await fetchDriveOrClassify({ driveId, title, action });
+        if (result.ok) return result.response;
 
         // ---- 3. Drive is blocked — fail over to the mirror silently -------
         if (telegramFileId) {
@@ -321,7 +324,7 @@ export async function GET(request, { params }) {
         // ---- 4. Nothing left to try. Explain, do not just fail. -----------
         return htmlPage(
           unavailableHtml({
-            reason: health.reason,
+            reason: result.reason,
             title,
             contact: await loadContact(projectId, apiKey),
             retryUrl,

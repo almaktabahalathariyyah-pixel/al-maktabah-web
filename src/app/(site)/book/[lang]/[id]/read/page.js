@@ -47,8 +47,10 @@ export default function PdfReaderPage({ params }) {
     if (authLoading || !user) return;
     let alive = true;
 
+    // Use cached ID token unless expired (Firebase auto-refreshes when needed)
+    // to avoid an extra Google Auth round-trip on every book open.
     user
-      .getIdToken(true)
+      .getIdToken(false)
       .then((t) => {
         if (alive) setToken(t);
       })

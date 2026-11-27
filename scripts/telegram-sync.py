@@ -43,6 +43,103 @@ DRIVE_FILE_RE = re.compile(
 DRIVE_FOLDER_RE = re.compile(
     r"https?://drive\.google\.com/drive/(?:u/\d+/)?folders/([a-zA-Z0-9_-]{20,})"
 )
+DIRECT_PDF_RE = re.compile(r"https?://[^\s\"'<>]+\.pdf(?:\?[^\s\"'<>]*)?", re.I)
+
+
+def detect_language(text: str) -> str:
+    s = str(text or "")
+    if len(re.findall(r"[\u0e00-\u0e7f]", s)) >= 3:
+        return "ไทย"
+    if len(re.findall(r"[\u0600-\u06ff]", s)) >= 3:
+        return "อาหรับ"
+    return "อังกฤษ"
+
+
+def clean_title(raw: str, fallback: str = "หนังสือใหม่จาก Telegram") -> str:
+    for line in str(raw or "").splitlines():
+        cleaned = re.sub(r"https?://\S+", "", line).strip()
+        if cleaned:
+            base = re.sub(r"\.pdf$", "", cleaned, flags=re.I)
+            base = re.sub(r"[_]+", " ", base)
+            base = re.sub(r"\s+", " ", base).strip()
+            if base:
+                return base[:180]
+    fb = re.sub(r"\.pdf$", "", fallback, flags=re.I).replace("_", " ").strip()
+    return fb[:180] or "หนังสือใหม่จาก Telegram"
+
+
+def auto_add_to_firestore(key_path: str, items: list[dict]) -> int:
+    """Inserts newly discovered Drive/PDF link items into Firestore and bumps catalogRev."""
+    if not items:
+        return 0
+    node_code = r"""
+const fs = require('fs');
+const crypto = require('crypto');
+const keyPath = process.argv[1];
+const items = JSON.parse(fs.readFileSync(0, 'utf8'));
+const sa = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+const b64 = (s) => Buffer.from(s).toString('base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+const now = Math.floor(Date.now()/1000);
+const hdr = b64(JSON.stringify({alg:'RS256',typ:'JWT'}));
+const clm = b64(JSON.stringify({iss:sa.client_email,scope:'https://www.googleapis.com/auth/datastore',aud:sa.token_uri||'https://oauth2.googleapis.com/token',iat:now,exp:now+3600}));
+const sig = crypto.createSign('RSA-SHA256').update(hdr+'.'+clm).sign(sa.private_key,'base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+(async () => {
+  const tr = await fetch(sa.token_uri||'https://oauth2.googleapis.com/token', {
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: new URLSearchParams({grant_type:'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: hdr+'.'+clm+'.'+sig})
+  });
+  const { access_token } = await tr.json();
+  const base = `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents`;
+  const headers = { Authorization: `Bearer ${access_token}`, 'Content-Type': 'application/json' };
+  let added = 0;
+  for (const item of items) {
+    const cr = await fetch(`${base}:commit`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ writes: [{ transform: {
+        document: `projects/${sa.project_id}/databases/(default)/documents/metadata/counters`,
+        fieldTransforms: [{ fieldPath: 'lastBookId', increment: { integerValue: '1' } }]
+      }}]})
+    });
+    const cd = await cr.json();
+    const id = cd?.writeResults?.[0]?.transformResults?.[0]?.integerValue;
+    if (!id) continue;
+    const fields = {
+      title: { stringValue: item.title },
+      language: { stringValue: item.language },
+      driveUrl: { stringValue: item.driveUrl },
+      restricted: { booleanValue: false },
+      downloadCount: { integerValue: '0' },
+      createdAt: { timestampValue: new Date().toISOString() },
+      syncedFromTelegramChat: { stringValue: item.chat || '' },
+    };
+    if (item.sourceFile) fields.sourceFile = { stringValue: item.sourceFile };
+    const wr = await fetch(`${base}:commit`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ writes: [
+        { update: { name: `projects/${sa.project_id}/databases/(default)/documents/books/${id}`, fields } },
+        { transform: {
+          document: `projects/${sa.project_id}/databases/(default)/documents/config/catalog`,
+          fieldTransforms: [
+            { fieldPath: 'rev', increment: { integerValue: '1' } },
+            { fieldPath: 'changedAt', setToServerValue: 'REQUEST_TIME' }
+          ]
+        }}
+      ]})
+    });
+    if (wr.ok) added += 1;
+  }
+  process.stdout.write(String(added));
+})();
+"""
+    res = subprocess.run(
+        ["node", "-e", node_code, key_path],
+        input=json.dumps(items, ensure_ascii=False),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    return int(res.stdout.strip() or "0")
 
 
 def load_env():
@@ -312,6 +409,28 @@ async def run_sync(args):
                             "caption": text[:400],
                         })
 
+                # 2b. Direct HTTPS .pdf URLs (non-Drive)
+                for m in DIRECT_PDF_RE.finditer(text):
+                    pdf_url = m.group(0)
+                    if "drive.google.com" in pdf_url.lower() or "drive.usercontent.google.com" in pdf_url.lower():
+                        continue
+                    uk = norm_key(pdf_url)
+                    if uk in seen_did:
+                        continue
+                    seen_did.add(uk)
+                    fname = pdf_url.rsplit("/", 1)[-1].split("?")[0]
+                    missing_drive.append({
+                        "kind": "direct_pdf_link",
+                        "chat": title,
+                        "chat_id": entity.id,
+                        "msg_id": msg.id,
+                        "date": dt,
+                        "drive_id": "",
+                        "drive_url": pdf_url,
+                        "filename": fname,
+                        "caption": text[:400],
+                    })
+
                 # 3. Direct Telegram PDF attachments
                 if msg.document:
                     mime = (msg.document.mime_type or "").lower()
@@ -366,9 +485,23 @@ async def run_sync(args):
         STATE_FILE.write_text(json.dumps({"chats": chats_state}, ensure_ascii=False, indent=2), encoding="utf-8")
 
         print("\n=== COMBINED SYNC DIFF SUMMARY ===")
-        print(f"Missing Google Drive PDFs (files + folders): {len(missing_drive)}")
-        print(f"Missing Telegram PDFs                      : {len(missing_pdfs)}")
-        print(f"Report saved to                            : {MISSING_FILE}")
+        print(f"Missing Google Drive / Direct PDFs : {len(missing_drive)}")
+        print(f"Missing Telegram PDFs              : {len(missing_pdfs)}")
+        print(f"Report saved to                    : {MISSING_FILE}")
+
+        if args.auto_add and missing_drive:
+            payload = []
+            for item in missing_drive:
+                t = clean_title(item.get("filename") or item.get("caption"), item.get("filename") or "หนังสือใหม่จาก Telegram")
+                payload.append({
+                    "title": t,
+                    "language": detect_language(f"{t} {item.get('filename', '')}"),
+                    "driveUrl": item["drive_url"],
+                    "sourceFile": item.get("filename") or "",
+                    "chat": item.get("chat") or "",
+                })
+            added = auto_add_to_firestore(key_path, payload)
+            print(f"Auto-added to Firestore            : {added} / {len(payload)} books", flush=True)
 
         if args.download and missing_pdfs:
             DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -394,11 +527,26 @@ def main():
     p = argparse.ArgumentParser(description="Sync books from Telegram groups + Drive folders to Al-Maktabah")
     p.add_argument("--scan", action="store_true", help="Full scan of all configured groups")
     p.add_argument("--incremental", action="store_true", help="Only scan messages newer than last_message_id")
+    p.add_argument("--auto-add", action="store_true", help="Automatically insert new Drive/PDF links into Firestore")
+    p.add_argument("--watch", type=int, default=0, metavar="SECONDS", help="Poll continuously every N seconds (implies --incremental --auto-add)")
     p.add_argument("--download", action="store_true", help="Also download missing Telegram PDFs locally")
     p.add_argument("--qr", action="store_true", help="Sign in by scanning a QR code with Telegram mobile app")
     p.add_argument("--chat", default="", help="Comma-separated Telegram group names")
     args = p.parse_args()
-    if not (args.scan or args.incremental or args.download):
+    if args.watch > 0:
+        args.incremental = True
+        args.auto_add = True
+        async def watch_loop():
+            while True:
+                try:
+                    await run_sync(args)
+                except Exception as exc:
+                    print(f"Watch cycle error: {exc}", flush=True)
+                print(f"\nSleeping {args.watch}s before next check...", flush=True)
+                await asyncio.sleep(args.watch)
+        asyncio.run(watch_loop())
+        return
+    if not (args.scan or args.incremental or args.download or args.auto_add):
         args.scan = True
     asyncio.run(run_sync(args))
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback, useDeferredValue } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -28,7 +28,7 @@ const URL_FILTERS = ['category', 'type', 'language', 'year', 'publisher', 'perso
 /** Roughly three rows of covers on a laptop — enough to browse, not a wall. */
 const PAGE_SIZE = 20;
 /** Books fetched per Firestore round trip while the shelf fills in. */
-const FETCH_CHUNK = 150;
+const FETCH_CHUNK = 500;
 
 const FILTER_LABELS = {
   category: 'หมวดหมู่',
@@ -362,6 +362,18 @@ export default function Home() {
     }
   }, [canSeeAll]);
 
+  // Hydrate immediately from localStorage cache on mount (before Firebase Auth
+  // settles) so returning visitors see the shelf in <50ms instead of a blank
+  // skeleton. `allowedBooks` still filters out restricted items until auth confirms.
+  useEffect(() => {
+    const quick = readBookCache('public') || readBookCache('full');
+    if (quick?.books?.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBooks(quick.books);
+      setLoading(false);
+    }
+  }, []);
+
   // Re-runs once the session settles, because what a reader may ask for
   // depends on whether they have been approved.
   useEffect(() => {
@@ -428,6 +440,8 @@ export default function Home() {
     return allowedBooks.filter((book) => !book.restricted);
   }, [allowedBooks, isAdmin, adminShelfView]);
 
+  const deferredQuery = useDeferredValue(queryText);
+
   const results = useMemo(() => {
     // Every word has to appear, but not in the order or the spacing they were
     // typed in. One substring match over the raw fields failed three ordinary
@@ -437,7 +451,7 @@ export default function Home() {
     // single run of characters contains both; and "บทความ" or "เตาฮีด" found
     // only the books wearing the word in their title, not the 37 and 8 that
     // are actually filed under it.
-    const terms = queryText.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const terms = deferredQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
 
     const filtered = visibleBooks.filter((book) => {
       for (const [key, value] of Object.entries(filters)) {
@@ -469,7 +483,7 @@ export default function Home() {
         .map((field) => String(field ?? ''))
         .join(' ');
 
-      return matchesSearch(haystack, queryText);
+      return matchesSearch(haystack, deferredQuery);
     });
 
     // localeCompare with 'th', so ก sorts before ข and a Latin title lands
@@ -492,7 +506,7 @@ export default function Home() {
       return filtered.reverse();
     }
     return filtered;
-  }, [visibleBooks, filters, queryText, sortOrder]);
+  }, [visibleBooks, filters, deferredQuery, sortOrder]);
 
   /**
    * A fresh query or sort means a fresh first page, and no leftover highlight
